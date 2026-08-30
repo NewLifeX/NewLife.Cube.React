@@ -1,14 +1,14 @@
 /**
- * 工作台数据 Hook
+ * 工作台数据 Hook（命名与 MVC 版工作台统一为 Dashboard，视图 Index/Dashboard）
  *
- * 优先请求后端聚合接口 `/Admin/Index/Workbench`（HOME-3），
+ * 优先请求后端聚合接口 `/Admin/Index/Dashboard`（HOME-3），
  * 接口不可用时自动降级为空数据（页面继续用菜单/用户信息渲染，不白屏）。
  */
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/api';
 
 /** 工作台 KPI 卡 */
-export interface WorkbenchKpi {
+export interface DashboardKpi {
   /** 语义名（用于图标映射：users/login/online/log/error/cpu） */
   name?: string;
   /** 标题 */
@@ -24,32 +24,42 @@ export interface WorkbenchKpi {
 }
 
 /** 快捷入口 */
-export interface WorkbenchQuickLink {
+export interface DashboardQuickLink {
   name: string;
   url: string;
   icon?: string;
 }
 
+/** 个人资料（Dashboard 接口 profile 字段） */
+export interface DashboardProfile {
+  name?: string;
+  displayName?: string;
+  roleNames?: string;
+  online?: boolean;
+  logins?: number;
+  lastLogin?: string;
+  lastLoginIP?: string;
+  registerTime?: string;
+}
+
 /** 工作台聚合数据 */
-export interface WorkbenchData {
+export interface DashboardData {
   user?: {
     name?: string;
     displayName?: string;
     roles?: string[];
-    online?: boolean;
-    logins?: number;
-    lastLogin?: string;
-    lastLoginIP?: string;
-    registerTime?: string;
   };
-  kpis?: WorkbenchKpi[];
-  quickLinks?: WorkbenchQuickLink[];
-  profile?: Record<string, unknown>;
+  /** 可见 KPI 指标（MVC Widget 部件驱动） */
+  kpis?: DashboardKpi[];
+  /** 用户已隐藏的 KPI 指标（供恢复面板） */
+  hiddenKpis?: DashboardKpi[];
+  quickLinks?: DashboardQuickLink[];
+  profile?: DashboardProfile;
   sysInfo?: Record<string, string>;
 }
 
-export interface UseWorkbenchResult {
-  data: WorkbenchData | null;
+export interface UseDashboardResult {
+  data: DashboardData | null;
   loading: boolean;
   reload: () => Promise<void>;
 }
@@ -59,15 +69,15 @@ export interface UseWorkbenchResult {
  *
  * @returns 工作台数据 / 加载状态 / 刷新函数
  */
-export function useWorkbench(): UseWorkbenchResult {
-  const [data, setData] = useState<WorkbenchData | null>(null);
+export function useDashboard(): UseDashboardResult {
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.client.get('/Admin/Index/Workbench');
-      const body = res.data as { data?: WorkbenchData };
+      const res = await api.client.get('/Admin/Index/Dashboard');
+      const body = res.data as { data?: DashboardData };
       if (body?.data) {
         setData(body.data);
         return;
@@ -86,4 +96,4 @@ export function useWorkbench(): UseWorkbenchResult {
   return { data, loading, reload: load };
 }
 
-export default useWorkbench;
+export default useDashboard;

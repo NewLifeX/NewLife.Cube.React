@@ -1,9 +1,9 @@
 /**
- * 首页 / 工作台（AntD5 风格）
+ * 首页 / 工作台（AntD6 风格，命名与 MVC 版统一为 Dashboard）
  *
- * - 欢迎横幅：问候 + 日期 + 角色 + 操作按钮
+ * - 欢迎横幅：时间段问候 + 昵称 + 日期/角色 + 操作按钮（对齐 MVC Index/Dashboard）
  * - 工作台卡片（卡片三能力）：拖动排序 / 保存顺序 / 隐藏，布局按用户持久化到服务端（Parameter）
- * - KPI 卡行：后端工作台接口（/Admin/Index/Workbench）数据优先，缺失时降级个人统计
+ * - KPI 卡行：后端工作台接口（/Admin/Index/Dashboard）数据优先，缺失时降级个人统计；点击跳转
  * - 性能监控：轮询 /Admin/Index/MonitorData（对齐 MVC 契约 {xs, series}）
  * - 快捷入口 + 常用菜单：菜单树叶子递归收集，接口数据优先
  * - 系统信息 / 个人信息：来自工作台接口，缺失时隐藏
@@ -13,6 +13,10 @@ import {
   AppstoreAddOutlined,
   AppstoreOutlined,
   BugOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  DashboardOutlined,
+  DesktopOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -20,9 +24,9 @@ import {
   LineChartOutlined,
   MoreOutlined,
   ReloadOutlined,
-  SafetyOutlined,
   SaveOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { App, Button, Card, Dropdown, Empty, Skeleton, Space, Tag } from 'antd';
@@ -31,11 +35,21 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
 import { getConfig } from '@/configure';
-import { useWorkbench, type WorkbenchKpi } from '@/hooks/useWorkbench';
+import { useDashboard, type DashboardKpi } from '@/hooks/useDashboard';
 import type { LoginConfig, MenuItem } from '@cube/api-core';
 
-/** KPI 语义名 → 图标 */
+/** KPI 语义名 → 图标（MVC Widget 部件名优先，兼容旧语义名降级数据） */
 const KPI_ICONS: Record<string, ReactNode> = {
+  // MVC Widget 部件名（后端 Dashboard 由 WidgetManager 驱动返回）
+  UserCount: <TeamOutlined />,
+  TodayLogin: <UserOutlined />,
+  OnlineCount: <AppstoreOutlined />,
+  Log24h: <FileTextOutlined />,
+  Error24h: <BugOutlined />,
+  CpuRate: <LineChartOutlined />,
+  MyDays: <CalendarOutlined />,
+  MyLogins: <ClockCircleOutlined />,
+  // 兼容旧语义名（接口不可用时的降级数据）
   users: <TeamOutlined />,
   login: <UserOutlined />,
   online: <AppstoreOutlined />,
@@ -50,7 +64,7 @@ interface WidgetLayoutItem {
   hide?: boolean;
 }
 
-/** 工作台卡片清单：默认顺序 + 标题 */
+/** 工作台卡片清单：默认顺序 + 标题 + 图标（对齐 MVC 卡头图标样式） */
 const WIDGET_DEFAULT_ORDER = ['kpi', 'monitor', 'quick', 'menus', 'profile', 'sysinfo'];
 const WIDGET_TITLES: Record<string, string> = {
   kpi: '指标概览',
@@ -60,13 +74,37 @@ const WIDGET_TITLES: Record<string, string> = {
   profile: '个人信息',
   sysinfo: '系统信息',
 };
+const WIDGET_ICONS: Record<string, ReactNode> = {
+  kpi: <DashboardOutlined />,
+  monitor: <LineChartOutlined />,
+  quick: <ThunderboltOutlined />,
+  menus: <AppstoreOutlined />,
+  profile: <UserOutlined />,
+  sysinfo: <DesktopOutlined />,
+};
+
+/**
+ * 布局 key 归一化：后端 Json 序列化强制 camelCase（字典 key 首字母小写），
+ * KPI 部件名（UserCount）与卡片名（kpi）统一转首字母小写（userCount / kpi）后访问布局
+ */
+export const layoutKey = (name?: string) => (name ? name.charAt(0).toLowerCase() + name.slice(1) : '');
+
+/** 按用户布局过滤 + 排序 KPI（隐藏项剔除，未排序项按后端顺序兜底） */
+export const sortKpisByLayout = (all: DashboardKpi[], layout: Record<string, WidgetLayoutItem>) => {
+  const order = (k: DashboardKpi) => layout[layoutKey(k.name)]?.sort ?? 999;
+  return all.filter((k) => !layout[layoutKey(k.name)]?.hide).sort((a, b) => order(a) - order(b));
+};
+
+/** 用户已隐藏的 KPI（恢复面板用） */
+export const filterHiddenKpis = (all: DashboardKpi[], layout: Record<string, WidgetLayoutItem>) =>
+  all.filter((k) => layout[layoutKey(k.name)]?.hide);
 
 export default function HomePage() {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const userInfo = useUserStore((s) => s.userInfo);
   const menus = useUserStore((s) => s.menus);
-  const { data: wb, reload: reloadWb } = useWorkbench();
+  const { data: wb, reload: reloadWb } = useDashboard();
   const [config, setConfig] = useState<LoginConfig | null>(null);
   const [now, setNow] = useState(new Date());
   const chartRef = useRef<HTMLDivElement>(null);
@@ -111,30 +149,34 @@ export default function HomePage() {
     };
   }, []);
 
-  // 性能曲线渲染
+  // 性能曲线渲染（文字/边框色取主题 CSS 变量，明暗两套自适应）
   useEffect(() => {
     if (!chartRef.current || monitor.xs.length < 2) return;
     // 卡片隐藏后重新显示时，旧实例已挂在已卸载节点上，先释放再重建
     chartInstRef.current?.dispose();
+    const textColor =
+      getComputedStyle(document.body).getPropertyValue('--cube-text-muted').trim() || '#94a3b8';
+    const borderColor =
+      getComputedStyle(document.body).getPropertyValue('--cube-border-soft').trim() || 'rgba(148,163,184,.4)';
     const chart = echarts.init(chartRef.current);
     chartInstRef.current = chart;
     chart.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { data: ['CPU', '内存'], top: 0, right: 0, textStyle: { color: '#94a3b8' } },
+      legend: { data: ['CPU', '内存'], top: 0, right: 0, textStyle: { color: textColor } },
       grid: { left: 8, right: 8, top: 32, bottom: 0, containLabel: true },
       xAxis: {
         type: 'category',
         data: monitor.xs,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: 'rgba(148,163,184,.4)' } },
-        axisLabel: { color: '#94a3b8' },
+        axisLine: { lineStyle: { color: borderColor } },
+        axisLabel: { color: textColor },
       },
       yAxis: {
         type: 'value',
         min: 0,
         max: 100,
-        splitLine: { lineStyle: { color: 'rgba(148,163,184,.18)' } },
-        axisLabel: { color: '#94a3b8', formatter: '{value}%' },
+        splitLine: { lineStyle: { color: borderColor } },
+        axisLabel: { color: textColor, formatter: '{value}%' },
       },
       series: [
         { name: 'CPU', type: 'line', smooth: true, showSymbol: false, data: monitor.cpu, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
@@ -232,15 +274,53 @@ export default function HomePage() {
     return leaves.slice(0, 12);
   }, [menus]);
 
-  // KPI：接口数据优先，缺失时降级个人统计
-  const kpis = useMemo<WorkbenchKpi[]>(() => {
-    if (wb?.kpis?.length) return wb.kpis;
+  // KPI：接口部件数据（可见 + 已隐藏）优先，缺失时降级个人统计
+  const allKpis = useMemo<DashboardKpi[]>(() => {
+    if (wb?.kpis?.length || wb?.hiddenKpis?.length) return [...(wb.kpis ?? []), ...(wb.hiddenKpis ?? [])];
     return [
       { name: 'login', label: '我的登录', value: '—', color: 'green', trend: '累计登录次数' },
       { name: 'online', label: '在线状态', value: '在线', color: 'cyan', trend: '当前账号状态' },
       { name: 'users', label: '我的角色', value: userInfo?.roleName || '—', color: 'purple', trend: '当前角色' },
     ];
   }, [wb, userInfo]);
+
+  // 可见 KPI：按用户布局隐藏过滤 + 排序（camelCase 布局 key，与后端 Json 输出对齐）
+  const kpis = useMemo<DashboardKpi[]>(() => sortKpisByLayout(allKpis, layout), [allKpis, layout]);
+
+  // 已隐藏 KPI（恢复面板用）
+  const hiddenKpis = useMemo<DashboardKpi[]>(() => filterHiddenKpis(allKpis, layout), [allKpis, layout]);
+
+  // ── KPI 小卡交互（对齐 MVC 工作台：拖动排序 + 隐藏/恢复）──
+  const [kpiDragKey, setKpiDragKey] = useState<string | null>(null);
+
+  // KPI 拖拽落点：把拖拽卡插入目标卡位置，重新分配可见 KPI 排序（部件名作为布局 key）
+  const handleKpiDrop = (target: string) => {
+    if (!kpiDragKey || kpiDragKey === target) {
+      setKpiDragKey(null);
+      return;
+    }
+    setLayout((prev) => {
+      const visible = kpis.filter((k) => k.name !== kpiDragKey);
+      const idx = visible.findIndex((k) => k.name === target);
+      visible.splice(idx < 0 ? visible.length : idx, 0, kpis.find((k) => k.name === kpiDragKey)!);
+      const next = { ...prev };
+      visible.forEach((k, i) => {
+        if (k.name) next[layoutKey(k.name)] = { ...(next[layoutKey(k.name)] ?? {}), sort: i };
+      });
+      return next;
+    });
+    setKpiDragKey(null);
+  };
+
+  const handleHideKpi = (k: DashboardKpi) =>
+    setLayout((prev) => ({ ...prev, [layoutKey(k.name)]: { ...(prev[layoutKey(k.name)] ?? {}), hide: true } }));
+
+  const handleUnhideKpi = (k: DashboardKpi) =>
+    setLayout((prev) => {
+      const next = { ...prev };
+      next[layoutKey(k.name)] = { ...(next[layoutKey(k.name)] ?? {}), hide: false };
+      return next;
+    });
 
   // 快捷入口：接口数据优先，降级取常用菜单前 8 项
   const quickLinks = useMemo(() => {
@@ -255,6 +335,17 @@ export default function HomePage() {
   const today = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 星期${'日一二三四五六'[now.getDay()]}`;
   const displayName = userCard?.displayName || userCard?.name || userInfo?.displayName || userInfo?.name || '用户';
   const roles = userCard?.roles?.join(' / ') || userInfo?.roleName || '';
+  // 时间段问候（对齐 MVC Index/Dashboard：夜深了/早上好/中午好/下午好/晚上好）
+  const greet =
+    now.getHours() < 6
+      ? '夜深了'
+      : now.getHours() < 12
+        ? '早上好'
+        : now.getHours() < 14
+          ? '中午好'
+          : now.getHours() < 18
+            ? '下午好'
+            : '晚上好';
 
   // 工作台卡片布局：默认顺序 + 用户布局（排序/隐藏）
   const sortOf = (key: string) => layout[key]?.sort ?? WIDGET_DEFAULT_ORDER.indexOf(key);
@@ -270,10 +361,53 @@ export default function HomePage() {
         return (
           <div className="cube-home-kpi-grid">
             {kpis.map((k) => (
-              <div key={k.name || k.label} className="cube-home-kpi-card">
+              <div
+                key={k.name || k.label}
+                className="cube-home-kpi-card"
+                onClick={(e) => {
+                  // 拖动手柄 / 隐藏菜单（含 antd 弹层 portal，事件按组件树冒泡到卡片）不触发卡片跳转
+                  const target = e.target as HTMLElement;
+                  if (target.closest('.cube-home-kpi-actions') || target.closest('.ant-dropdown')) return;
+                  if (k.url) navigate(k.url);
+                }}
+                onDragOver={(e) => {
+                  if (kpiDragKey && kpiDragKey !== (k.name ?? '')) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleKpiDrop(k.name ?? '');
+                }}
+                style={k.url ? { cursor: 'pointer' } : undefined}
+              >
                 <div className="cube-home-kpi-head">
-                  <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
-                  <span className="cube-home-kpi-label">{k.label}</span>
+                  <div className="cube-home-kpi-head-left">
+                    <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
+                    <span className="cube-home-kpi-label">{k.label}</span>
+                  </div>
+                  <span className="cube-home-kpi-actions">
+                    <span
+                      className="cube-kpi-drag-handle"
+                      title="拖动排序"
+                      draggable
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', k.name ?? '');
+                        setKpiDragKey(k.name ?? '');
+                      }}
+                      onDragEnd={() => setKpiDragKey(null)}
+                    >
+                      <HolderOutlined />
+                    </span>
+                    <Dropdown
+                      trigger={['click']}
+                      menu={{
+                        items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏', onClick: () => handleHideKpi(k) }],
+                      }}
+                    >
+                      <Button type="text" size="small" icon={<MoreOutlined />} />
+                    </Dropdown>
+                  </span>
                 </div>
                 <div>
                   <div className="cube-home-kpi-value">{k.value}</div>
@@ -281,6 +415,7 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+            {!kpis.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无指标" />}
           </div>
         );
       case 'monitor':
@@ -376,30 +511,36 @@ export default function HomePage() {
       <div className="cube-home-hero">
         <div className="cube-home-hero-inner">
           <div className="cube-home-hero-main">
-            <div className="cube-home-hero-avatar">
+            <div
+              className="cube-home-hero-avatar"
+              title="进入个人中心"
+              role="button"
+              onClick={() => navigate('/profile')}
+            >
               {userInfo?.avatar ? <img src={userInfo.avatar} alt="avatar" /> : <UserOutlined />}
             </div>
-            <div>
+            <div className="cube-home-hero-copy">
               <Tag className="cube-home-hero-eyebrow" color="blue" variant="filled">
-                欢迎回来
+                {greet}
               </Tag>
-              <h1 className="cube-home-hero-title">{displayName}</h1>
+              <h1 className="cube-home-hero-title" title="进入个人中心" onClick={() => navigate('/profile')}>
+                {displayName}
+              </h1>
               <p className="cube-home-hero-subtitle">
-                {today} {roles ? ` · ${roles}` : ''} · 系统运行正常
+                欢迎回到 {getConfig().base.title} · {today}
+                {roles ? ` · ${roles}` : ''} · 系统运行正常
               </p>
               {config?.loginTip && <p className="cube-home-hero-tip">{config.loginTip}</p>}
             </div>
           </div>
           <div className="cube-home-hero-actions">
-            <Button icon={<ReloadOutlined />} onClick={() => void reloadWb()}>
-              刷新
-            </Button>
-            <Button icon={<SafetyOutlined />} onClick={() => navigate('/profile/security')}>
-              安全中心
-            </Button>
-            <Button type="primary" icon={<AppstoreOutlined />} onClick={() => navigate('/Admin/User')}>
-              用户管理
-            </Button>
+            <Button
+              type="text"
+              icon={<ReloadOutlined />}
+              title="刷新工作台数据"
+              aria-label="刷新工作台数据"
+              onClick={() => void reloadWb()}
+            />
           </div>
         </div>
       </div>
@@ -415,16 +556,40 @@ export default function HomePage() {
           </Button>
           <Dropdown
             menu={{
-              items: hiddenWidgets.map((k) => ({
-                key: k,
-                label: WIDGET_TITLES[k],
-                icon: <EyeOutlined />,
-                onClick: () => handleUnhideWidget(k),
-              })),
+              items: [
+                ...(hiddenWidgets.length
+                  ? [
+                      {
+                        type: 'group' as const,
+                        label: '工作台卡片',
+                        children: hiddenWidgets.map((k) => ({
+                          key: k,
+                          label: WIDGET_TITLES[k],
+                          icon: <EyeOutlined />,
+                          onClick: () => handleUnhideWidget(k),
+                        })),
+                      },
+                    ]
+                  : []),
+                ...(hiddenKpis.length
+                  ? [
+                      {
+                        type: 'group' as const,
+                        label: '指标小卡',
+                        children: hiddenKpis.map((k) => ({
+                          key: `kpi-${k.name ?? k.label}`,
+                          label: k.label,
+                          icon: <EyeOutlined />,
+                          onClick: () => handleUnhideKpi(k),
+                        })),
+                      },
+                    ]
+                  : []),
+              ],
             }}
-            disabled={!hiddenWidgets.length}
+            disabled={!hiddenWidgets.length && !hiddenKpis.length}
           >
-            <Button size="small" icon={<AppstoreAddOutlined />} disabled={!hiddenWidgets.length}>
+            <Button size="small" icon={<AppstoreAddOutlined />} disabled={!hiddenWidgets.length && !hiddenKpis.length}>
               恢复卡片
             </Button>
           </Dropdown>
@@ -465,6 +630,7 @@ export default function HomePage() {
                 >
                   <HolderOutlined />
                 </span>
+                <span className="cube-widget-icon">{WIDGET_ICONS[key]}</span>
                 {WIDGET_TITLES[key]}
               </span>
             }
