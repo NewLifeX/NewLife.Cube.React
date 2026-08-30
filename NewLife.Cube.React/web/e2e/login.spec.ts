@@ -147,3 +147,80 @@ test.describe('保存密码跨会话恢复（干净上下文）', () => {
     expect(page.url()).toContain('/Admin/User');
   });
 });
+
+test.describe('第三方登录（OAuth 入口）', () => {
+  // 本组用例聚焦登录页匿名场景，清空默认登录态（SSO 回调用例需从"未登录"模拟回跳）
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  /**
+   * 拦截 LoginConfig 响应，注入 oAuth 提供商列表，与后端配置解耦
+   * @param page Playwright 页面
+   * @param providers OAuth 提供商列表（空数组 = 未配置）
+   */
+  async function mockOAuthProviders(page: import('@playwright/test').Page, providers: unknown[]) {
+    await page.route('**/Auth/LoginConfig', async (route) => {
+      const res = await route.fetch();
+      const json = (await res.json()) as { data: { oAuth?: unknown[] } };
+      if (json.data) json.data.oAuth = providers;
+      await route.fulfill({ response: res, json });
+    });
+  }
+
+  test('配置了 OAuth 提供商时显示第三方登录入口（皮肤规范 §2.1 必须项）', async ({ page }) => {
+    await mockOAuthProviders(page, [{ name: 'NewLife', logo: '/Content/images/logo/NewLife.png', nickName: '新生命用户中心' }]);
+
+    await page.goto('/login');
+    await expect(page.getByText('第三方登录')).toBeVisible();
+    await expect(page.getByRole('button', { name: /新生命用户中心/ })).toBeVisible();
+  });
+
+  test('点击第三方登录按钮跳转 SSO 授权地址', async ({ page }) => {
+    await mockOAuthProviders(page, [{ name: 'NewLife', logo: '/Content/images/logo/NewLife.png', nickName: '新生命用户中心' }]);
+
+    await page.goto('/login');
+    const redirectReq = page.waitForRequest((req) => req.url().includes('/Sso/Login/NewLife'));
+    await page.getByRole('button', { name: /新生命用户中心/ }).click();
+    const req = await redirectReq;
+    expect(req.url()).toContain('source=front-end');
+    expect(req.url()).toContain('redirect_uri=');
+  });
+
+  test('未配置 OAuth 提供商时不显示第三方登录入口', async ({ page }) => {
+    await mockOAuthProviders(page, []);
+
+    await page.goto('/login');
+    await expect(page.getByText('第三方登录')).toHaveCount(0);
+  });
+
+  test('SSO 回调：携带 #token 访问自动登录并清理 URL', async ({ page }) => {
+    const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+    const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
+
+    // 先密码登录拿一个真实 token（模拟后端 SSO 颁发）
+    await page.goto('/login');
+    await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(ADMIN_USER);
+    await page.getByPlaceholder('请输入密码').fill(ADMIN_PASS);
+    await page.getByRole('button', { name: '登 录' }).click();
+    await page.waitForURL('**/', { timeout: 15000 });
+    const token = await page.evaluate(() => localStorage.getItem('token'));
+    expect(token).toBeTruthy();
+
+    // 清空登录态，仅以 /#token=xxx 形式模拟第三方登录回调（同源场景：无 Cookie 会话）
+    await page.evaluate(() => {
+      localStorage.removeItem('token');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    });
+
+    // 模拟第三方跳回：真实场景从 sso.newlifex.com 跨域整页跳回（main.tsx 重新加载后消费 #token），
+    // 故先离开当前页再带 #token 访问，确保文档重新加载而非仅更新 hash
+    await page.goto('/login');
+    await page.goto(`/#token=${encodeURIComponent(token!)}`);
+    // 应自动登录进入主页（而非跳回登录页）
+    await page.waitForURL('**/', { timeout: 10000 });
+    await expect(page.getByPlaceholder('用户名 / 邮箱 / 手机号')).toHaveCount(0);
+    // URL 中的 #token 已被清理，避免登录态丢失/地址栏残留
+    expect(page.url()).not.toContain('#token=');
+    // token 已写入本地存储
+    expect(await page.evaluate(() => localStorage.getItem('token'))).toBeTruthy();
+  });
+});

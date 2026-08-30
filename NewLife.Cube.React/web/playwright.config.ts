@@ -23,6 +23,8 @@ export default defineConfig({
     baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // 支持 https 自签证书站点（如 launchSettings 默认的 https://localhost:7116）
+    ignoreHTTPSErrors: true,
   },
   projects: [
     {
