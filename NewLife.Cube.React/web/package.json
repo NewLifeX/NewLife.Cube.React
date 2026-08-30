@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "魔方 React 前端皮肤（第三代 WebAPI），基于 React 18 + Ant Design 5 + Zustand + Vite",
+  "description": "魔方 React 前端皮肤（第三代 WebAPI），基于 React 19 + Ant Design 6 + Zustand + Vite",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -19,11 +19,11 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
-    "@cube/api-core": "workspace:*",
-    "@cube/auth-logic": "workspace:*",
-    "@cube/field-mapping": "workspace:*",
-    "@cube/page-logic": "workspace:*",
-    "@cube/page-utils": "workspace:*",
+    "@cube/api-core": "file:../../../NewLife.Cube/packages/api-core",
+    "@cube/auth-logic": "file:../../../NewLife.Cube/packages/auth-logic",
+    "@cube/field-mapping": "file:../../../NewLife.Cube/packages/field-mapping",
+    "@cube/page-logic": "file:../../../NewLife.Cube/packages/page-logic",
+    "@cube/page-utils": "file:../../../NewLife.Cube/packages/page-utils",
     "antd": "^6.6.2",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
@@ -60,5 +60,17 @@
   "engines": {
     "node": ">=24",
     "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ],
+    "overrides": {
+      "@cube/api-core": "file:../../../NewLife.Cube/packages/api-core",
+      "@cube/page-utils": "file:../../../NewLife.Cube/packages/page-utils",
+      "@cube/field-mapping": "file:../../../NewLife.Cube/packages/field-mapping",
+      "@cube/auth-logic": "file:../../../NewLife.Cube/packages/auth-logic",
+      "@cube/page-logic": "file:../../../NewLife.Cube/packages/page-logic"
+    }
   }
 }

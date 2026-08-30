@@ -2,7 +2,7 @@
 
 魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，对齐 Vue 皮肤功能。
 
-> 本项目为**全新重构**（原 UMI Max 版本已废弃），依赖公共前端库 `packages/`（`@cube/*`）。
+> 本项目为**全新重构**（原 UMI Max 版本已废弃），依赖公共前端库 `@cube/*`（`file:` 本地引用 `../NewLife.Cube/packages`，见[架构设计](../../Doc/架构设计.md) §3）。
 
 ---
 
@@ -39,18 +39,21 @@ web/
 │  └─ types/            # FieldMeta / ControlType 等共享类型
 ├─ e2e/                 # Playwright E2E（auth.setup 会话复用 + login/list 场景）
 ├─ tests/               # Vitest 环境与全局 mock
-├─ Doc/                 # 功能清单.md + 架构设计.md
 └─ package.json
 ```
+
+> 文档（需求/功能清单/架构设计）位于仓库根 `Doc/`：[需求文档](../../Doc/需求文档.md) / [功能清单](../../Doc/功能清单.md) / [架构设计](../../Doc/架构设计.md)
 
 ---
 
 ## 本地开发
 
-前置：先启动后端 API（如 `CubeDemo`，默认 `http://localhost:5050`），`/api` 与 `/Ai` 由 Vite 代理转发（剥掉 `/api` 前缀）。
+前置：
+1. 本地有 `../NewLife.Cube` monorepo（团队公共前端包仓库）且已 `pnpm install`，保证 `packages/*/dist` 存在（`@cube/*` 以 `file:` 引用，详见[架构设计](../../Doc/架构设计.md) §3）
+2. 启动后端 API（如 `CubeDemo`，默认 `http://localhost:5050`），`/api` 与 `/Ai` 由 Vite 代理转发（剥掉 `/api` 前缀）
 
 ```bash
-# 安装依赖（仓库根执行一次即可）
+# 安装依赖（web/ 目录执行一次即可）
 pnpm install
 
 # 启动开发服务器（端口 5188）
@@ -68,7 +71,7 @@ pnpm build
 ## 测试
 
 ```bash
-# 单元测试（Vitest，81 个）
+# 单元测试（Vitest，136 个）
 pnpm test:unit
 
 # E2E 测试（Playwright，48 个；默认 5050，可用 $env:E2E_BASE_URL="http://localhost:7081" 覆盖指向一体站点）
@@ -79,6 +82,7 @@ pnpm test:e2e
 
 ## 文档
 
-- 功能清单：`web/Doc/功能清单.md`（基线 55/55 + AntD5 二期重设计 13/13 + antd6 升级，全部完成，含验收记录）
-- 架构设计：`web/Doc/架构设计.md`
-- 需求参考：公共 `Doc/需求文档.md`（SPA 章节）、`Doc/Api/魔方前端内置需求.md`
+- 📋 [需求文档](../../Doc/需求文档.md) — 愿景、核心目标、功能需求
+- ✅ [功能清单](../../Doc/功能清单.md) — 三维状态追踪（含 SKIN/PKG/CI 模块）
+- 🏗️ [架构设计](../../Doc/架构设计.md) — .NET 皮肤集成、公共包策略、前端架构
+- 📖 [仓库 README](../../README.md) — 项目门面、快速开始
