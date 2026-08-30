@@ -27,6 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NewLife.MySql" Version="1.4.2026.801" />
   </ItemGroup>
 
