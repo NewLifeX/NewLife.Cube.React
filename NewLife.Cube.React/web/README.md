@@ -1,8 +1,8 @@
 # NewLife.Cube.React
 
-魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，对齐 Vue 皮肤功能。
+魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，符合魔方皮肤设计规范。
 
-> 本项目为**全新重构**（原 UMI Max 版本已废弃），依赖公共前端库 `@cube/*`（`file:` 本地引用 `../NewLife.Cube/packages`，见[架构设计](../../Doc/架构设计.md) §3）。
+> 本项目为**全新重构**（原 UMI Max 版本已废弃），依赖公共前端库 `@newlifex/*`（`file:` 本地引用 `../NewLife.Cube/packages`，见[架构设计](../../Doc/架构设计.md) §3）。
 
 ---
 
@@ -14,7 +14,7 @@
 | UI | Ant Design 6 + @ant-design/icons（单一主题 × 明暗） |
 | 状态 | Zustand 5（登录态 / 菜单 / 多标签 / 主题） |
 | 路由 | react-router v6（静态路由 + catch-all `*` → 动态实体页） |
-| 数据 | axios（`@cube/api-core`）+ `@cube/page-logic` 页面 Store |
+| 数据 | axios（`@newlifex/api-core`）+ `@newlifex/page-logic` 页面 Store |
 | 图表 | ECharts 5（懒加载） |
 | AI | `marked` + `dompurify` + mermaid（CDN 懒加载） |
 | 测试 | Vitest 3 + RTL（单测）；Playwright 1.54（E2E） |
@@ -49,7 +49,7 @@ web/
 ## 本地开发
 
 前置：
-1. 本地有 `../NewLife.Cube` monorepo（团队公共前端包仓库）且已 `pnpm install`，保证 `packages/*/dist` 存在（`@cube/*` 以 `file:` 引用，详见[架构设计](../../Doc/架构设计.md) §3）
+1. 本地有 `../NewLife.Cube` monorepo（团队公共前端包仓库）且已 `pnpm install`，保证 `packages/*/dist` 存在（`@newlifex/*` 以 `file:` 引用，详见[架构设计](../../Doc/架构设计.md) §3）
 2. 启动后端 API（如 `CubeDemo`，默认 `http://localhost:5050`），`/api` 与 `/Ai` 由 Vite 代理转发（剥掉 `/api` 前缀）
 
 ```bash
