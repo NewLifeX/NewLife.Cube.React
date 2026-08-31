@@ -147,7 +147,11 @@ export default function ConfigPage({ type }: ConfigPageProps) {
                         >
                           <FieldControl field={meta} apiPrefix={type} />
                         </Form.Item>
-                        {meta.description && <div className="cube-config-desc">{meta.description}</div>}
+                        {meta.description && (
+                          <div className="cube-config-desc" title={meta.description}>
+                            {meta.description}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

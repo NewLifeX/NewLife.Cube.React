@@ -441,10 +441,13 @@ select {
   font-size: 13px;
   line-height: 32px;
   padding-top: 4px;
-  word-break: break-word;
+  /* 描述强制单行，超出省略号，完整内容由 title 悬浮提示展示，保证每条配置只占一行 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 移动端：控件与描述换行，避免溢出 */
+/* 移动端：控件与描述换行，避免溢出（描述仍单行省略） */
 @media (max-width: 768px) {
   .cube-config-row {
     flex-wrap: wrap;
