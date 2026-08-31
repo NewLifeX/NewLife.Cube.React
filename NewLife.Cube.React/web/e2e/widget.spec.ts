@@ -33,10 +33,14 @@ test.describe('工作台卡片（卡片三能力）', () => {
     await expect(page.locator('.cube-home-grid .cube-home-widget').first()).toBeVisible({ timeout: 10000 });
   }
 
-  /** 重置布局并确认（清理测试残留） */
+  /** 重置布局并确认（清理测试残留）：工具栏「重置布局」已移除，恢复默认布局入口在已隐藏面板底部、
+   *  无隐藏时不可达 → 直接调服务端接口（对齐 MVC resetLayout） */
   async function resetLayout(page: import('@playwright/test').Page) {
-    await page.getByRole('button', { name: /重置布局/ }).click();
-    await expect(page.locator('.ant-message').getByText('布局已重置')).toBeVisible({ timeout: 8000 });
+    await page.evaluate(async () => {
+      const token = localStorage.getItem('token') ?? '';
+      await fetch('/api/Admin/Index/ResetWidgetLayout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    });
+    await page.waitForTimeout(400);
   }
 
   test('隐藏内容卡片后消失，恢复后重现', async ({ page }) => {

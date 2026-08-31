@@ -206,10 +206,11 @@ export default function HomePage() {
     layoutRef.current = layout;
   }, [layout]);
 
-  // 拖拽状态（指针式拖拽：mousedown 手柄启动、mousemove 高亮目标、mouseup 落点重排，
-  // 对齐 MVC jQuery sortable 的可靠性，规避 HTML5 DnD 触发卡片点击跳转的问题）
+  // 拖拽状态（MVC 式实时占位：mousedown 拿起卡片浮层跟随鼠标，mousemove 实时计算
+  // 目标位置虚线占位框并腾出位置，mouseup 按占位位置重排；对齐 MVC jQuery sortable placeholder）
   const [dragKey, setDragKey] = useState<string | null>(null);
-  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number; w: number; h: number; ox: number; oy: number } | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = useState(-1);
 
   // 读取用户布局（后端 Parameter 持久化，key 统一归一化为 camelCase）
   useEffect(() => {
@@ -259,66 +260,6 @@ export default function HomePage() {
     commitLayout(next);
   };
 
-  // 拖拽落点：组内（KPI 之间 / 内容部件之间）重排并即时保存，跨组拖拽忽略
-  const handleDrop = (target: string) => {
-    if (!dragKey || dragKey === target) {
-      setDragKey(null);
-      return;
-    }
-    const dragItem = allItems.find((it) => it.key === dragKey);
-    const targetItem = allItems.find((it) => it.key === target);
-    if (!dragItem || !targetItem || dragItem.kind !== targetItem.kind) {
-      setDragKey(null);
-      return;
-    }
-    const visible = allItems.filter(
-      (it) => !layoutRef.current[it.key]?.hide && it.key !== dragKey && it.kind === dragItem.kind,
-    );
-    const idx = visible.findIndex((it) => it.key === target);
-    visible.splice(idx < 0 ? visible.length : idx, 0, dragItem);
-    const next = { ...layoutRef.current };
-    visible.forEach((it, i) => {
-      next[it.key] = { ...(next[it.key] ?? {}), sort: i };
-    });
-    commitLayout(next);
-    setDragKey(null);
-  };
-
-  // 最新 handleDrop 引用（供拖拽全局监听使用，避免闭包过期）
-  const handleDropRef = useRef(handleDrop);
-  useEffect(() => {
-    handleDropRef.current = handleDrop;
-  });
-
-  // 指针式拖拽全局监听：拖拽期间 mousemove 高亮目标卡，mouseup 触发重排
-  useEffect(() => {
-    if (!dragKey) return;
-    const onMove = (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-      setDragOverKey(el?.closest<HTMLElement>('.cube-home-widget, .cube-home-kpi-card')?.dataset.key ?? null);
-    };
-    const onUp = (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-      const target = el?.closest<HTMLElement>('.cube-home-widget, .cube-home-kpi-card')?.dataset.key;
-      if (target) handleDropRef.current(target);
-      else setDragKey(null);
-      setDragOverKey(null);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-  }, [dragKey]);
-
-  // 拖拽手柄：mousedown 启动拖拽（preventDefault 抑制点击跳转）
-  const startDrag = (key: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragKey(key);
-  };
-
   // KPI：接口部件数据（可见 + 已隐藏）优先，缺失时降级个人统计
   const allKpis = useMemo<DashboardKpi[]>(() => {
     if (wb?.kpis?.length || wb?.hiddenKpis?.length) return [...(wb.kpis ?? []), ...(wb.hiddenKpis ?? [])];
@@ -347,6 +288,104 @@ export default function HomePage() {
   const hiddenItems = useMemo(() => filterHiddenItems(allItems, layout), [allItems, layout]);
   const hiddenKpis = hiddenItems.filter((it) => it.kind === 'kpi');
   const hiddenWidgets = hiddenItems.filter((it) => it.kind === 'widget');
+
+  // 拖拽落点：按占位索引在组内重排并即时保存（占位索引 = 同组可见卡中的插入位置）
+  const handleDrop = () => {
+    const key = dragKey;
+    if (!key) {
+      setPlaceholderIndex(-1);
+      return;
+    }
+    const dragItem = allItems.find((it) => it.key === key);
+    if (!dragItem) {
+      setDragKey(null);
+      setDragPos(null);
+      setPlaceholderIndex(-1);
+      return;
+    }
+    const kind = dragItem.kind;
+    const rest = allItems.filter((it) => !layoutRef.current[it.key]?.hide && it.key !== key && it.kind === kind);
+    const order = sortHomeItems(rest, layoutRef.current).map((it) => it.key);
+    const idx = Math.min(Math.max(placeholderIndex, 0), order.length);
+    order.splice(idx, 0, key);
+    const next = { ...layoutRef.current };
+    order.forEach((it, i) => {
+      next[it] = { ...(next[it] ?? {}), sort: i };
+    });
+    commitLayout(next);
+    setDragKey(null);
+    setDragPos(null);
+    setPlaceholderIndex(-1);
+  };
+
+  // 最新 handleDrop 引用（供拖拽全局监听使用，避免闭包过期）
+  const handleDropRef = useRef(handleDrop);
+  useEffect(() => {
+    handleDropRef.current = handleDrop;
+  });
+
+  // 指针式拖拽全局监听：mousemove 浮层跟随 + 实时计算占位索引，mouseup 按占位重排
+  useEffect(() => {
+    if (!dragKey) return;
+    const onMove = (e: MouseEvent) => {
+      const mx = e.clientX;
+      const my = e.clientY;
+      // 浮层跟随鼠标（保持手柄相对偏移）
+      setDragPos((p) => (p ? { ...p, x: mx - p.ox, y: my - p.oy } : p));
+      // 计算同组可见卡中的插入位置（占位索引）
+      const dragItem = allItems.find((it) => it.key === dragKey);
+      if (!dragItem) return;
+      const kind = dragItem.kind;
+      const order = visibleItems.filter((it) => it.key !== dragKey && it.kind === kind);
+      let idx = order.length;
+      for (let i = 0; i < order.length; i++) {
+        const el = document.querySelector<HTMLElement>(`[data-key="${order[i].key}"]`);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        const midY = r.top + r.height / 2;
+        const midX = r.left + r.width / 2;
+        // 鼠标完全在该卡上方 → 插到它前面
+        if (my < midY - r.height / 2) {
+          idx = i;
+          break;
+        }
+        // 鼠标与该卡同一行 → 比较水平位置（中心左侧插前，右侧继续）
+        if (Math.abs(my - midY) <= r.height / 2) {
+          if (mx <= midX) {
+            idx = i;
+            break;
+          }
+          continue;
+        }
+      }
+      setPlaceholderIndex(idx);
+    };
+    const onUp = () => {
+      handleDropRef.current();
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [dragKey, allItems, visibleItems]);
+
+  // 拖拽手柄：mousedown 拿起卡片（记录浮层几何 + 初始占位），preventDefault 抑制点击跳转
+  const startDrag = (key: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = (e.currentTarget as HTMLElement).closest<HTMLElement>('.cube-home-widget, .cube-home-kpi-card');
+    const r = card?.getBoundingClientRect();
+    if (!r) return;
+    setDragKey(key);
+    setDragPos({ x: r.left, y: r.top, w: r.width, h: r.height, ox: e.clientX - r.left, oy: e.clientY - r.top });
+    // 初始占位 = 被拖卡原位置（同组内，拖起瞬间原位置立即腾出占位框）
+    const dragItem = allItems.find((it) => it.key === key);
+    const kind = dragItem?.kind;
+    const orderAll = visibleItems.filter((it) => it.kind === kind);
+    setPlaceholderIndex(orderAll.findIndex((it) => it.key === key));
+  };
 
   const userCard = wb?.user;
 
@@ -507,6 +546,141 @@ export default function HomePage() {
     }
   };
 
+  // 拖拽浮层数据（被拖卡 + 分组）
+  const dragItem = dragKey ? allItems.find((it) => it.key === dragKey) : undefined;
+  const dragKind = dragItem?.kind;
+
+  /** KPI 卡内部内容（操作区 + 图标 + 信息，普通渲染与拖拽浮层共用） */
+  const renderKpiInner = (item: HomeItem): ReactNode => {
+    const k = item.kpi!;
+    return (
+      <>
+        <span className="cube-home-kpi-actions">
+          <Dropdown
+            trigger={['click']}
+            menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏', onClick: () => handleHide(item.key) }] }}
+          >
+            <Button type="text" size="small" icon={<MoreOutlined />} />
+          </Dropdown>
+          <span className="cube-kpi-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+            <DragOutlined />
+          </span>
+        </span>
+        <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
+        <div className="cube-home-kpi-info">
+          <div className="cube-home-kpi-value">{k.value}</div>
+          <div className="cube-home-kpi-label">{k.label}</div>
+          {k.trend && <div className="cube-home-kpi-trend">{k.trend}</div>}
+        </div>
+      </>
+    );
+  };
+
+  /** KPI 卡（普通网格项） */
+  const renderKpiCard = (item: HomeItem): ReactNode => {
+    const k = item.kpi!;
+    return (
+      <div
+        key={item.key}
+        data-key={item.key}
+        className="cube-home-kpi-card"
+        style={k.url ? { cursor: 'pointer' } : undefined}
+        onClick={(e) => {
+          // 拖拽十字 / 隐藏菜单（含 antd 弹层 portal，事件按组件树冒泡到卡片）不触发卡片跳转
+          const target = e.target as HTMLElement;
+          if (target.closest('.cube-home-kpi-actions') || target.closest('.ant-dropdown')) return;
+          if (k.url) navigate(k.url);
+        }}
+      >
+        {renderKpiInner(item)}
+      </div>
+    );
+  };
+
+  /** 内容部件内部（antd Card，普通渲染与拖拽浮层共用） */
+  const renderWidgetInner = (item: HomeItem): ReactNode => {
+    const w = item.widget!;
+    return (
+      <Card
+        className="cube-home-card"
+        size="small"
+        title={
+          <span className="cube-widget-title">
+            <span className="cube-widget-icon">{resolveIcon(w.icon)}</span>
+            {w.title}
+          </span>
+        }
+        extra={
+          <span className="cube-widget-actions">
+            <Dropdown
+              trigger={['click']}
+              menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏卡片', onClick: () => handleHide(item.key) }] }}
+            >
+              <Button type="text" size="small" icon={<MoreOutlined />} />
+            </Dropdown>
+            <span className="cube-widget-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+              <DragOutlined />
+            </span>
+          </span>
+        }
+      >
+        {renderWidgetBody(w)}
+      </Card>
+    );
+  };
+
+  /** 内容部件卡（普通网格项） */
+  const renderWidgetCard = (item: HomeItem): ReactNode => (
+    <div key={item.key} data-key={item.key} className="cube-home-widget" style={{ gridColumn: `span ${item.cols}` }}>
+      {renderWidgetInner(item)}
+    </div>
+  );
+
+  /** 网格渲染：排除被拖卡，目标位置实时插入虚线占位框（对齐 MVC ui-sortable-placeholder） */
+  const renderGrid = (): ReactNode => {
+    if (!visibleItems.length)
+      return (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无卡片" />
+        </div>
+      );
+    const list: ReactNode[] = [];
+    let kpiN = 0;
+    let widgetN = 0;
+    let lastKpiCols = 2;
+    let lastWidgetCols = 4;
+    visibleItems.forEach((item) => {
+      if (item.key === dragKey) return;
+      const isKpi = item.kind === 'kpi';
+      const gIdx = isKpi ? kpiN : widgetN;
+      if (isKpi) {
+        kpiN++;
+        lastKpiCols = item.cols || 2;
+      } else {
+        widgetN++;
+        lastWidgetCols = item.cols || 4;
+      }
+      // 占位：同组内、组内序号命中占位索引 → 在该卡前插入虚线占位框
+      if (dragKey && item.kind === dragKind && gIdx === placeholderIndex) {
+        list.push(
+          <div key={`ph-${item.key}`} className="cube-home-drag-placeholder" style={{ gridColumn: `span ${isKpi ? 2 : item.cols}` }} />,
+        );
+      }
+      list.push(isKpi ? renderKpiCard(item) : renderWidgetCard(item));
+    });
+    // 末尾占位：占位索引 == 组内数量（拖到组尾）
+    if (dragKey && dragKind && placeholderIndex >= (dragKind === 'kpi' ? kpiN : widgetN)) {
+      list.push(
+        <div
+          key="ph-end"
+          className="cube-home-drag-placeholder"
+          style={{ gridColumn: `span ${dragKind === 'kpi' ? lastKpiCols : lastWidgetCols}` }}
+        />,
+      );
+    }
+    return <>{list}</>;
+  };
+
   return (
     <div className="cube-home-page">
       {/* 紧凑欢迎横幅（对齐 MVC wb-banner） */}
@@ -588,105 +762,15 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 卡片布局工具栏：拖动提示 + 重置布局（隐藏/排序已即时保存服务端，对齐 MVC） */}
-      <div className="cube-home-widget-toolbar">
-        <span className="cube-home-widget-hint">
-          <DragOutlined /> 拖动卡片标题调整顺序，隐藏后可恢复，操作自动保存
-        </span>
-        <Button size="small" onClick={handleResetLayout}>
-          重置布局
-        </Button>
-      </div>
+      {/* 12 列部件栅格：KPI 卡直接排布（span 2）+ 内容部件（span=cols），MVC 式实时占位拖动排序 / 隐藏 */}
+      <div className="cube-home-grid">{renderGrid()}</div>
 
-      {/* 12 列部件栅格：KPI 卡直接排布（span 2）+ 内容部件（span=cols），指针式拖动排序 / 隐藏 */}
-      <div className="cube-home-grid">
-        {visibleItems.map((item) => {
-          if (item.kind === 'kpi' && item.kpi) {
-            const k = item.kpi;
-            return (
-              <div
-                key={item.key}
-                data-key={item.key}
-                className={`cube-home-kpi-card${dragOverKey === item.key ? ' cube-home-drag-over' : ''}`}
-                style={k.url ? { cursor: 'pointer' } : undefined}
-                onClick={(e) => {
-                  // 拖拽十字 / 隐藏菜单（含 antd 弹层 portal，事件按组件树冒泡到卡片）不触发卡片跳转
-                  const target = e.target as HTMLElement;
-                  if (target.closest('.cube-home-kpi-actions') || target.closest('.ant-dropdown')) return;
-                  if (k.url) navigate(k.url);
-                }}
-              >
-                {/* 操作区：三点菜单 + 拖拽十字，绝对定位右上角（对齐 MVC：widget-menu right:22、widget-drag right:8，十字最右、菜单居左） */}
-                <span className="cube-home-kpi-actions">
-                  <Dropdown
-                    trigger={['click']}
-                    menu={{
-                      items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏', onClick: () => handleHide(item.key) }],
-                    }}
-                  >
-                    <Button type="text" size="small" icon={<MoreOutlined />} />
-                  </Dropdown>
-                  <span className="cube-kpi-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
-                    <DragOutlined />
-                  </span>
-                </span>
-                <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
-                <div className="cube-home-kpi-info">
-                  <div className="cube-home-kpi-value">{k.value}</div>
-                  <div className="cube-home-kpi-label">{k.label}</div>
-                  {k.trend && <div className="cube-home-kpi-trend">{k.trend}</div>}
-                </div>
-              </div>
-            );
-          }
-          if (item.kind === 'widget' && item.widget) {
-            const w = item.widget;
-            return (
-              <div
-                key={item.key}
-                data-key={item.key}
-                className={`cube-home-widget${dragOverKey === item.key ? ' cube-home-drag-over' : ''}`}
-                style={{ gridColumn: `span ${item.cols}` }}
-              >
-                <Card
-                  className="cube-home-card"
-                  size="small"
-                  title={
-                    <span className="cube-widget-title">
-                      <span className="cube-widget-icon">{resolveIcon(w.icon)}</span>
-                      {w.title}
-                    </span>
-                  }
-                  extra={
-                    <span className="cube-widget-actions">
-                      <Dropdown
-                        trigger={['click']}
-                        menu={{
-                          items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏卡片', onClick: () => handleHide(item.key) }],
-                        }}
-                      >
-                        <Button type="text" size="small" icon={<MoreOutlined />} />
-                      </Dropdown>
-                      {/* 拖拽十字置于头部最右（对齐 MVC widget-header：图标→标题→三点→十字） */}
-                      <span className="cube-widget-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
-                        <DragOutlined />
-                      </span>
-                    </span>
-                  }
-                >
-                  {renderWidgetBody(w)}
-                </Card>
-              </div>
-            );
-          }
-          return null;
-        })}
-        {!visibleItems.length && (
-          <div style={{ gridColumn: '1 / -1' }}>
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无卡片" />
-          </div>
-        )}
-      </div>
+      {/* 拖拽浮层：拿起跟随鼠标（pointer-events none 不拦截交互），目标位置已由占位框腾出 */}
+      {dragKey && dragPos && dragItem && (
+        <div className="cube-home-dragging-card" style={{ left: dragPos.x, top: dragPos.y, width: dragPos.w, height: dragPos.h }}>
+          {dragKind === 'kpi' ? renderKpiInner(dragItem) : renderWidgetInner(dragItem)}
+        </div>
+      )}
     </div>
   );
 }
