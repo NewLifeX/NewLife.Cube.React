@@ -93,9 +93,9 @@
   box-shadow: var(--cube-shadow-soft);
   padding: 16px;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -193,10 +193,13 @@
 .cube-home-kpi-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .cube-home-kpi-icon.grey { background: linear-gradient(135deg, #64748b, #475569); }
 
-/* KPI 信息区：数值 / 标签 / 趋势（对齐 MVC widget-kpi-value/label/trend 字号） */
-.cube-home-kpi-info {
+/* KPI 头部：图标 + 数值同排，预留右侧操作区空间（数值不顶到三点/十字） */
+.cube-home-kpi-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 40px;
   min-width: 0;
-  flex: 1;
 }
 
 .cube-home-kpi-value {
@@ -204,17 +207,22 @@
   font-size: 24px;
   line-height: 1.15;
   font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cube-home-kpi-label {
-  margin-top: 2px;
   color: var(--cube-text-secondary);
   font-size: 12px;
   line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cube-home-kpi-trend {
-  margin-top: 2px;
   color: var(--cube-text-muted);
   font-size: 11px;
   line-height: 1.5;
@@ -457,23 +465,28 @@
   height: 320px;
 }
 
-/* 登录与在线部件：最近登录 + 在线用户双列，每项时间在前（对齐 MVC LoginLog.cshtml） */
-.cube-home-login-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* 登录与在线部件：最近登录、在线用户上下分段，每行时间在前（对齐 MVC LoginLog.cshtml 上下两块） */
+.cube-home-login {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .cube-home-login-title {
   font-weight: 600;
   color: var(--cube-text);
-  margin-bottom: 10px;
+  margin-top: 10px;
+  padding-bottom: 2px;
+}
+
+.cube-home-login-title:first-child {
+  margin-top: 0;
 }
 
 .cube-home-login-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .cube-home-login-item {
@@ -516,6 +529,36 @@
   align-items: center;
   gap: 6px;
   color: var(--cube-success);
+}
+
+/* 系统信息部件：两列信息网格（键小字灰 + 值重点，悬浮完整值） */
+.cube-home-sys-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cube-home-sys-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--cube-surface-muted);
+  border: 1px solid var(--cube-border-soft);
+  min-width: 0;
+}
+
+.cube-home-sys-key {
+  display: block;
+  color: var(--cube-text-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.cube-home-sys-value {
+  display: block;
+  color: var(--cube-text);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 .cube-home-info-list {
@@ -612,6 +655,52 @@
   text-decoration: underline;
 }
 
+/* 个人信息信息表：紧凑行（键灰左 + 值右），状态带在线圆点 */
+.cube-home-profile-table {
+  margin-top: 8px;
+}
+
+.cube-home-profile-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--cube-border-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cube-home-profile-row:last-child {
+  border-bottom: 0;
+}
+
+.cube-home-profile-k {
+  color: var(--cube-text-muted);
+  flex: none;
+}
+
+.cube-home-profile-v {
+  color: var(--cube-text);
+  text-align: right;
+  word-break: break-all;
+  min-width: 0;
+}
+
+.cube-online-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cube-text-muted);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.cube-online-dot.on {
+  background: var(--cube-success);
+}
+
 @media (max-width: 1200px) {
   .cube-home-kpi-card {
     grid-column: span 4;
@@ -653,7 +742,7 @@
     grid-template-columns: 1fr;
   }
 
-  .cube-home-login-grid {
+  .cube-home-sys-grid {
     grid-template-columns: 1fr;
   }
 

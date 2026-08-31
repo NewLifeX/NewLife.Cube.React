@@ -4,13 +4,16 @@
  * 对齐 Vue 皮肤 DefaultEntity.vue：根据当前路径在菜单树中匹配，
  * 命中 → 渲染通用列表页；表单类 URL（含 ?id= 或 /Edit 等后缀）→ 渲染表单页；未命中 → 404。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Card, Spin } from 'antd';
 import { useMenuStore } from '@/stores/menu';
 import DefaultListPage from '@/views/list';
 import FormPage from '@/views/form/FormPage';
 import NotFoundPage from '@/pages/NotFound';
 import ConfigNav, { findConfigCenter } from '@/views/config/ConfigNav';
+import { routeToApiPrefix } from '@/utils/url';
+import { api } from '@/api';
 
 /** 是否表单类路径（含 ?id= 或 /Edit /Add /New /Detail 后缀） */
 function isFormPath(pathname: string, search: string): boolean {
@@ -30,8 +33,40 @@ export default function DefaultEntityPage() {
   // 配置中心路径：配置控制器在左侧菜单隐藏，菜单树中不存在，需按静态清单特判
   const config = useMemo(() => findConfigCenter(location.pathname), [location.pathname]);
 
+  // 隐藏菜单实体页（如 /Admin/UserOnline、/Admin/UserStat，控制器 [Menu(0,false)] 不在菜单树）：
+  // 菜单未命中时探测后端 GetPage，返回 JSON 即按实体页渲染，否则 404
+  const [probe, setProbe] = useState<'idle' | 'json' | 'none'>('idle');
+  useEffect(() => {
+    if (matched || config) return;
+    let cancelled = false;
+    setProbe('idle');
+    api.page
+      .getPage(routeToApiPrefix(location.pathname))
+      .then((res) => {
+        if (cancelled) return;
+        // GetPage 返回 HTML（SPA 兜底）说明不是实体 CRUD 页
+        setProbe(typeof res === 'string' || typeof res?.data === 'string' ? 'none' : 'json');
+      })
+      .catch(() => {
+        if (!cancelled) setProbe('none');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [matched, config, location.pathname]);
+
   if (!matched && !config) {
-    return <NotFoundPage />;
+    // 探测中：加载占位
+    if (probe === 'idle') {
+      return (
+        <Card size="small" styles={{ body: { display: 'flex', justifyContent: 'center', padding: 48 } }}>
+          <Spin />
+        </Card>
+      );
+    }
+    // 后端无此实体 → 404
+    if (probe === 'none') return <NotFoundPage />;
+    // 隐藏菜单实体页命中（GetPage 返回 JSON）→ 按列表页渲染（DefaultListPage 内部再探测分发）
   }
 
   const title = config?.label || matched?.title || matched?.name || '';

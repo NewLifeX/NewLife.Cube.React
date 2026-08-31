@@ -428,34 +428,30 @@ export default function HomePage() {
     </div>
   );
 
-  /** 登录与在线部件正文：最近登录 + 在线用户双列，时间在前（对齐 MVC LoginLog.cshtml list-time/list-name/list-action） */
+  /** 登录与在线部件正文：最近登录、在线用户上下分段，各显示少量行（对齐 MVC LoginLog.cshtml 上下两块） */
   const renderLoginLogBody = (data?: DashboardLoginLog): ReactNode => (
-    <div className="cube-home-login-grid">
-      <div>
-        <div className="cube-home-login-title">最近登录</div>
-        <div className="cube-home-login-list">
-          {(data?.logins ?? []).map((it, i) => (
-            <div key={i} className="cube-home-login-item" title={it.createIP ? `${it.action || ''} ${it.createIP}` : undefined}>
-              <span className="cube-home-login-time">{fmtTime(it.createTime)}</span>
-              <span className="cube-home-login-name">{it.userName || '—'}</span>
-              <span className="cube-home-login-action">{it.action || ''}</span>
-            </div>
-          ))}
-          {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="最近24h无登录记录" />}
-        </div>
+    <div className="cube-home-login">
+      <div className="cube-home-login-title">最近登录</div>
+      <div className="cube-home-login-list">
+        {(data?.logins ?? []).map((it, i) => (
+          <div key={i} className="cube-home-login-item" title={it.createIP ? `${it.action || ''} ${it.createIP}` : undefined}>
+            <span className="cube-home-login-time">{fmtTime(it.createTime)}</span>
+            <span className="cube-home-login-name">{it.userName || '—'}</span>
+            <span className="cube-home-login-action">{it.action || ''}</span>
+          </div>
+        ))}
+        {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="最近24h无登录记录" />}
       </div>
-      <div>
-        <div className="cube-home-login-title">在线用户</div>
-        <div className="cube-home-login-list">
-          {(data?.onlines ?? []).map((it, i) => (
-            <div key={i} className="cube-home-login-item" title={it.oAuthProvider}>
-              <span className="cube-home-login-time">{fmtTime(it.createTime, 'hm')}</span>
-              <span className="cube-home-login-name">{it.name || '—'}</span>
-              <span className="cube-home-login-action">{it.oAuthProvider || ''}</span>
-            </div>
-          ))}
-          {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前无在线用户" />}
-        </div>
+      <div className="cube-home-login-title">在线用户</div>
+      <div className="cube-home-login-list">
+        {(data?.onlines ?? []).map((it, i) => (
+          <div key={i} className="cube-home-login-item" title={it.oAuthProvider}>
+            <span className="cube-home-login-time">{fmtTime(it.createTime, 'hm')}</span>
+            <span className="cube-home-login-name">{it.name || '—'}</span>
+            <span className="cube-home-login-action">{it.oAuthProvider || ''}</span>
+          </div>
+        ))}
+        {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前无在线用户" />}
       </div>
     </div>
   );
@@ -472,30 +468,33 @@ export default function HomePage() {
           <div className="cube-home-profile-role">{p?.roleNames || roles || '—'}</div>
         </div>
       </div>
-      <div className="cube-home-info-list">
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">账号</span>
-          <span className="cube-home-info-value">{p?.name ?? '—'}</span>
+      <div className="cube-home-profile-table">
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">账号</span>
+          <span className="cube-home-profile-v">{p?.name ?? '—'}</span>
         </div>
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">状态</span>
-          <span className="cube-home-info-value">{p?.online ? '在线' : '离线'}</span>
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">状态</span>
+          <span className="cube-home-profile-v">
+            <span className={`cube-online-dot${p?.online ? ' on' : ''}`} />
+            {p?.online ? '在线' : '离线'}
+          </span>
         </div>
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">登录次数</span>
-          <span className="cube-home-info-value">{p?.logins ?? '—'} 次</span>
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">登录次数</span>
+          <span className="cube-home-profile-v">{p?.logins ?? '—'} 次</span>
         </div>
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">上次登录</span>
-          <span className="cube-home-info-value">{p?.lastLogin || '—'}</span>
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">上次登录</span>
+          <span className="cube-home-profile-v">{p?.lastLogin || '—'}</span>
         </div>
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">上次地址</span>
-          <span className="cube-home-info-value">{p?.lastLoginIP || '—'}</span>
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">上次地址</span>
+          <span className="cube-home-profile-v">{p?.lastLoginIP || '—'}</span>
         </div>
-        <div className="cube-home-info-item">
-          <span className="cube-home-info-key">注册时间</span>
-          <span className="cube-home-info-value">{p?.registerTime || '—'}</span>
+        <div className="cube-home-profile-row">
+          <span className="cube-home-profile-k">注册时间</span>
+          <span className="cube-home-profile-v">{p?.registerTime || '—'}</span>
         </div>
       </div>
       <div className="cube-home-profile-more">
@@ -506,7 +505,20 @@ export default function HomePage() {
     </div>
   );
 
-  /** 键值字典正文（系统信息 / 未知名部件兜底） */
+  /** 系统信息部件正文：两列信息网格（键小字灰 + 值重点，悬浮完整值） */
+  const renderSysInfoBody = (data?: Record<string, unknown>): ReactNode =>
+    data ? (
+      <div className="cube-home-sys-grid">
+        {Object.entries(data).map(([k, v]) => (
+          <div key={k} className="cube-home-sys-item" title={String(v ?? '')}>
+            <span className="cube-home-sys-key">{k}</span>
+            <span className="cube-home-sys-value">{String(v ?? '')}</span>
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  /** 键值字典正文（未知名部件兜底） */
   const renderKvBody = (data?: Record<string, unknown>): ReactNode =>
     data ? (
       <div className="cube-home-info-list">
@@ -533,7 +545,7 @@ export default function HomePage() {
           </>
         );
       case 'SysInfo':
-        return renderKvBody(data);
+        return renderSysInfoBody(data);
       case 'LoginLog':
         return renderLoginLogBody(data as DashboardLoginLog | undefined);
       case 'QuickLink':
@@ -550,9 +562,11 @@ export default function HomePage() {
   const dragItem = dragKey ? allItems.find((it) => it.key === dragKey) : undefined;
   const dragKind = dragItem?.kind;
 
-  /** KPI 卡内部内容（操作区 + 图标 + 信息，普通渲染与拖拽浮层共用） */
+  /** KPI 卡内部内容：头部（图标 + 数值同排）+ 名字 + 趋势（普通渲染与拖拽浮层共用）
+   *  头部为图标+数值横向，预留右侧操作区空间，数值不顶到三点/十字；名字/趋势单行省略 + title 悬浮完整 */
   const renderKpiInner = (item: HomeItem): ReactNode => {
     const k = item.kpi!;
+    const trend = k.trend || '';
     return (
       <>
         <span className="cube-home-kpi-actions">
@@ -566,12 +580,20 @@ export default function HomePage() {
             <DragOutlined />
           </span>
         </span>
-        <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
-        <div className="cube-home-kpi-info">
-          <div className="cube-home-kpi-value">{k.value}</div>
-          <div className="cube-home-kpi-label">{k.label}</div>
-          {k.trend && <div className="cube-home-kpi-trend">{k.trend}</div>}
+        <div className="cube-home-kpi-head">
+          <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
+          <div className="cube-home-kpi-value" title={k.value}>
+            {k.value}
+          </div>
         </div>
+        <div className="cube-home-kpi-label" title={k.label}>
+          {k.label}
+        </div>
+        {trend && (
+          <div className="cube-home-kpi-trend" title={trend}>
+            {trend}
+          </div>
+        )}
       </>
     );
   };
