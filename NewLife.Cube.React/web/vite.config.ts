@@ -34,6 +34,11 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:5050',
           changeOrigin: true,
         },
+        // SSO 绑定/解绑（/Sso/Bind、/Sso/UnBind）不带 /api 前缀
+        '/Sso': {
+          target: 'http://localhost:5050',
+          changeOrigin: true,
+        },
       },
     },
   };

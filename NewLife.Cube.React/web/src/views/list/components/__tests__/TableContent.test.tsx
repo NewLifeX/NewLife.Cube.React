@@ -37,16 +37,16 @@ describe('TableContent 列表表格', () => {
     const { container, rerender } = render(
       <TableContent fields={FIELDS} data={DATA} canView canEdit={false} canDelete={false} selectable={false} />,
     );
-    // 仅「查看」→ 64px（原固定 160px 会留大块空白）
-    expect(opsColStyle(container)).toContain('width: 64px');
+    // 仅「查看」→ 68px（原固定 160px 会留大块空白）
+    expect(opsColStyle(container)).toContain('width: 68px');
 
-    // 查看 + 编辑 + 删除 → 160px 撑开容纳三个按钮
+    // 查看 + 编辑 + 删除 → 172px 撑开容纳三个胶囊按钮
     rerender(<TableContent fields={FIELDS} data={DATA} canView canEdit canDelete selectable={false} />);
-    expect(opsColStyle(container)).toContain('width: 160px');
+    expect(opsColStyle(container)).toContain('width: 172px');
 
-    // 编辑 + 删除（可编辑时无查看）→ 112px
+    // 编辑 + 删除（可编辑时无查看）→ 120px
     rerender(<TableContent fields={FIELDS} data={DATA} canView={false} canEdit canDelete selectable={false} />);
-    expect(opsColStyle(container)).toContain('width: 112px');
+    expect(opsColStyle(container)).toContain('width: 120px');
   });
 
   it('仅排序列带 ant-table-column-sort 类（排序箭头受控显示）', () => {

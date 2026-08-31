@@ -34,6 +34,11 @@
   /* 表格冻结列背景（由 themes/applyTableCellCssVars 按明暗注入，此处为浅色兜底） */
   --cube-table-header-bg: #fafafa;
   --cube-table-row-hover-bg: #fafafa;
+  /* 表格斑马纹行底色（对齐 MVC ace-ui 奇数行浅蓝灰，兜底值） */
+  --cube-table-striped-bg: #fbfcfd;
+  /* 滚动条（对齐 MVC ace-ui 8px 圆角细滚动条） */
+  --cube-scrollbar-thumb: #c5ccd4;
+  --cube-scrollbar-thumb-hover: #aab3bd;
 }
 
 body[data-cube-mode='dark'] {
@@ -54,6 +59,8 @@ body[data-cube-mode='dark'] {
   --cube-text-desc: rgba(255, 255, 255, 0.75);
   --cube-text-muted: rgba(255, 255, 255, 0.45);
   --cube-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cube-scrollbar-thumb: #4a4f57;
+  --cube-scrollbar-thumb-hover: #5d636c;
 }
 
 /* ============================================================
@@ -472,7 +479,43 @@ select {
   display: inline-flex;
 }
 
-/* 冻结列（操作列）背景不透明：antd 固定列表头/行悬停叠用半透明 headerBg/rowHoverBg，
+/* ============================================================
+   表格观感（对齐 MVC ace-ui）：
+   - 表头浅蓝灰（--cube-table-header-bg）
+   - 斑马纹行（奇数行 --cube-table-striped-bg）
+   - 行悬停浅蓝白（--cube-table-row-hover-bg）
+   - 紧凑密度（单元格纵向 padding 收紧）
+   antd6 表格样式经 CSS-in-JS 注入，选择器带 .ant-table-wrapper 前缀，
+   此处同前缀 + !important 保证覆盖。
+   ============================================================ */
+
+/* 表头：浅蓝灰底 + 紧凑纵向 padding */
+.ant-table-wrapper .ant-table-thead > tr > th {
+  background: var(--cube-table-header-bg) !important;
+  padding-block: 10px !important;
+}
+
+/* 紧凑密度：单元格纵向 padding 收紧（对齐 MVC 4px/8px 的紧凑感，保留可读性） */
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  padding-block: 8px !important;
+}
+
+/* 斑马纹：奇数行浅蓝灰底。注意 hover 规则必须在其后声明（同特异性时后者生效），
+   保证悬停时整行统一高亮不被斑马纹残留 */
+.ant-table-wrapper .ant-table-tbody > tr:nth-child(odd) > td,
+.ant-table-wrapper .ant-table-tbody > tr:nth-child(odd) > .ant-table-cell-fix-right,
+.ant-table-wrapper .ant-table-tbody > tr:nth-child(odd) > .ant-table-cell-fix-left {
+  background: var(--cube-table-striped-bg) !important;
+}
+
+/* 行悬停：整行（含固定列）统一高亮，覆盖斑马纹 */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td,
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > .ant-table-cell-fix-right,
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > .ant-table-cell-fix-left {
+  background: var(--cube-table-row-hover-bg) !important;
+}
+
+/* 固定列（操作列）背景不透明：antd 固定列表头/行悬停叠用半透明 headerBg/rowHoverBg，
    横向滚动时其它列会透出，用主题注入的不透明色覆盖（--cube-table-* 见 themes） */
 .ant-table-thead .ant-table-cell-fix-right,
 .ant-table-thead .ant-table-cell-fix-left {
@@ -481,6 +524,43 @@ select {
 .ant-table-tbody tr:hover > .ant-table-cell-fix-right,
 .ant-table-tbody tr:hover > .ant-table-cell-fix-left {
   background: var(--cube-table-row-hover-bg) !important;
+}
+
+/* ============================================================
+   分页器（对齐 MVC ace-ui：圆角按钮 + 当前页主色填充）
+   ============================================================ */
+.ant-pagination .ant-pagination-item,
+.ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  border-radius: 6px;
+}
+.ant-pagination .ant-pagination-item-active {
+  background: var(--cube-primary);
+  border-color: var(--cube-primary);
+}
+.ant-pagination .ant-pagination-item-active a {
+  color: #fff;
+}
+.ant-pagination .ant-pagination-item-active:hover a {
+  color: #fff;
+}
+
+/* ============================================================
+   滚动条美化（对齐 MVC ace-ui 8px 圆角细滚动条，明暗两套）
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--cube-scrollbar-thumb);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cube-scrollbar-thumb-hover);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* ============================================================

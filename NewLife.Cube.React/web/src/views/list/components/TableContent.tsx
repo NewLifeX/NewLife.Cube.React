@@ -198,29 +198,29 @@ export default function TableContent({
   };
 
   if (canView || canEdit || canDelete) {
-    // 操作列宽度按可用操作数自适应：每按钮约 48px + 单元格 16px 内边距，
+    // 操作列宽度按可用操作数自适应：每胶囊按钮约 52px + 单元格 16px 内边距，
     // 仅「查看」时收窄避免大块留白，多操作时撑开容纳按钮
     const opsCount = (canView ? 1 : 0) + (canEdit ? 1 : 0) + (canDelete ? 1 : 0);
     columns.push({
       title: '操作',
       key: '__ops',
-      width: 16 + 48 * opsCount,
+      width: 16 + 52 * opsCount,
       fixed: 'right',
       render: (_, row) => (
         <span>
           {canView && (
-            <Button type="link" size="small" onClick={() => onView?.(row)}>
+            <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-view" onClick={() => onView?.(row)}>
               查看
             </Button>
           )}
           {canEdit && (
-            <Button type="link" size="small" onClick={() => onEdit?.(row)}>
+            <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-edit" onClick={() => onEdit?.(row)}>
               编辑
             </Button>
           )}
           {canDelete &&
             (isSoftDeleted(row) ? (
-              <Button type="link" size="small" onClick={() => onRestore?.(row)}>
+              <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-restore" onClick={() => onRestore?.(row)}>
                 恢复
               </Button>
             ) : (
@@ -230,7 +230,7 @@ export default function TableContent({
                 okButtonProps={{ danger: true }}
                 onConfirm={() => onDelete?.(row)}
               >
-                <Button type="link" size="small" danger>
+                <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-delete" danger>
                   删除
                 </Button>
               </Popconfirm>

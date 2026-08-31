@@ -156,6 +156,72 @@
   font-size: 13px;
 }
 
+/* ============================================================
+   操作列胶囊按钮（对齐 MVC ace-ui .op-btn-*）
+   语义色淡底 + 圆角胶囊 + hover 反色；用 !important 覆盖 antd link 按钮内联样式
+   ============================================================ */
+.cube-op-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  margin: 1px 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.15s ease;
+  /* antd 按钮由 CSS-in-JS 注入内联类样式，尺寸类关键属性用 !important 保证覆盖 */
+  height: 24px !important;
+  padding: 0 10px !important;
+  border-radius: 12px !important;
+}
+
+.cube-op-btn-op-view {
+  color: #5bc0de !important;
+  background: #f0fafc !important;
+  border-color: #d5eef4 !important;
+}
+.cube-op-btn-op-view:hover {
+  color: #fff !important;
+  background: #5bc0de !important;
+  border-color: #5bc0de !important;
+}
+
+.cube-op-btn-op-edit {
+  color: var(--cube-primary) !important;
+  background: var(--cube-primary-soft) !important;
+  border-color: rgba(22, 119, 255, 0.22) !important;
+}
+.cube-op-btn-op-edit:hover {
+  color: #fff !important;
+  background: var(--cube-primary) !important;
+  border-color: var(--cube-primary) !important;
+}
+
+.cube-op-btn-op-restore {
+  color: #449d44 !important;
+  background: #eef7ee !important;
+  border-color: #d4ebd4 !important;
+}
+.cube-op-btn-op-restore:hover {
+  color: #fff !important;
+  background: #449d44 !important;
+  border-color: #449d44 !important;
+}
+
+.cube-op-btn-op-delete {
+  color: #d9534f !important;
+  background: #fdf0ef !important;
+  border-color: #f3d6d5 !important;
+}
+.cube-op-btn-op-delete:hover {
+  color: #fff !important;
+  background: #d9534f !important;
+  border-color: #d9534f !important;
+}
+
 .cube-form-actions {
   display: flex;
   gap: 12px;
