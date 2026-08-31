@@ -56,6 +56,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
             allowClear
+            style={{ width: '100%' }}
           />
         );
       }
@@ -67,6 +68,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
             rows={3}
+            style={{ width: '100%' }}
           />
         );
       case 'inputNumber':
