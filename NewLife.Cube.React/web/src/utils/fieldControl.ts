@@ -344,11 +344,11 @@ export function serializeSubmitModel(
   const multiNames = new Set(
     fields
       .filter((f) => f.multiple || (f.itemType ?? '').toLowerCase() === 'multipleselect')
-      .map((f) => f.name),
+      .map((f) => f.name.toLowerCase()),
   );
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(model)) {
-    if (multiNames.has(k) && Array.isArray(v)) {
+    if (multiNames.has(k.toLowerCase()) && Array.isArray(v)) {
       out[k] = (v as unknown[]).map(String).join(',');
     } else {
       out[k] = v;

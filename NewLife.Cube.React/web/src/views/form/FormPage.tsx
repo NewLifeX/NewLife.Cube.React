@@ -12,7 +12,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FormFieldItem from './FormFieldItem';
 import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
-import { routeToApiPrefix } from '@/utils/url';
+import { routeToApiPrefix, getValueByKey, setValueByKey } from '@/utils/url';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { usePageStore } from '@/hooks/usePageStore';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
@@ -95,7 +95,7 @@ export default function FormPage({ title }: FormPageProps) {
       // 从路由 ?id= 显式合并，保证更新请求携带主键
       if (isEdit) {
         const pk = fields.find((f) => f.field.primaryKey)?.field.name;
-        if (pk && !(pk in model)) model[pk] = params.get('id') ?? '';
+        if (pk && getValueByKey(model, pk) === undefined) setValueByKey(model, pk, params.get('id') ?? '');
       }
       setSubmitting(true);
       if (isEdit) {

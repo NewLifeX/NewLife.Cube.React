@@ -38,22 +38,43 @@ export function routeToApiPrefix(path: string): string {
 }
 
 /**
- * 从数据对象中取值：先试 data[key]，再翻转首字母（PascalCase ↔ camelCase），
- * 全大写 key（如 ID）转全小写再试，容错后端 JSON 字段名大小写不匹配。
+ * 从数据对象中取值，大小写不敏感。
+ *
+ * 后端实体 JSON 为 camelCase（name/displayName），字段元数据为 PascalCase（Name/DisplayName），
+ * 且注入的扩展字段（IExtend.Items）保持原键大小写（如 AvatarImage），
+ * 故统一按小写比对，避免 GetPage / 数据接口字段名大小写不一致导致取不到值。
+ * 后端约定同一表不会出现仅大小写不同的字段，此匹配安全。
  */
 export function getValueByKey(data: Record<string, unknown>, key: string): unknown {
   if (key in data) return data[key];
-  const flipped = toPascalAndCamel(key);
-  if (flipped !== key && flipped in data) return data[flipped];
-  if (key === key.toUpperCase() && key !== key.toLowerCase()) {
-    const lowerKey = key.toLowerCase();
-    if (lowerKey in data) return data[lowerKey];
-  }
-  if (key === key.toLowerCase() && /[a-z]/.test(key)) {
-    const upperKey = key.toUpperCase();
-    if (upperKey in data) return data[upperKey];
+  const lowerKey = key.toLowerCase();
+  // 行数据为普通 JSON 对象，for...in 仅遍历自身可枚举键
+  for (const k in data) {
+    if (k.toLowerCase() === lowerKey) return data[k];
   }
   return undefined;
+}
+
+/**
+ * 按大小写不敏感键名写入数据对象。已存在同键（忽略大小写）则覆盖原键，否则新增。
+ *
+ * @param data 目标对象
+ * @param key 键名（可任意大小写）
+ * @param value 值
+ */
+export function setValueByKey(data: Record<string, unknown>, key: string, value: unknown): void {
+  if (key in data) {
+    data[key] = value;
+    return;
+  }
+  const lowerKey = key.toLowerCase();
+  for (const k in data) {
+    if (k.toLowerCase() === lowerKey) {
+      data[k] = value;
+      return;
+    }
+  }
+  data[key] = value;
 }
 
 /**
@@ -69,4 +90,4 @@ export function resolveUrl(url: string, row: Record<string, unknown>): string {
   });
 }
 
-export default { toPascalCase, toCamelCase, routeToApiPrefix, getValueByKey, resolveUrl };
+export default { toPascalCase, toCamelCase, routeToApiPrefix, getValueByKey, setValueByKey, resolveUrl };

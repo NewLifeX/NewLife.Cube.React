@@ -9,7 +9,7 @@ import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
 import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
-import { getValueByKey } from '@/utils/url';
+import { getValueByKey, setValueByKey } from '@/utils/url';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
 
@@ -79,9 +79,9 @@ export default function FormDialog({
       // 从行数据按主键字段名显式合并，保证更新请求携带主键
       if (mode === 'edit' && row) {
         const pk = fields.find((f) => f.field.primaryKey)?.field.name;
-        if (pk && !(pk in model)) {
+        if (pk && getValueByKey(model, pk) === undefined) {
           const id = getValueByKey(row, pk);
-          if (id !== undefined) model[pk] = id;
+          if (id !== undefined) setValueByKey(model, pk, id);
         }
       }
       await onSubmit?.(model);

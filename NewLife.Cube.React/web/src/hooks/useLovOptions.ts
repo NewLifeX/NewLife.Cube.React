@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { fetchLovMeta, fetchLovListData } from '@/api/lov';
 import { resolveLovType } from '@/types/lov';
+import { getValueByKey } from '@/utils/url';
 
 export interface LovOption {
   value: string;
@@ -62,8 +63,8 @@ export function useLovOptions(lovCode?: string, dataSource?: Record<string, stri
           if (!cancelled) {
             setOptions(
               res.data.map((row) => ({
-                value: String(row[vf] ?? ''),
-                label: String(row[lf] ?? ''),
+                value: String(getValueByKey(row, vf) ?? ''),
+                label: String(getValueByKey(row, lf) ?? ''),
               })),
             );
           }

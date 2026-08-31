@@ -131,6 +131,12 @@ describe('serializeSubmitModel 提交序列化', () => {
     const out = serializeSubmitModel({ Tags: 'a', Num: 3 }, fields);
     expect(out).toEqual({ Tags: 'a', Num: 3 });
   });
+
+  it('表单键与字段名大小写不一致时仍合并多选（大小写不敏感）', () => {
+    const fields = [{ name: 'RoleIds', multiple: true, typeName: 'String' }] as FieldMeta[];
+    const out = serializeSubmitModel({ roleIds: ['1', '2'] }, fields);
+    expect(out).toEqual({ roleIds: '1,2' });
+  });
 });
 
 describe('mapDataToFormValues 编辑回填映射', () => {

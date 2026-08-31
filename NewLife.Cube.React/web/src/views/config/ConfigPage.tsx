@@ -18,6 +18,7 @@ import type { DataField } from '@newlifex/api-core';
 import FieldControl from '@/components/field/FieldControl';
 import { groupByCategory, isFullWidthControl, resolveControl, serializeSubmitModel } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
+import { getValueByKey } from '@/utils/url';
 import { api } from '@/api';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
 
@@ -67,11 +68,13 @@ export default function ConfigPage({ type }: ConfigPageProps) {
           .filter((f) => !f.primaryKey && !f.readOnly);
         setFields(metas);
 
-        // 回填当前值（布尔串转布尔）
+        // 回填当前值（布尔串转布尔；配置对象键与字段名大小写可能不一致，按字段名大小写不敏感取值）
         const values = (objRes?.data?.data ?? objRes?.data ?? {}) as Record<string, unknown>;
-        const normalized = Object.fromEntries(
-          Object.entries(values).map(([k, v]) => [k, normalizeValue(v)]),
-        );
+        const normalized: Record<string, unknown> = {};
+        for (const f of metas) {
+          const v = getValueByKey(values, f.name);
+          if (v !== undefined) normalized[f.name] = normalizeValue(v);
+        }
         form.setFieldsValue(normalized);
       })
       .finally(() => {

@@ -13,6 +13,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fetchLovMeta, fetchLovListData } from '@/api/lov';
 import { resolveLovType } from '@/types/lov';
+import { getValueByKey } from '@/utils/url';
 import type { LovListMeta, LovSearchField } from '@/types/lov';
 
 export interface LovSelectTableProps {
@@ -164,7 +165,7 @@ export default function LovSelectTable({
   // 单选行点击即选并关闭
   const handleRowClick = (row: Record<string, unknown>) => {
     if (multiple) return;
-    const key = String(row[vf] ?? '');
+    const key = String(getValueByKey(row, vf) ?? '');
     if (key) {
       onChange?.(key);
       setOpen(false);
@@ -199,7 +200,7 @@ export default function LovSelectTable({
                   height: 14,
                   borderRadius: '50%',
                   border: '1px solid #d9d9d9',
-                  background: selectedKeys.includes(String(row[vf])) ? '#1677ff' : '#fff',
+                  background: selectedKeys.includes(String(getValueByKey(row, vf) ?? '')) ? '#1677ff' : '#fff',
                 }}
               />
             }
@@ -283,7 +284,7 @@ export default function LovSelectTable({
         )}
         {/* 数据表格 */}
         <Table
-          rowKey={(row) => String(row[vf] ?? '')}
+          rowKey={(row) => String(getValueByKey(row, vf) ?? '')}
           size="small"
           loading={loading}
           columns={columns}

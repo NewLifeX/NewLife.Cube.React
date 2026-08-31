@@ -193,7 +193,7 @@ export default function TableContent({
   // 操作列：查看（只读/无编辑权限时）+ 编辑 + 删除（软删除行显示「恢复」）
   const isSoftDeleted = (row: Record<string, unknown>) => {
     if (!softDeleteField) return false;
-    const v = row[softDeleteField];
+    const v = getValueByKey(row, softDeleteField);
     return v === true || v === 'true' || v === 1;
   };
 
