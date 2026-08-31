@@ -2,13 +2,14 @@
  * 列表表单弹窗（命令式 add/edit Modal）
  *
  * 依据 FieldMapping 渲染 FieldControl，提交时 serializeSubmitModel 序列化。
- * 编辑模式自动加载详情（布尔串转布尔）。
+ * 编辑模式自动回填行数据（mapDataToFormValues 按字段名大小写不敏感匹配，布尔串转布尔、多选转数组）。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, hasCategory, serializeSubmitModel } from '@/utils/fieldControl';
+import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
+import { getValueByKey } from '@/utils/url';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
 
@@ -23,13 +24,6 @@ export interface FormDialogProps {
   submitting?: boolean;
   onSubmit?: (data: Record<string, unknown>) => Promise<void>;
   onCancel?: () => void;
-}
-
-/** 详情布尔串转布尔 */
-function normalizeDetail(data: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(data).map(([k, v]) => [k, v === 'true' ? true : v === 'false' ? false : v]),
-  );
 }
 
 export default function FormDialog({
@@ -70,17 +64,26 @@ export default function FormDialog({
     form.resetFields();
     setDetail({});
     if (mode === 'edit' && row) {
-      const values = normalizeDetail(row);
+      // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
+      const values = mapDataToFormValues(row, fields.map((f) => toFieldMeta(f.field)));
       form.setFieldsValue(values);
       setDetail(values);
     }
-  }, [open, mode, row, form]);
+  }, [open, mode, row, form, fields]);
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       const model = serializeSubmitModel(values, metas);
-      // 编辑模式：主键已通过 setFieldsValue(row) 保留在表单中，随 model 提交
+      // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键，
+      // 从行数据按主键字段名显式合并，保证更新请求携带主键
+      if (mode === 'edit' && row) {
+        const pk = fields.find((f) => f.field.primaryKey)?.field.name;
+        if (pk && !(pk in model)) {
+          const id = getValueByKey(row, pk);
+          if (id !== undefined) model[pk] = id;
+        }
+      }
       await onSubmit?.(model);
     } catch (err) {
       // 校验失败或提交失败
@@ -88,7 +91,11 @@ export default function FormDialog({
     }
   };
 
-  const recordId = mode === 'edit' && row ? (Object.values(row)[0] as number | string | undefined) : undefined;
+  // 上传关联的主记录主键（编辑模式从行数据按主键字段名取值，避免假设主键是行对象首字段）
+  const recordId =
+    mode === 'edit' && row
+      ? (getValueByKey(row, fields.find((f) => f.field.primaryKey)?.field.name ?? 'id') as number | string | undefined)
+      : undefined;
 
   /** 渲染一组字段栅格（分组内 / 平铺共用，label|控件|description 同排） */
   const renderFields = (list: FieldMeta[]) => (

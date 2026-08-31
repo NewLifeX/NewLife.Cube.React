@@ -65,6 +65,51 @@ describe('FormDialog 表单弹窗', () => {
     expect(screen.getByDisplayValue('张三')).toBeInTheDocument();
   });
 
+  it('编辑模式回填 camelCase 行数据（后端实体 JSON 大小写）', () => {
+    // 回归：后端 GetList/Detail 返回 camelCase（{id,name,displayName,...}），
+    // 而字段名为 PascalCase，直接 setFieldsValue 会全部落空（旧版编辑看不到数据）
+    const { unmount } = render(
+      <FormDialog
+        open
+        mode="edit"
+        fields={[
+          mapping('Name', { category: '基本信息' }),
+          mapping('DisplayName', { category: '基本信息' }),
+          mapping('Enable', { category: '基本信息', typeName: 'Boolean' }),
+        ]}
+        row={{ id: 2, name: 'Stone', displayName: '石头', enable: 'true' }}
+      />,
+    );
+    expect(screen.getByDisplayValue('Stone')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('石头')).toBeInTheDocument();
+    // 布尔串归一为开关开启
+    expect(screen.getByRole('switch')).toBeChecked();
+    // 显式卸载，清理 Modal 内部延迟计时器（避免全量跑时 unhandled error）
+    unmount();
+  });
+
+  it('编辑模式提交模型携带主键', async () => {
+    let submitted: Record<string, unknown> | null = null;
+    const { unmount } = render(
+      <FormDialog
+        open
+        mode="edit"
+        fields={[mapping('ID', { primaryKey: true }), mapping('Name')]}
+        row={{ id: 7, name: 'Stone' }}
+        onSubmit={async (data) => {
+          submitted = data;
+        }}
+      />,
+    );
+    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '新名' } });
+    fireEvent.click(screen.getByRole('button', { name: /保\s*存/ }));
+    await waitFor(() => {
+      expect(submitted).toEqual({ Name: '新名', ID: 7 });
+    });
+    // 显式卸载，清理 Modal 内部延迟计时器（避免全量跑时 unhandled error）
+    unmount();
+  });
+
   it('保存触发 onSubmit 并携带表单值', async () => {
     let submitted: Record<string, unknown> | null = null;
     render(

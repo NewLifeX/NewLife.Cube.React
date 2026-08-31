@@ -14,6 +14,7 @@
  */
 import type { WidgetType } from '@newlifex/field-mapping';
 import type { FieldMeta, ControlType, SearchControlType, ListControlType } from '@/types/field';
+import { getValueByKey } from '@/utils/url';
 
 /** 数值类型集合 */
 const NUMERIC_TYPES: ReadonlySet<string> = new Set([
@@ -352,6 +353,65 @@ export function serializeSubmitModel(
     } else {
       out[k] = v;
     }
+  }
+  return out;
+}
+
+/**
+ * 多选值归一为 string[]（对齐 Vue 皮肤 toMultiArray）
+ *
+ * 兼容三种来源：
+ * - 数组（表单编辑中 LovSelect 直接回写的 string[]）
+ * - 逗号分隔字符串（后端 String 列存储格式，如 "1,2"）
+ * - JSON 字符串（如 '["1","2"]'）
+ *
+ * @param val 原始值
+ * @returns 字符串数组
+ */
+function toMultiArray(val: unknown): string[] {
+  if (val == null) return [];
+  if (Array.isArray(val)) return val.filter((x) => x != null).map(String);
+  const s = String(val).trim();
+  if (!s) return [];
+  try {
+    const parsed = JSON.parse(s);
+    if (Array.isArray(parsed)) return parsed.filter((x: unknown) => x != null).map(String);
+  } catch {
+    /* 非 JSON，按逗号拆分 */
+  }
+  return s
+    .split(',')
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+}
+
+/**
+ * 编辑回填：将后端 camelCase 数据（列表行/详情）映射为表单字段值（PascalCase 字段名）
+ *
+ * 后端实体 JSON 序列化为 camelCase（如 { id, name, displayName, enable }），
+ * 而 GetPage 下发的 DataField.name 为 PascalCase 实体属性名（如 ID/Name/DisplayName）。
+ * 若直接用 form.setFieldsValue(data) 精确匹配，camelCase 键与 PascalCase 字段名对不上，
+ * 编辑表单将全部为空（旧版问题：三方登录用户数据多时编辑完全看不到数据）。
+ *
+ * 归一规则：
+ * - 按字段名大小写不敏感取值（复用 getValueByKey，兼容 ID↔id）；
+ * - 布尔串 'true'/'false' → boolean（Enable 等）；
+ * - 多选字段（multiple / itemType=multipleselect）逗号/JSON 字符串 → string[]（LovSelect 多选展示）。
+ *
+ * @param data 后端数据对象（列表行或详情）
+ * @param fields 表单字段元数据（建议传全量字段，含主键，保证主键也进入表单 store）
+ * @returns 以字段名为键的表单值
+ */
+export function mapDataToFormValues(data: Record<string, unknown>, fields: FieldMeta[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    const v = getValueByKey(data, f.name);
+    if (v === undefined) continue;
+    let val: unknown = v === 'true' ? true : v === 'false' ? false : v;
+    if (f.multiple || (f.itemType ?? '').toLowerCase() === 'multipleselect') {
+      val = toMultiArray(val);
+    }
+    out[f.name] = val;
   }
   return out;
 }

@@ -6,6 +6,7 @@ import {
   DEFAULT_CATEGORY,
   groupByCategory,
   hasCategory,
+  mapDataToFormValues,
   resolveControl,
   resolveDescription,
   resolveSearchControl,
@@ -129,6 +130,49 @@ describe('serializeSubmitModel 提交序列化', () => {
     const fields = [{ name: 'Tags', multiple: true, typeName: 'String' }] as FieldMeta[];
     const out = serializeSubmitModel({ Tags: 'a', Num: 3 }, fields);
     expect(out).toEqual({ Tags: 'a', Num: 3 });
+  });
+});
+
+describe('mapDataToFormValues 编辑回填映射', () => {
+  it('camelCase 数据 → PascalCase 字段名（大小写不敏感）', () => {
+    const fields = [
+      { name: 'ID', primaryKey: true, typeName: 'Int32' },
+      { name: 'Name', typeName: 'String' },
+      { name: 'DisplayName', typeName: 'String' },
+    ] as FieldMeta[];
+    const out = mapDataToFormValues({ id: 2, name: 'Stone', displayName: '石头' }, fields);
+    expect(out).toEqual({ ID: 2, Name: 'Stone', DisplayName: '石头' });
+  });
+
+  it('布尔串转布尔（Enable 等）', () => {
+    const fields = [{ name: 'Enable', typeName: 'Boolean' }] as FieldMeta[];
+    expect(mapDataToFormValues({ enable: 'true' }, fields)).toEqual({ Enable: true });
+    expect(mapDataToFormValues({ enable: 'false' }, fields)).toEqual({ Enable: false });
+    expect(mapDataToFormValues({ enable: true }, fields)).toEqual({ Enable: true });
+  });
+
+  it('多选逗号串 → string[]（RoleIds 等）', () => {
+    const fields = [{ name: 'RoleIds', multiple: true, typeName: 'String' }] as FieldMeta[];
+    expect(mapDataToFormValues({ roleIds: '1,2,3' }, fields)).toEqual({ RoleIds: ['1', '2', '3'] });
+  });
+
+  it('多选 JSON 字符串 / 数组 同样归一', () => {
+    const fields = [{ name: 'RoleIds', multiple: true, typeName: 'String' }] as FieldMeta[];
+    expect(mapDataToFormValues({ roleIds: '["1","2"]' }, fields)).toEqual({ RoleIds: ['1', '2'] });
+    expect(mapDataToFormValues({ roleIds: ['1', 2] }, fields)).toEqual({ RoleIds: ['1', '2'] });
+  });
+
+  it('itemType=multipleSelect 同样转数组', () => {
+    const fields = [{ name: 'Tags', itemType: 'multipleSelect', typeName: 'String' }] as FieldMeta[];
+    expect(mapDataToFormValues({ tags: 'a,b' }, fields)).toEqual({ Tags: ['a', 'b'] });
+  });
+
+  it('缺失字段跳过，不输出空 key', () => {
+    const fields = [
+      { name: 'Name', typeName: 'String' },
+      { name: 'Mail', typeName: 'String' },
+    ] as FieldMeta[];
+    expect(mapDataToFormValues({ name: 'Stone' }, fields)).toEqual({ Name: 'Stone' });
   });
 });
 

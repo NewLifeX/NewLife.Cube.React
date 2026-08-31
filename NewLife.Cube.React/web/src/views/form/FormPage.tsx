@@ -11,8 +11,8 @@ import { App, Button, Card, Form, Row, Space, Spin, Tabs } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, hasCategory, serializeSubmitModel } from '@/utils/fieldControl';
-import { routeToApiPrefix, getValueByKey } from '@/utils/url';
+import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
+import { routeToApiPrefix } from '@/utils/url';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { usePageStore } from '@/hooks/usePageStore';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
@@ -70,11 +70,8 @@ export default function FormPage({ title }: FormPageProps) {
           try {
             const detail = await store.getState().getDetail<Record<string, unknown>>(id);
             if (!cancelled) {
-              // 布尔串转布尔
-              const normalized = Object.fromEntries(
-                Object.entries(detail).map(([k, v]) => [k, v === 'true' ? true : v === 'false' ? false : v]),
-              );
-              form.setFieldsValue(normalized);
+              // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
+              form.setFieldsValue(mapDataToFormValues(detail, fields.map((f) => toFieldMeta(f.field))));
             }
           } catch {
             message.error('加载详情失败');
@@ -94,6 +91,12 @@ export default function FormPage({ title }: FormPageProps) {
     try {
       const values = await form.validateFields();
       const model = serializeSubmitModel(values, metas);
+      // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键，
+      // 从路由 ?id= 显式合并，保证更新请求携带主键
+      if (isEdit) {
+        const pk = fields.find((f) => f.field.primaryKey)?.field.name;
+        if (pk && !(pk in model)) model[pk] = params.get('id') ?? '';
+      }
       setSubmitting(true);
       if (isEdit) {
         await store.getState().update(model);
