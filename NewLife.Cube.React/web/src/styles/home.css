@@ -82,17 +82,20 @@
   background: rgba(255, 255, 255, 0.16);
 }
 
+/* KPI 指标卡（对齐 MVC widget-kpi：横向图标+信息，拖拽十字与三点菜单绝对定位右上角，不占布局） */
 .cube-home-kpi-card {
   grid-column: span 2;
-  min-height: 146px;
-  border-radius: 12px;
+  position: relative;
+  min-height: 99px;
+  border-radius: 10px;
   background: var(--cube-surface-bg);
   border: 1px solid var(--cube-border-soft);
   box-shadow: var(--cube-shadow-soft);
-  padding: 20px;
+  padding: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -102,54 +105,57 @@
   box-shadow: 0 20px 42px rgba(15, 23, 42, 0.08);
 }
 
-.cube-home-kpi-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+/* 拖拽高亮目标卡 */
+.cube-home-kpi-card.cube-home-drag-over {
+  border-color: var(--cube-primary);
+  box-shadow: 0 0 0 2px var(--cube-primary-soft);
 }
 
-.cube-home-kpi-head-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-/* KPI 小卡操作区：拖动手柄 + 隐藏菜单（对齐 MVC 工作台 KPI 小卡） */
+/* KPI 卡操作区：拖拽十字 + 隐藏菜单，绝对定位右上角（对齐 MVC widget-menu/widget-drag） */
 .cube-home-kpi-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
 
 .cube-kpi-drag-handle {
   cursor: grab;
   color: var(--cube-text-muted);
-  font-size: 14px;
-  padding: 4px 6px;
+  font-size: 13px;
+  padding: 4px;
   border-radius: 6px;
   line-height: 1;
+  display: inline-flex;
 }
 
 .cube-kpi-drag-handle:hover {
   color: var(--cube-text);
-  background: var(--cube-bg-hover, rgba(148, 163, 184, 0.12));
+  background: var(--cube-surface-muted);
+}
+
+.cube-kpi-drag-handle:active {
+  cursor: grabbing;
 }
 
 .cube-home-kpi-actions .ant-btn {
   color: var(--cube-text-muted);
+  height: 22px;
+  min-width: 22px;
 }
 
 .cube-home-kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   color: #fff;
+  flex: none;
 }
 
 .cube-home-kpi-icon.blue { background: linear-gradient(135deg, #1677ff, #145bdb); }
@@ -160,22 +166,34 @@
 .cube-home-kpi-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .cube-home-kpi-icon.grey { background: linear-gradient(135deg, #64748b, #475569); }
 
-.cube-home-kpi-label {
-  color: var(--cube-text-secondary);
-  font-size: 13px;
+/* KPI 信息区：数值 / 标签 / 趋势（对齐 MVC widget-kpi-value/label/trend 字号） */
+.cube-home-kpi-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .cube-home-kpi-value {
   color: var(--cube-text);
-  font-size: clamp(24px, 2.6vw, 30px);
-  line-height: 1.1;
-  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.cube-home-kpi-label {
+  margin-top: 2px;
+  color: var(--cube-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .cube-home-kpi-trend {
+  margin-top: 2px;
   color: var(--cube-text-muted);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cube-home-grid {
@@ -257,6 +275,12 @@
 
 .cube-widget-drag-handle:active {
   cursor: grabbing;
+}
+
+/* 内容部件拖拽高亮目标卡 */
+.cube-home-widget.cube-home-drag-over .cube-home-card {
+  border-color: var(--cube-primary);
+  box-shadow: 0 0 0 2px var(--cube-primary-soft);
 }
 
 .cube-home-quick-grid {

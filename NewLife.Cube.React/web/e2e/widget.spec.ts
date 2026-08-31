@@ -1,7 +1,8 @@
 /**
- * 工作台卡片三能力 E2E（WIDGET-1：拖动排序 / 保存顺序 / 隐藏）
+ * 工作台卡片三能力 E2E（WIDGET-1：拖动排序 / 即时保存 / 隐藏）
  *
- * 覆盖：内容卡隐藏/恢复、KPI 指标卡隐藏/恢复、保存布局并刷新保持，布局按用户持久化到服务端。
+ * 覆盖：内容卡隐藏/恢复、KPI 指标卡隐藏/恢复、指针式拖拽排序并刷新保持。
+ * 隐藏/排序操作即时保存服务端（对齐 MVC HideWidget/SaveOrder），无需手动保存按钮。
  * 以首页 / 为例。
  *
  * ⚠️ 并发约束：本文件与 home.spec.ts 共享同一登录用户的工作台布局状态（Parameter 按用户持久化），
@@ -29,17 +30,25 @@ test.describe('工作台卡片（卡片三能力）', () => {
     await expect(page.locator('.cube-home-grid .cube-home-widget').first()).toBeVisible({ timeout: 10000 });
   }
 
+  /** 重置布局并确认（清理测试残留） */
+  async function resetLayout(page: import('@playwright/test').Page) {
+    await page.getByRole('button', { name: /重置布局/ }).click();
+    await expect(page.locator('.ant-message').getByText('布局已重置')).toBeVisible({ timeout: 8000 });
+  }
+
   test('隐藏内容卡片后消失，恢复后重现', async ({ page }) => {
     await page.goto('/');
     await waitHome(page);
 
-    // 隐藏「快捷入口」卡片
+    // 隐藏「快捷入口」卡片（即时保存服务端）
     await hideWidget(page, '快捷入口');
     await expect(page.locator('.cube-home-widget', { hasText: '快捷入口' })).toHaveCount(0);
 
-    // 恢复卡片
+    // 恢复卡片（即时保存回显）
     await restoreWidget(page, '快捷入口');
     await expect(page.locator('.cube-home-widget', { hasText: '快捷入口' }).first()).toBeVisible({ timeout: 8000 });
+
+    await resetLayout(page);
   });
 
   test('KPI 指标卡可隐藏与恢复', async ({ page }) => {
@@ -57,24 +66,65 @@ test.describe('工作台卡片（卡片三能力）', () => {
     await page.getByRole('button', { name: /恢复卡片/ }).click();
     await page.locator('.ant-dropdown:visible').getByText(label, { exact: true }).click();
     await expect(page.locator('.cube-home-grid > .cube-home-kpi-card', { hasText: label }).first()).toBeVisible({ timeout: 8000 });
+
+    await resetLayout(page);
   });
 
-  test('保存布局后刷新保持', async ({ page }) => {
+  test('隐藏卡片后刷新保持（自动保存服务端）', async ({ page }) => {
     await page.goto('/');
     await waitHome(page);
 
-    // 隐藏「快捷入口」并保存
+    // 隐藏「快捷入口」→ 即时保存，无需手动保存按钮
     await hideWidget(page, '快捷入口');
-    await page.getByRole('button', { name: /保存布局/ }).click();
-    await expect(page.locator('.ant-message').getByText('布局已保存')).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('.cube-home-widget', { hasText: '快捷入口' })).toHaveCount(0);
 
     // 刷新后仍保持隐藏
     await page.reload();
     await waitHome(page);
     await expect(page.locator('.cube-home-widget', { hasText: '快捷入口' })).toHaveCount(0);
 
-    // 清理：重置布局，避免影响其它用例
-    await page.getByRole('button', { name: /重置布局/ }).click();
-    await expect(page.locator('.ant-message').getByText('布局已重置')).toBeVisible({ timeout: 8000 });
+    await resetLayout(page);
+  });
+
+  test('KPI 卡指针式拖拽排序并刷新保持（自动保存）', async ({ page }) => {
+    await page.goto('/');
+    const kpiCards = page.locator('.cube-home-grid > .cube-home-kpi-card');
+    await expect(kpiCards.first()).toBeVisible({ timeout: 10000 });
+
+    const before = await kpiCards.evaluateAll((els) =>
+      els.map((c) => c.querySelector('.cube-home-kpi-label')?.textContent?.trim()),
+    );
+    if (before.length < 3) return; // 卡不足跳过
+
+    // 指针式拖拽：第一个 KPI 卡拖到第三个
+    const handle = kpiCards.first().locator('.cube-kpi-drag-handle');
+    const target = kpiCards.nth(2);
+    const hb = await handle.boundingBox();
+    const tb = await target.boundingBox();
+    if (!hb || !tb) return; // 元素不可见跳过
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(50);
+    await page.mouse.move(tb.x + tb.width / 2, tb.y + tb.height / 2, { steps: 10 });
+    await page.mouse.up();
+
+    // 组内顺序变化
+    await expect
+      .poll(async () =>
+        page
+          .locator('.cube-home-grid > .cube-home-kpi-card')
+          .evaluateAll((els) => els.map((c) => c.querySelector('.cube-home-kpi-label')?.textContent?.trim())),
+      )
+      .not.toEqual(before);
+
+    // 刷新后仍保持新顺序（即时保存服务端）
+    await page.reload();
+    await expect(page.locator('.cube-home-grid > .cube-home-kpi-card').first()).toBeVisible({ timeout: 10000 });
+    const after = await page
+      .locator('.cube-home-grid > .cube-home-kpi-card')
+      .evaluateAll((els) => els.map((c) => c.querySelector('.cube-home-kpi-label')?.textContent?.trim()));
+    expect(after).not.toEqual(before);
+
+    await resetLayout(page);
   });
 });

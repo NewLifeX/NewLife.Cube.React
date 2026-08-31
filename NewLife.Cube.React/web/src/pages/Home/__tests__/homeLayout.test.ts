@@ -6,7 +6,7 @@
  * 排序（隐藏剔除、未排序项保持构建序）、已隐藏项提取（恢复面板）。
  */
 import { describe, expect, it } from 'vitest';
-import { buildHomeItems, filterHiddenItems, layoutKey, sortHomeItems } from '../index';
+import { buildHomeItems, filterHiddenItems, layoutKey, normalizeLayout, sortHomeItems } from '../index';
 import type { DashboardKpi, DashboardWidget } from '@/hooks/useDashboard';
 
 /** 布局项 */
@@ -35,6 +35,28 @@ describe('工作台布局 key', () => {
     expect(layoutKey('QuickLink')).toBe('quickLink');
     expect(layoutKey(undefined)).toBe('');
     expect(layoutKey('')).toBe('');
+  });
+
+  it('normalizeLayout：PascalCase/混合大小写 key 统一转 camelCase', () => {
+    const raw: Record<string, LayoutItem> = {
+      UserCount: { sort: 0, hide: false },
+      TodayLogin: { sort: 2 },
+      myLogins: { sort: 1, hide: true },
+      Monitor: { sort: 6 },
+    };
+    const rs = normalizeLayout(raw);
+    expect(rs).toEqual({
+      userCount: { sort: 0, hide: false },
+      todayLogin: { sort: 2 },
+      myLogins: { sort: 1, hide: true },
+      monitor: { sort: 6 },
+    });
+    // 已是 camelCase 的键保持不变
+    expect(rs.myLogins).toEqual({ sort: 1, hide: true });
+  });
+
+  it('normalizeLayout：空对象返回空', () => {
+    expect(normalizeLayout({})).toEqual({});
   });
 });
 
