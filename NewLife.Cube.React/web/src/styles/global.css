@@ -22,6 +22,8 @@
   --cube-border-strong: rgba(5, 5, 5, 0.15);
   --cube-text: rgba(0, 0, 0, 0.88);
   --cube-text-secondary: rgba(0, 0, 0, 0.65);
+  /* 配置页描述文字（对齐 MVC _Form_Item 的 help-block 深灰，比 secondary 更清晰） */
+  --cube-text-desc: rgba(0, 0, 0, 0.75);
   --cube-text-muted: rgba(0, 0, 0, 0.45);
   --cube-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px rgba(0, 0, 0, 0.03);
   --cube-success: #52c41a;
@@ -49,6 +51,7 @@ body[data-cube-mode='dark'] {
   --cube-border-strong: rgba(253, 253, 253, 0.18);
   --cube-text: rgba(255, 255, 255, 0.85);
   --cube-text-secondary: rgba(255, 255, 255, 0.65);
+  --cube-text-desc: rgba(255, 255, 255, 0.75);
   --cube-text-muted: rgba(255, 255, 255, 0.45);
   --cube-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
@@ -407,8 +410,17 @@ select {
   min-width: 0;
 }
 
+/* 表单项：flex-basis 由 ConfigPage 内联控制（非整行控件 580px = 标签 160 + 控件 420，
+   整行控件 1 1 auto 占满中间），此处兜底可收缩 */
 .cube-config-row .ant-form-item {
   margin-bottom: 0;
+  min-width: 0;
+}
+
+/* 标签与控件强制同行：antd .ant-form-item-row 默认 flex-wrap: wrap，
+   当表单项宽度被压缩时控件会换行到标签下方，破坏「标签 | 控件 | 描述」单行布局 */
+.cube-config-row .ant-form-item-row {
+  flex-wrap: nowrap;
 }
 
 .cube-config-row .ant-form-item-label {
@@ -417,11 +429,16 @@ select {
   text-overflow: ellipsis;
 }
 
+/* 控件列允许收缩，避免内容撑破容器导致换行 */
+.cube-config-row .ant-form-item-control {
+  min-width: 0;
+}
+
 .cube-config-desc {
   flex: 1 1 auto;
   min-width: 200px;
-  color: var(--cube-text-secondary);
-  font-size: 12px;
+  color: var(--cube-text-desc);
+  font-size: 13px;
   line-height: 32px;
   padding-top: 4px;
   word-break: break-word;

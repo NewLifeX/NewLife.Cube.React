@@ -138,10 +138,12 @@ export default function ConfigPage({ type }: ConfigPageProps) {
                         <Form.Item
                           name={meta.name}
                           label={meta.displayName || meta.name}
-                          labelCol={{ flex: '0 0 160px' }}
-                          wrapperCol={{ flex: full ? '1 1 auto' : '0 1 420px' }}
+                          labelCol={{ flex: '0 0 200px' }}
+                          wrapperCol={{ flex: full ? '1 1 auto' : '0 1 340px' }}
                           rules={meta.required ? [{ required: true, message: `请输入${meta.displayName || meta.name}` }] : []}
-                          style={{ marginBottom: 0, minWidth: 0 }}
+                          // 非整行控件固定基础宽度（标签 200 + 控件 340，对齐 MVC _Form_Item 栅格比例），
+                          // 保证「标签 | 控件 | 描述」同行；整行控件占满中间，由描述列吸收剩余空间
+                          style={{ flex: full ? '1 1 auto' : '0 1 548px', minWidth: 0, marginBottom: 0 }}
                         >
                           <FieldControl field={meta} apiPrefix={type} />
                         </Form.Item>
