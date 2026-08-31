@@ -24,6 +24,7 @@
     "@newlifex/field-mapping": "file:../../../NewLife.Cube/packages/field-mapping",
     "@newlifex/page-logic": "file:../../../NewLife.Cube/packages/page-logic",
     "@newlifex/page-utils": "file:../../../NewLife.Cube/packages/page-utils",
+    "@wangeditor/editor": "^5.1.23",
     "antd": "^6.6.2",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",

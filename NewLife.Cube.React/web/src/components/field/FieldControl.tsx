@@ -84,6 +84,15 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
         );
       case 'switch':
         return <Switch {...commonProps} checked={toBool(value)} onChange={(v) => onChange?.(v)} />;
+      case 'date':
+        return (
+          <DatePicker
+            {...commonProps}
+            value={value ? dayjs(value as string) : null}
+            onChange={(d) => onChange?.(d ? d.format('YYYY-MM-DD') : null)}
+            style={{ width: '100%' }}
+          />
+        );
       case 'datePicker':
         return (
           <DatePicker

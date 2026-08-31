@@ -13,6 +13,7 @@ export type ControlType =
   | 'inputNumber' // 数值输入
   | 'switch' // 布尔开关
   | 'datePicker' // 日期时间选择
+  | 'date' // 日期选择（纯日期，无时间）
   | 'timePicker' // 时间选择（HH:mm:ss）
   | 'lov' // 值集单选（枚举 / 单选）
   | 'lovMulti' // 值集多选

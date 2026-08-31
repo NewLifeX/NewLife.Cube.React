@@ -2,12 +2,13 @@
  * 富文本编辑器（markdown / html）
  *
  * markdown 用文本域 + marked 渲染预览（复用 AI 助手同款 marked + DOMPurify，零新增依赖）；
- * html 用文本域。完整 WYSIWYG 编辑器（@wangeditor/react 等）在 CMP-3 阶段按选型替换，本组件保持接口不变。
+ * html 用 wangEditor（@wangeditor/editor 核心包 + WangEditor React 封装）渲染 WYSIWYG 编辑器，对齐 MVC _Form_Html。
  */
 import { useState } from 'react';
 import { Input, Segmented } from 'antd';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import WangEditor from './WangEditor';
 
 export interface RichEditorProps {
   value?: string;
@@ -59,13 +60,5 @@ export default function RichEditor({ value, onChange, markdown, placeholder, dis
     );
   }
 
-  return (
-    <Input.TextArea
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      rows={rows}
-    />
-  );
+  return <WangEditor value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} />;
 }

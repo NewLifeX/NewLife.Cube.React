@@ -6,6 +6,7 @@ import {
   DEFAULT_CATEGORY,
   groupByCategory,
   hasCategory,
+  isDateOnlyField,
   mapDataToFormValues,
   resolveControl,
   resolveDescription,
@@ -96,7 +97,7 @@ describe('widgetToControl @newlifex widget → 皮肤控件', () => {
     expect(widgetToControl('textarea')).toBe('textarea');
     expect(widgetToControl('number')).toBe('inputNumber');
     expect(widgetToControl('switch')).toBe('switch');
-    expect(widgetToControl('date')).toBe('datePicker');
+    expect(widgetToControl('date')).toBe('date');
     expect(widgetToControl('datetime')).toBe('datePicker');
     expect(widgetToControl('lov')).toBe('lov');
     expect(widgetToControl('lovMulti')).toBe('lovMulti');
@@ -257,5 +258,39 @@ describe('groupByCategory 按分类分组', () => {
     const g = groupByCategory([f({ name: 'A', category: ' 基本信息 ' }), f({ name: 'B', category: '基本信息' })]);
     expect(g).toHaveLength(1);
     expect(g[0].category).toBe('基本信息');
+  });
+});
+
+describe('对齐 MVC：枚举类型名 / 纯日期 / dataSource 多选', () => {
+  it('真实枚举类型名（SexKinds）→ lov，选项由后端 dataSource 下发', () => {
+    expect(resolveControl(f({ name: 'Sex', typeName: 'SexKinds', dataSource: { '0': '未知', '1': '男', '2': '女' } }))).toBe('lov');
+    // 后端未下发 dataSource 时仍按枚举渲染下拉（空选项兜底）
+    expect(resolveControl(f({ name: 'Sex', typeName: 'SexKinds' }))).toBe('lov');
+    expect(resolveListControl(f({ typeName: 'SexKinds', dataSource: { '1': '男' } }))).toBe('lov');
+  });
+
+  it('纯日期：itemType=date 或字段名以 Date/day 结尾 → date，其余 datePicker', () => {
+    expect(resolveControl(f({ name: 'Birthday', typeName: 'DateTime' }))).toBe('date');
+    expect(resolveControl(f({ name: 'LastLoginDay', typeName: 'DateTime' }))).toBe('date');
+    expect(resolveControl(f({ name: 'T', typeName: 'DateTime', itemType: 'date' }))).toBe('date');
+    expect(resolveControl(f({ name: 'CreateTime', typeName: 'DateTime' }))).toBe('datePicker');
+    expect(isDateOnlyField(f({ name: 'Birthday', typeName: 'DateTime' }))).toBe(true);
+    expect(isDateOnlyField(f({ name: 'CreateTime', typeName: 'DateTime' }))).toBe(false);
+    expect(isDateOnlyField(f({ name: 'T', typeName: 'DateTime', itemType: 'date' }))).toBe(true);
+  });
+
+  it('dataSource + 字段名以 s 结尾 → lovMulti，其余单选 lov', () => {
+    expect(resolveControl(f({ name: 'RoleIds', typeName: 'String', dataSource: { '2': '管理员', '3': '普通用户' } }))).toBe('lovMulti');
+    expect(resolveControl(f({ name: 'Tags', typeName: 'String', dataSource: { '1': 'A' }, multiple: true }))).toBe('lovMulti');
+    expect(resolveControl(f({ name: 'Role', typeName: 'Int32', dataSource: { '2': '管理员' } }))).toBe('lov');
+  });
+
+  it('widgetToControl date → date', () => {
+    expect(widgetToControl('date')).toBe('date');
+  });
+
+  it('纯日期搜索 → dateRange，其余 datetimeRange', () => {
+    expect(resolveSearchControl(f({ name: 'Birthday', typeName: 'DateTime' }))).toBe('dateRange');
+    expect(resolveSearchControl(f({ name: 'CreateTime', typeName: 'DateTime' }))).toBe('datetimeRange');
   });
 });

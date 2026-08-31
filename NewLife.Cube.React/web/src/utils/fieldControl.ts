@@ -30,6 +30,30 @@ const NUMERIC_TYPES: ReadonlySet<string> = new Set([
   'SByte',
 ]);
 
+/** 已知基元类型集合。不在其中的 typeName 视为枚举（选项由后端 dataSource 下发，对齐 MVC _Form_Int） */
+const PRIMITIVE_TYPES: ReadonlySet<string> = new Set([
+  ...NUMERIC_TYPES,
+  'String',
+  'Boolean',
+  'DateTime',
+  'TimeSpan',
+  'Guid',
+  'Enum',
+]);
+
+/**
+ * 是否纯日期字段（itemType=date，或字段名以 Date/day 结尾且无 itemType，对齐 MVC _Form_DateTime）
+ *
+ * @param field 字段元数据
+ * @returns 是否纯日期（不带时间）
+ */
+export function isDateOnlyField(field: FieldMeta): boolean {
+  const itemType = normalizeItemType(field);
+  if (itemType === 'date') return true;
+  if (itemType) return false;
+  return /(date|day)$/i.test(field.name);
+}
+
 /** ItemType（小写） → 表单控件类型 的精确映射表（唯一真理表） */
 const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   file: 'upload',
@@ -48,6 +72,7 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   lovtablemulti: 'lovMulti',
   password: 'input',
   time: 'timePicker',
+  date: 'date',
 };
 
 /** 解析小写 ItemType */
@@ -75,19 +100,27 @@ export function resolveControl(field: FieldMeta): ControlType {
     return 'readonly';
   }
 
-  // 3. 枚举 / 单选 / 多选：lovCode 由后端下发，统一走 LOV
-  if (field.lovCode) {
-    return field.multiple || itemType === 'multipleselect' ? 'lovMulti' : 'lov';
+  // 3. 枚举 / 单选 / 多选：lovCode 或 dataSource 由后端下发，统一走 LOV
+  const hasOptions =
+    !!field.lovCode || (field.dataSource != null && Object.keys(field.dataSource).length > 0);
+  if (hasOptions) {
+    // 多选：显式 multiple / multipleselect，或 dataSource 字段名以 s 结尾（对齐 MVC _Form_Item 约定）
+    const multi =
+      field.multiple ||
+      itemType === 'multipleselect' ||
+      itemType === 'lovtablemulti' ||
+      (!!field.dataSource && /s$/i.test(field.name));
+    return multi ? 'lovMulti' : 'lov';
   }
 
   // 4. 已知 CLR 类型
   if (typeName === 'Boolean') return 'switch';
-  if (typeName === 'DateTime') return 'datePicker';
+  if (typeName === 'DateTime') return isDateOnlyField(field) ? 'date' : 'datePicker';
   if (typeName === 'TimeSpan') return 'timePicker';
   if (NUMERIC_TYPES.has(typeName)) return 'inputNumber';
 
-  // 枚举类型名（非标准基元，且无 lovCode 兜底）按 lov 渲染
-  if (typeName === 'Enum') return 'lov';
+  // 枚举类型名（非标准基元，如 SexKinds，选项由后端 dataSource 下发）按 lov 渲染
+  if (typeName === 'Enum' || (typeName && !PRIMITIVE_TYPES.has(typeName))) return 'lov';
 
   // 5. 字符串：大文本 → textarea
   if (typeName === 'String') {
@@ -115,7 +148,7 @@ export function widgetToControl(widget: WidgetType): ControlType {
     select: 'lov',
     checkbox: 'switch',
     switch: 'switch',
-    date: 'datePicker',
+    date: 'date',
     datetime: 'datePicker',
     time: 'timePicker',
     password: 'input',
@@ -166,7 +199,7 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
 
   // 已知 CLR 类型
   if (typeName === 'Boolean') return 'switch';
-  if (typeName === 'DateTime') return 'datetimeRange';
+  if (typeName === 'DateTime') return isDateOnlyField(field) ? 'dateRange' : 'datetimeRange';
   if (typeName === 'TimeSpan') return 'timeRange';
   if (NUMERIC_TYPES.has(typeName)) return 'numberRange';
 
@@ -215,8 +248,8 @@ export function resolveListControl(field: FieldMeta): ListControlType {
   if (typeName === 'TimeSpan') return 'time';
   if (NUMERIC_TYPES.has(typeName)) return 'number';
 
-  // 枚举 / LOV
-  if (field.lovCode || typeName === 'Enum') return 'lov';
+  // 枚举 / LOV（真实枚举类型名如 SexKinds 也按 LOV 渲染）
+  if (field.lovCode || typeName === 'Enum' || (typeName && !PRIMITIVE_TYPES.has(typeName))) return 'lov';
 
   // 默认文本
   return 'text';

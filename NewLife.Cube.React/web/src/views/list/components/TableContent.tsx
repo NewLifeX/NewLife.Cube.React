@@ -7,7 +7,7 @@
 import { Table, Tag, Tooltip, Button, Popconfirm } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { FieldMapping } from '@newlifex/field-mapping';
-import { resolveListControl } from '@/utils/fieldControl';
+import { resolveListControl, isDateOnlyField } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import { getValueByKey, resolveUrl } from '@/utils/url';
 import { resolveIcon } from '@/utils/icon';
@@ -75,8 +75,8 @@ function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string,
     case 'boolean':
       return <Tag color={raw === true || raw === 'true' || raw === 1 ? 'success' : 'default'}>{raw === true || raw === 'true' || raw === 1 ? '是' : '否'}</Tag>;
     case 'date': {
-      // 纯日期字段（ItemType=date）只显示日期，其余显示完整时间
-      const dateOnly = (meta.itemType || '').toLowerCase() === 'date';
+      // 纯日期字段（ItemType=date 或字段名以 Date/day 结尾）只显示日期，其余显示完整时间
+      const dateOnly = isDateOnlyField(meta);
       return <span>{formatDate(raw, dateOnly)}</span>;
     }
     case 'time':
