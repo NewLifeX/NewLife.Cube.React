@@ -77,6 +77,34 @@ describe('resolveSearchControl 搜索控件映射', () => {
   it('默认文本', () => {
     expect(resolveSearchControl(f({ typeName: 'String' }))).toBe('text');
   });
+
+  it('dataSource 数据字典 → 下拉（性别 SexKinds 单选）', () => {
+    expect(
+      resolveSearchControl(f({ name: 'Sex', typeName: 'SexKinds', dataSource: { '0': '未知', '1': '男', '2': '女' } })),
+    ).toBe('lov');
+  });
+
+  it('dataSource + multiple → 多选下拉（部门 DepartmentID）', () => {
+    expect(
+      resolveSearchControl(
+        f({ name: 'DepartmentID', typeName: 'Int32', dataSource: { '1': '研发部', '2': '运营部' }, multiple: true }),
+      ),
+    ).toBe('lovMulti');
+  });
+
+  it('lovCode + multiple → 多选下拉（角色 RoleID）', () => {
+    expect(resolveSearchControl(f({ name: 'RoleID', typeName: 'Int32', lovCode: 'Role', multiple: true }))).toBe(
+      'lovMulti',
+    );
+  });
+
+  it('枚举类型名（非基元）无 dataSource 兜底 → 下拉', () => {
+    expect(resolveSearchControl(f({ name: 'Kind', typeName: 'SomeEnum' }))).toBe('lov');
+  });
+
+  it('无选项的 Int32 仍是数字范围（部门未配置数据源时兜底）', () => {
+    expect(resolveSearchControl(f({ name: 'DepartmentID', typeName: 'Int32' }))).toBe('numberRange');
+  });
 });
 
 describe('resolveListControl 列表单元格映射', () => {

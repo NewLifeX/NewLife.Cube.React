@@ -192,9 +192,17 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
   // Guid / 主键：上游已过滤，这里兜底不进搜索
   if (typeName === 'Guid') return 'text';
 
-  // LOV 驱动
-  if (field.lovCode) {
-    return field.multiple || itemType === 'multipleselect' ? 'lovMulti' : 'lov';
+  // 枚举 / 单选 / 多选：lovCode 或 dataSource（数据字典）→ 下拉。
+  // 多选：显式 multiple / multipleselect，或 dataSource 字段名以 s 结尾（对齐 resolveControl 与 MVC _Form_Item 约定）
+  const hasOptions =
+    !!field.lovCode || (field.dataSource != null && Object.keys(field.dataSource).length > 0);
+  if (hasOptions) {
+    const multi =
+      field.multiple ||
+      itemType === 'multipleselect' ||
+      itemType === 'lovtablemulti' ||
+      (!!field.dataSource && /s$/i.test(field.name));
+    return multi ? 'lovMulti' : 'lov';
   }
 
   // 已知 CLR 类型
@@ -202,6 +210,9 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
   if (typeName === 'DateTime') return isDateOnlyField(field) ? 'dateRange' : 'datetimeRange';
   if (typeName === 'TimeSpan') return 'timeRange';
   if (NUMERIC_TYPES.has(typeName)) return 'numberRange';
+
+  // 枚举类型名（非标准基元，如 SexKinds，选项由后端 dataSource 下发）→ 下拉
+  if (typeName === 'Enum' || (typeName && !PRIMITIVE_TYPES.has(typeName))) return 'lov';
 
   // 默认模糊文本
   return 'text';
