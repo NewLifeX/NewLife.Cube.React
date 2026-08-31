@@ -95,6 +95,10 @@ export default function ConfigPage({ type }: ConfigPageProps) {
       setSaving(true);
       await api.client.put(type, model);
       message.success('保存成功');
+      // React 皮肤设置：保存后刷新页面，让全局配置（表单风格/导航排开等）立即生效
+      if (type.toLowerCase().endsWith('/react')) {
+        setTimeout(() => window.location.reload(), 600);
+      }
     } catch (err) {
       if ((err as Error)?.message && !(err as Error)?.message.includes('validateFields')) {
         message.error((err as Error).message);
