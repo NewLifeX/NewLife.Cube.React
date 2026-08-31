@@ -436,7 +436,7 @@ select {
 
 .cube-config-desc {
   flex: 1 1 auto;
-  min-width: 200px;
+  min-width: 160px;
   color: var(--cube-text-desc);
   font-size: 13px;
   line-height: 32px;
