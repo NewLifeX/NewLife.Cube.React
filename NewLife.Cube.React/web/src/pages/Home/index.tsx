@@ -10,7 +10,6 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  AppstoreAddOutlined,
   AppstoreOutlined,
   BugOutlined,
   CalendarOutlined,
@@ -23,9 +22,10 @@ import {
   MoreOutlined,
   ReloadOutlined,
   TeamOutlined,
+  UndoOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { App, Button, Card, Dropdown, Empty, Space } from 'antd';
+import { App, Button, Card, Dropdown, Empty, Popover } from 'antd';
 import * as echarts from 'echarts';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
@@ -507,61 +507,69 @@ export default function HomePage() {
             aria-label="刷新工作台数据"
             onClick={() => void reloadWb()}
           />
+          {/* 已隐藏 N：仅当有隐藏卡片时显示，点击弹出恢复面板（对齐 MVC btn-widget-hidden + wb-hidden-pop） */}
+          {hiddenItems.length > 0 && (
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              arrow={false}
+              styles={{ content: { padding: 0, borderRadius: 10 } }}
+              content={
+                <div className="cube-hidden-pop">
+                  <div className="cube-hidden-pop-title">已隐藏卡片</div>
+                  <ul className="cube-hidden-pop-list">
+                    {hiddenWidgets.length > 0 && <li className="cube-hidden-pop-group">内容卡片</li>}
+                    {hiddenWidgets.map((it) => (
+                      <li key={it.key} className="cube-hidden-pop-item">
+                        <span className="cube-hidden-pop-name">
+                          {resolveIcon(it.widget?.icon)}
+                          {it.widget?.title ?? it.key}
+                        </span>
+                        <Button type="primary" size="small" onClick={() => handleUnhide(it.key)}>
+                          恢复
+                        </Button>
+                      </li>
+                    ))}
+                    {hiddenKpis.length > 0 && <li className="cube-hidden-pop-group">指标小卡</li>}
+                    {hiddenKpis.map((it) => (
+                      <li key={`kpi-${it.key}`} className="cube-hidden-pop-item">
+                        <span className="cube-hidden-pop-name">
+                          {KPI_ICONS[it.kpi?.name ?? ''] ?? null}
+                          {it.kpi?.label ?? it.key}
+                        </span>
+                        <Button type="primary" size="small" onClick={() => handleUnhide(it.key)}>
+                          恢复
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="cube-hidden-pop-foot">
+                    <a role="button" onClick={handleResetLayout}>
+                      <UndoOutlined /> 恢复默认布局
+                    </a>
+                  </div>
+                </div>
+              }
+            >
+              <Button type="text" icon={<EyeInvisibleOutlined />}>
+                已隐藏 {hiddenItems.length}
+              </Button>
+            </Popover>
+          )}
           <Button type="text" icon={<UserOutlined />} onClick={() => navigate('/profile')}>
             个人中心
           </Button>
         </div>
       </div>
 
-      {/* 卡片布局工具栏：拖动提示 + 恢复 / 重置（隐藏/排序已即时保存服务端，对齐 MVC） */}
+      {/* 卡片布局工具栏：拖动提示 + 重置布局（隐藏/排序已即时保存服务端，对齐 MVC） */}
       <div className="cube-home-widget-toolbar">
         <span className="cube-home-widget-hint">
           <DragOutlined /> 拖动卡片标题调整顺序，隐藏后可恢复，操作自动保存
         </span>
-        <Space wrap>
-          <Dropdown
-            menu={{
-              items: [
-                ...(hiddenWidgets.length
-                  ? [
-                      {
-                        type: 'group' as const,
-                        label: '内容卡片',
-                        children: hiddenWidgets.map((it) => ({
-                          key: it.key,
-                          label: it.widget?.title ?? it.key,
-                          icon: <EyeOutlined />,
-                          onClick: () => handleUnhide(it.key),
-                        })),
-                      },
-                    ]
-                  : []),
-                ...(hiddenKpis.length
-                  ? [
-                      {
-                        type: 'group' as const,
-                        label: '指标小卡',
-                        children: hiddenKpis.map((it) => ({
-                          key: `kpi-${it.key}`,
-                          label: it.kpi?.label ?? it.key,
-                          icon: <EyeOutlined />,
-                          onClick: () => handleUnhide(it.key),
-                        })),
-                      },
-                    ]
-                  : []),
-              ],
-            }}
-            disabled={!hiddenItems.length}
-          >
-            <Button size="small" icon={<AppstoreAddOutlined />} disabled={!hiddenItems.length}>
-              恢复卡片
-            </Button>
-          </Dropdown>
-          <Button size="small" onClick={handleResetLayout}>
-            重置布局
-          </Button>
-        </Space>
+        <Button size="small" onClick={handleResetLayout}>
+          重置布局
+        </Button>
       </div>
 
       {/* 12 列部件栅格：KPI 卡直接排布（span 2）+ 内容部件（span=cols），指针式拖动排序 / 隐藏 */}

@@ -19,10 +19,13 @@ test.describe('工作台卡片（卡片三能力）', () => {
     await page.locator('.ant-dropdown:visible').getByText('隐藏卡片').click();
   }
 
-  /** 恢复指定卡片：点击「恢复卡片」→ 选择卡片名 */
+  /** 恢复指定卡片：点横幅「已隐藏 N」→ 恢复面板 → 该卡「恢复」按钮（对齐 MVC btn-widget-hidden + wb-hidden-pop） */
   async function restoreWidget(page: import('@playwright/test').Page, title: string) {
-    await page.getByRole('button', { name: /恢复卡片/ }).click();
-    await page.locator('.ant-dropdown:visible').getByText(title, { exact: true }).click();
+    await page.getByRole('button', { name: /已隐藏 \d+/ }).click();
+    await page
+      .locator('.cube-hidden-pop-item', { hasText: title })
+      .getByRole('button', { name: /恢\s*复/ })
+      .click();
   }
 
   /** 等待工作台加载完成（内容部件出现） */
@@ -62,9 +65,8 @@ test.describe('工作台卡片（卡片三能力）', () => {
     await page.locator('.ant-dropdown:visible').getByText('隐藏', { exact: true }).click();
     await expect(page.locator('.cube-home-grid > .cube-home-kpi-card', { hasText: label })).toHaveCount(0);
 
-    // 恢复：指标小卡分组
-    await page.getByRole('button', { name: /恢复卡片/ }).click();
-    await page.locator('.ant-dropdown:visible').getByText(label, { exact: true }).click();
+    // 恢复：横幅「已隐藏 N」→ 指标小卡分组
+    await restoreWidget(page, label);
     await expect(page.locator('.cube-home-grid > .cube-home-kpi-card', { hasText: label }).first()).toBeVisible({ timeout: 8000 });
 
     await resetLayout(page);
