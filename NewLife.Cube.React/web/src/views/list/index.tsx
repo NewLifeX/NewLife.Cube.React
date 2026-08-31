@@ -19,6 +19,7 @@ import ConfigPage from '@/views/config/ConfigPage';
 import DbPage from '@/views/db/DbPage';
 import WidgetPage from '@/views/widget/WidgetPage';
 import AreaPage from '@/views/area/AreaPage';
+import ViewTracePage from '@/views/viewtrace/ViewTracePage';
 
 /** 页面种类：探测中 / 实体页 / 非实体页（配置或特殊页） */
 type PageKind = 'probe' | 'entity' | 'special';
@@ -53,6 +54,9 @@ export default function DefaultListPage() {
     }
     if (type.toLowerCase().endsWith('/cube/widget') || type.toLowerCase().endsWith('/widget')) {
       return <WidgetPage type={type} />;
+    }
+    if (type.toLowerCase().endsWith('/cube/viewtrace') || type.toLowerCase().endsWith('/viewtrace')) {
+      return <ViewTracePage type={type} />;
     }
     return <ConfigPage type={type} />;
   }

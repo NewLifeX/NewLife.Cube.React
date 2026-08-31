@@ -538,6 +538,15 @@ select {
   background: var(--cube-table-row-hover-bg) !important;
 }
 
+/* 视图解析诊断（ViewTracePage）：物理存在行浅绿、命中行橙底加粗（对齐 MVC Index.cshtml vt-phy/vt-hit） */
+.vt-phy > td {
+  background: #d9f7be !important;
+}
+.vt-hit > td {
+  background: #ffd591 !important;
+  font-weight: bold;
+}
+
 /* ============================================================
    分页器（对齐 MVC ace-ui：圆角按钮 + 当前页主色填充）
    ============================================================ */
