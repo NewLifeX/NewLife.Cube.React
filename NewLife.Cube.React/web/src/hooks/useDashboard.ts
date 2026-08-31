@@ -42,6 +42,47 @@ export interface DashboardProfile {
   registerTime?: string;
 }
 
+/** 登录与在线（LoginLog 部件数据） */
+export interface DashboardLoginLog {
+  logins?: {
+    createTime?: string;
+    userName?: string;
+    action?: string;
+    createIP?: string;
+  }[];
+  onlines?: {
+    name?: string;
+    createTime?: string;
+    oAuthProvider?: string;
+  }[];
+}
+
+/** 快捷入口部件数据（QuickLink） */
+export interface DashboardQuickLinkData {
+  links?: DashboardQuickLink[];
+}
+
+/**
+ * 内容部件（KPI 以外，由后端 WidgetManager 驱动，对齐 MVC WidgetAttribute）
+ * data 按 widgetType 解释：Content=业务数据 / Kv=键值字典 / Chart=null（前端独立轮询 MonitorData）
+ */
+export interface DashboardWidget {
+  /** 部件名（Monitor/SysInfo/LoginLog/QuickLink/Profile...） */
+  name: string;
+  /** 标题 */
+  title: string;
+  /** FontAwesome 图标名（fa-line-chart 等，resolveIcon 转换） */
+  icon?: string;
+  /** 栅格宽度 1-12 */
+  cols: number;
+  /** 分组/分类（系统/个人/通用/业务模块名） */
+  category?: string;
+  /** 部件类型（Kpi/Content/Html/Kv/Chart） */
+  widgetType: string;
+  /** 部件数据（Chart 为 null） */
+  data?: Record<string, unknown> | DashboardLoginLog | DashboardQuickLinkData | DashboardProfile | null;
+}
+
 /** 工作台聚合数据 */
 export interface DashboardData {
   user?: {
@@ -53,6 +94,10 @@ export interface DashboardData {
   kpis?: DashboardKpi[];
   /** 用户已隐藏的 KPI 指标（供恢复面板） */
   hiddenKpis?: DashboardKpi[];
+  /** 可见内容部件（非 KPI，含元数据与数据） */
+  widgets?: DashboardWidget[];
+  /** 用户已隐藏的内容部件（供恢复面板） */
+  hiddenWidgets?: DashboardWidget[];
   quickLinks?: DashboardQuickLink[];
   profile?: DashboardProfile;
   sysInfo?: Record<string, string>;

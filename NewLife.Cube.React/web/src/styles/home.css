@@ -3,125 +3,83 @@
   gap: 20px;
 }
 
-.cube-home-hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--cube-hero-bg);
-  border: 1px solid var(--cube-border-strong);
-  box-shadow: var(--cube-shadow-soft);
-  padding: 28px;
-}
-
-.cube-home-hero::after {
-  content: '';
-  position: absolute;
-  inset: auto -8% -40% auto;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  pointer-events: none;
-}
-
-.cube-home-hero-inner {
-  position: relative;
-  z-index: 1;
+/* 紧凑欢迎横幅（对齐 MVC wb-banner）：主色渐变底 + 白字，单行小头像 + 问候 + 操作按钮 */
+.cube-home-banner {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-radius: 12px;
+  /* 复用主题渐变变量（原大 hero 同款），明暗两套都好看 */
+  background: var(--cube-hero-bg);
+  box-shadow: 0 6px 20px rgba(22, 119, 255, 0.12), var(--cube-shadow-soft);
 }
 
-.cube-home-hero-main {
+.cube-home-banner-left {
   display: flex;
-  align-items: flex-start;
-  gap: 18px;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
-  flex: 1;
 }
 
-/* 欢迎文字区：允许 flex 收缩，保证副标题超长时省略号生效 */
-.cube-home-hero-copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.cube-home-hero-avatar {
-  width: 68px;
-  height: 68px;
-  border-radius: 22px;
+.cube-home-banner-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  overflow: hidden;
   flex: none;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.cube-home-hero-avatar:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+.cube-home-banner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.cube-home-hero-eyebrow {
-  display: inline-flex;
-  margin-bottom: 10px;
+.cube-home-banner-copy {
+  min-width: 0;
 }
 
-.cube-home-hero-title {
-  margin: 0;
+.cube-home-banner-greet {
   color: #fff;
-  font-size: clamp(26px, 3vw, 36px);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.cube-home-hero-title:hover {
-  opacity: 0.82;
-}
-
-.cube-home-hero-subtitle,
-.cube-home-hero-tip {
-  margin: 12px 0 0;
+.cube-home-banner-sub {
+  margin-top: 2px;
   color: rgba(255, 255, 255, 0.82);
-  line-height: 1.75;
-}
-
-/* 副标题强制单行：超长省略号，避免挤压换行 */
-.cube-home-hero-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.cube-home-hero-actions {
+.cube-home-banner-right {
   display: flex;
   align-items: center;
+  gap: 4px;
   flex: none;
 }
 
-/* 刷新图标按钮：渐变横幅上的低调白色图标 */
-.cube-home-hero-actions .ant-btn {
-  color: rgba(255, 255, 255, 0.85);
-  border-radius: 10px;
+.cube-home-banner-right .ant-btn {
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.cube-home-hero-actions .ant-btn:hover {
+.cube-home-banner-right .ant-btn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.16);
-}
-
-.cube-home-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
 }
 
 .cube-home-kpi-card {
@@ -362,22 +320,55 @@
   height: 320px;
 }
 
-.cube-home-menu-grid {
+/* 登录与在线部件：最近登录 + 当前在线双列 */
+.cube-home-login-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
-.cube-home-list-title {
+.cube-home-login-title {
   font-weight: 600;
   color: var(--cube-text);
+  margin-bottom: 10px;
 }
 
-.cube-home-list-url {
-  margin-top: 4px;
-  font-size: 12px;
+.cube-home-login-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cube-home-login-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cube-home-login-name {
+  color: var(--cube-text);
+  font-weight: 500;
+  flex: none;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cube-home-login-action {
+  color: var(--cube-text-secondary);
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cube-home-login-time {
   color: var(--cube-text-muted);
-  word-break: break-all;
+  margin-left: auto;
+  flex: none;
 }
 
 .cube-home-online-tag {
@@ -421,6 +412,11 @@
     grid-column: span 4;
   }
 
+  /* 内容部件窄屏全宽（覆盖内联 gridColumn） */
+  .cube-home-widget {
+    grid-column: span 12 !important;
+  }
+
   .cube-home-col-8,
   .cube-home-col-7,
   .cube-home-col-6,
@@ -431,24 +427,16 @@
 }
 
 @media (max-width: 768px) {
-  .cube-home-hero {
-    padding: 22px;
+  .cube-home-banner {
+    padding: 12px 16px;
   }
 
-  .cube-home-hero-inner {
+  .cube-home-banner-left {
     flex-direction: column;
+    align-items: flex-start;
   }
 
-  .cube-home-hero-main {
-    flex-direction: column;
-  }
-
-  .cube-home-hero-actions {
-    justify-content: flex-start;
-  }
-
-  /* 移动端纵向布局下允许副标题换行（不再省略） */
-  .cube-home-hero-subtitle {
+  .cube-home-banner-sub {
     white-space: normal;
   }
 
@@ -457,6 +445,10 @@
   }
 
   .cube-home-quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cube-home-login-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1,12 +1,17 @@
 /**
  * 首页 + 顶栏切换器 + 用户菜单 E2E（HOME-1 / CMP-6 / CMP-5）
  *
- * 覆盖：首页加载无错误、欢迎信息与常用菜单入口、语言/明暗切换、用户菜单退出登录。
+ * 覆盖：首页加载无错误、紧凑横幅欢迎信息、KPI 卡直排网格、内容部件（性能监控/系统信息/登录与在线/快捷入口）、
+ * 语言/明暗切换、用户菜单入口展示。
+ *
+ * ⚠️ 并发约束：本文件与 widget.spec.ts 共享同一登录用户的工作台布局状态，
+ * 需 --workers=1 串行运行（见 widget.spec.ts 文件头说明）。
+ * 退出登录用例独立在 logout.spec.ts（单会话策略会禁用共享 admin token）。
  */
 import { expect, test } from '@playwright/test';
 
 test.describe('首页（/）', () => {
-  test('首页加载无错误且展示欢迎信息与常用菜单', async ({ page }) => {
+  test('首页加载无错误且展示欢迎信息与工作台部件', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (m) => {
       if (m.type() === 'error') errors.push(m.text());
@@ -14,42 +19,41 @@ test.describe('首页（/）', () => {
     page.on('pageerror', (e) => errors.push(e.message));
 
     await page.goto('/');
-    // hero 副标题含"欢迎回到"（时间段问候 + 系统名，对齐 MVC Dashboard）
+    // 紧凑横幅副标题含"欢迎回到"（时间段问候 + 系统名，对齐 MVC wb-banner）
     await expect(page.getByText(/欢迎回到/).first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('常用菜单')).toBeVisible({ timeout: 10000 });
+    // 内容部件卡存在（性能监控/系统信息/登录与在线/快捷入口/个人信息）
+    await expect(page.locator('.cube-home-grid .cube-home-widget').first()).toBeVisible({ timeout: 10000 });
     expect(errors.filter((e) => !e.includes('favicon')), `控制台错误: ${errors.join('; ')}`).toEqual([]);
   });
 
-  test('首页常用菜单入口可点击进入实体页', async ({ page }) => {
+  test('KPI 指标卡直接排布在网格中（无外层 Card 容器）', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('常用菜单')).toBeVisible({ timeout: 10000 });
-    // 等待菜单数据加载
-    await page.waitForTimeout(1500);
-    // 常用菜单：原生网格容器内的卡片（antd6 升级后由 List 改为 CSS Grid）
-    const items = page.locator('.cube-home-menu-grid .ant-card');
-    if ((await items.count()) > 0) {
-      await items.first().click();
-      // 进入实体页后应渲染列表（非 404）
-      await expect(page.locator('.ant-card, h2').first()).toBeVisible({ timeout: 10000 });
-    } else {
-      // 无顶层菜单时展示空状态
-      await expect(page.getByText('暂无可用菜单').first()).toBeVisible({ timeout: 8000 });
-    }
+    const kpis = page.locator('.cube-home-grid > .cube-home-kpi-card');
+    await expect(kpis.first()).toBeVisible({ timeout: 10000 });
+    // 管理员默认系统 KPI 卡（UserCount/CpuRate/OnlineCount/TodayLogin/Log24h/Error24h），降级时至少 3 个
+    expect(await kpis.count()).toBeGreaterThanOrEqual(3);
+    // KPI 卡是网格直接子元素，未包在 Card 容器内
+    await expect(page.locator('.cube-home-grid > .cube-home-widget').first()).toBeVisible();
   });
 
-  test('点击 hero 头像/昵称进入个人中心', async ({ page }) => {
+  test('点击横幅头像进入个人中心', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.cube-home-hero-avatar')).toBeVisible({ timeout: 10000 });
-    // 点头像进入个人中心
-    await page.locator('.cube-home-hero-avatar').click();
+    await expect(page.locator('.cube-home-banner-avatar')).toBeVisible({ timeout: 10000 });
+    await page.locator('.cube-home-banner-avatar').click();
     await page.waitForURL('**/profile');
-    await expect(page.getByText('基本信息').first()).toBeVisible({ timeout: 10000 });
-    // 返回首页，点昵称同样进入个人中心
+    await expect(page.getByText('基础信息').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('快捷入口可点击进入实体页', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.cube-home-hero-title')).toBeVisible({ timeout: 10000 });
-    await page.locator('.cube-home-hero-title').click();
-    await page.waitForURL('**/profile');
-    await expect(page.getByText('基本信息').first()).toBeVisible({ timeout: 10000 });
+    const links = page.locator('.cube-home-quick-link');
+    await expect(links.first()).toBeVisible({ timeout: 10000 });
+    const n = await links.count();
+    if (n > 0) {
+      await links.first().click();
+      // 进入实体页后应渲染列表（非 404）
+      await expect(page.locator('.ant-card, h2').first()).toBeVisible({ timeout: 10000 });
+    }
   });
 });
 
@@ -74,7 +78,7 @@ test.describe('顶栏切换器（CMP-6）', () => {
   });
 });
 
-test.describe('用户菜单与登出（CMP-5）', () => {
+test.describe('用户菜单（CMP-5）', () => {
   test('点击用户菜单显示个人中心/安全中心与退出登录入口', async ({ page }) => {
     await page.goto('/');
     // 用户菜单（头像+用户名），用稳定触发器类名（首页卡片按钮也含 ant-dropdown-trigger，不能用 last）
@@ -83,20 +87,5 @@ test.describe('用户菜单与登出（CMP-5）', () => {
     await expect(page.locator('.ant-dropdown:visible').getByText('个人中心')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('.ant-dropdown:visible').getByText('安全中心')).toBeVisible();
     await expect(page.locator('.ant-dropdown:visible').getByText('退出登录')).toBeVisible();
-  });
-
-  test('退出登录跳转登录页', async ({ browser }) => {
-    // 独立 context 重新登录：登出会撤销服务端 token，避免污染共享 storageState 会话
-    const ctx = await browser.newContext();
-    const page = await ctx.newPage();
-    await page.goto('/login');
-    await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(process.env.ADMIN_USER || 'admin');
-    await page.getByPlaceholder('请输入密码').fill(process.env.ADMIN_PASS || 'admin');
-    await page.getByRole('button', { name: '登 录' }).click();
-    await page.waitForURL('**/', { timeout: 10000 });
-    await page.locator('.cube-user-trigger').first().click();
-    await page.getByText('退出登录').click();
-    await page.waitForURL(/\/login/, { timeout: 10000 });
-    await ctx.close();
   });
 });

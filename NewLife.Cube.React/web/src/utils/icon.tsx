@@ -169,6 +169,9 @@ const ICON_MAP: Record<string, ReactNode> = {
   'fa-cube': <AppstoreOutlined />,
   'fa-book': <ReadOutlined />,
   'fa-gear': <SettingOutlined />,
+  'fa-line-chart': <LineChartOutlined />,
+  'fa-user-circle': <UserOutlined />,
+  'fa-tachometer': <DashboardOutlined />,
 
   // ===== Element Plus 风格（Vue/ElementUI 皮肤时代，数据库当前标准） =====
   Monitor: <DesktopOutlined />,
