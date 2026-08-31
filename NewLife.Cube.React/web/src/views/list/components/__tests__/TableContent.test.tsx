@@ -14,6 +14,11 @@ function textField(name: string, displayName: string): FieldMapping {
   return { widget: 'text', field: { name, typeName: 'String', displayName } };
 }
 
+/** 构造带取值字段（valueField）的列表字段 */
+function valueFieldText(name: string, displayName: string, valueField?: string): FieldMapping {
+  return { widget: 'text', field: { name, typeName: 'String', displayName, valueField } };
+}
+
 const FIELDS = [textField('Name', '名称'), textField('Remark', '备注')];
 const DATA = [
   { Name: 'a', Remark: 'x' },
@@ -83,5 +88,22 @@ describe('TableContent 列表表格', () => {
     // 第 1 次点击 → 升序
     fireEvent.click(sorters);
     expect(onSortChange).toHaveBeenLastCalledWith('Name', false);
+  });
+
+  it('valueField 取值优先：优先显示取值字段，跳过空值回退本字段', () => {
+    // 模拟后端 Name.valueField=DisplayName（名称列优先显示昵称）
+    const fields = [valueFieldText('Name', '名称', 'DisplayName'), valueFieldText('DisplayName', '昵称')];
+    const data = [
+      { name: 'a', displayName: '昵称A' },
+      { name: 'b', displayName: '' },
+      { name: 'c', displayName: null },
+    ];
+    render(<TableContent fields={fields} data={data} selectable={false} />);
+    // 有昵称 → 名称列显示昵称（用户名 'a' 不再单独出现，昵称出现 2 次：名称列 + 昵称列）
+    expect(screen.queryByText('a')).toBeNull();
+    expect(screen.getAllByText('昵称A').length).toBe(2);
+    // 昵称为空串 / null → 名称列回退用户名
+    expect(screen.getByText('b')).toBeTruthy();
+    expect(screen.getByText('c')).toBeTruthy();
   });
 });

@@ -89,7 +89,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NewLife.Cube" Version="6.14.2026.830-beta1625" />
+    <!-- 本地构建版本：含 DataField.ValueField 与 Index 行值注入（OnFillListValues），由 D:\X\Bin 本地 feed 提供 -->
+    <PackageReference Include="NewLife.Cube" Version="6.14.2026.831" />
   </ItemGroup>
 
 </Project>

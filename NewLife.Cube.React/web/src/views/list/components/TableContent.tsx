@@ -55,11 +55,21 @@ function formatDate(v: unknown, dateOnly = false): string {
   return dateOnly ? base : `${base} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+/** 取单元格值。按字段名顺序取第一个非空值（跳过 undefined/null/空串），供 valueField 取值优先使用 */
+function getCellValue(row: Record<string, unknown>, names: string[]): unknown {
+  for (const n of names) {
+    const v = getValueByKey(row, n);
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return undefined;
+}
+
 /** 渲染单元格 */
-function CellRenderer({ field, value }: { field: FieldMapping; value: unknown }) {
+function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string, unknown> }) {
   const meta = toFieldMeta(field.field);
   const control = resolveListControl(meta);
-  const raw = value;
+  // 取值字段：优先取 valueField 指向的字段值（跳过空值），为空回退本字段（如名称列优先显示昵称）
+  const raw = meta.valueField ? getCellValue(row, [meta.valueField, meta.name]) : getCellValue(row, [meta.name]);
 
   switch (control) {
     case 'boolean':
@@ -176,9 +186,7 @@ export default function TableContent({
       sorter: onSortChange && !meta.primaryKey ? true : false,
       // 排序箭头仅当前排序列显示（受控）：其余列 sortOrder 置 null 复位，配合 CSS 隐藏默认箭头
       sortOrder: meta.name === sortField ? (sortDesc ? 'descend' : 'ascend') : null,
-      render: (_: unknown, row: Record<string, unknown>) => (
-        <CellRenderer field={field} value={getValueByKey(row, meta.name)} />
-      ),
+      render: (_: unknown, row: Record<string, unknown>) => <CellRenderer field={field} row={row} />,
     };
   });
 
