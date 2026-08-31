@@ -14,6 +14,7 @@ import IconSelector from './IconSelector';
 import RichEditor from './RichEditor';
 import { resolveControl, isFullWidthControl, resolveNumberPrecision } from '@/utils/fieldControl';
 import type { FieldMeta } from '@/types/field';
+import { useReactSetting } from '@/stores/reactSetting';
 
 export interface FieldControlProps {
   /** 字段元数据 */
@@ -40,6 +41,8 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
   // 占位提示用显示名；字段 Description 已由 FormFieldItem 同排展示，不再重复作占位
   const placeholder = field.displayName;
   const commonProps = { disabled };
+  // React 皮肤设置：文本框清除图标开关（默认关闭，对齐 MVC 与主流表单输入框）
+  const { inputClear } = useReactSetting();
 
   const renderByControl = () => {
     switch (control) {
@@ -55,7 +58,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             value={(value as string) ?? ''}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            allowClear
+            allowClear={inputClear}
             style={{ width: '100%' }}
           />
         );
