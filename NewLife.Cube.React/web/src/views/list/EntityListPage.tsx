@@ -55,6 +55,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const canDelete = store((s) => s.canDelete);
   const canExport = store((s) => s.canExport);
   const canImport = store((s) => s.canImport);
+  const canDevelop = store((s) => s.canDevelop);
 
   // 查看权限：只读控制器或无可编辑权限时提供「查看」（规范 §7.9）
   const canView = !!pageSetting?.isReadOnly || !canEdit;
@@ -73,6 +74,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   );
 
   const [searchParams, setSearchParams] = useState<Record<string, unknown>>({});
+  // 当前是否有搜索条件：有搜索时隐藏高级菜单「清空数据表」，防误删筛选后的数据（对齐 MVC page.Params.Count==0）
+  const hasSearch = Object.keys(searchParams).length > 0;
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   // 当前排序状态：驱动表头排序箭头受控显示（仅排序列显示）
   const [sortState, setSortState] = useState<{ field?: string; desc: boolean }>({ desc: false });
@@ -224,11 +227,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       });
   };
 
-  /** 导出：axios 携带 token 获取文件流后触发浏览器下载（对齐 Vue exportData，window.open 无法携带 Bearer 头） */
+  /** 导出：axios 携带 token 获取文件流后触发浏览器下载（对齐 Vue exportData，window.open 无法携带 Bearer 头）。
+   *  携带当前搜索条件与排序，后端基于查询条件全量导出（ExportData 全页拉取），而非整表或仅当前页 */
   const handleExport = async (format: string) => {
     try {
       const res = await api.client.get(`${type}/ExportFile`, {
-        params: { format },
+        params: { format, ...searchParams, sort: sortState.field, desc: sortState.desc },
         responseType: 'blob',
       });
       const blob = res.data as Blob;
@@ -287,6 +291,63 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     });
   };
 
+  /** 备份全表到服务器（高级菜单，开发模式。对齐 MVC Develop?act=Backup） */
+  const handleBackup = async () => {
+    try {
+      const res = await api.client.get(`${type}/Develop`, { params: { act: 'Backup' } });
+      message.success((res.data as { message?: string })?.message || '备份成功');
+    } catch (err) {
+      message.error((err as Error)?.message || '备份失败');
+    }
+  };
+
+  /** 从服务器备份目录还原（高级菜单，开发模式。对齐 MVC Develop?act=Restore） */
+  const handleRestore = async () => {
+    try {
+      const res = await api.client.get(`${type}/Develop`, { params: { act: 'Restore' } });
+      message.success((res.data as { message?: string })?.message || '还原成功');
+    } catch (err) {
+      message.error((err as Error)?.message || '还原失败');
+    }
+  };
+
+  /** 备份全表并下载 gz 文件（高级菜单，开发模式。对齐 MVC Develop?act=BackupAndExport） */
+  const handleBackupExport = async () => {
+    try {
+      const res = await api.client.get(`${type}/Develop`, {
+        params: { act: 'BackupAndExport' },
+        responseType: 'blob',
+      });
+      const blob = res.data as Blob;
+      const name = type.split('/').filter(Boolean).pop() || 'export';
+      downloadBlob(blob, `${name}_${dateStamp()}.gz`);
+      message.success('备份导出成功');
+    } catch (err) {
+      message.error((err as Error)?.message || '备份导出失败');
+    }
+  };
+
+  /** 清空数据表全部数据（高级菜单，开发模式+无搜索条件，二次确认。对齐 MVC Develop?act=Clear） */
+  const handleClear = () => {
+    modal.confirm({
+      title: '清空数据表',
+      content: '确定删除数据表所有数据并不可恢复？确认清空？',
+      okText: '清空',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const res = await api.client.get(`${type}/Develop`, { params: { act: 'Clear' } });
+          message.success((res.data as { message?: string })?.message || '清空成功');
+          setSelectedKeys([]);
+          void refresh();
+        } catch (err) {
+          message.error((err as Error)?.message || '清空失败');
+        }
+      },
+    });
+  };
+
   const handlePageChange = (page: number, pageSize?: number) => {
     store.getState().setPagination(page, pageSize);
     // 翻页保留当前排序参数，列表数据与表头箭头保持一致
@@ -325,6 +386,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
         canDelete={canDelete}
         canExport={canExport}
         canImport={canImport}
+        canDevelop={canDevelop}
+        hasSearch={hasSearch}
         canChart={canChart}
         view={view}
         selectedCount={selectedKeys.length}
@@ -333,6 +396,10 @@ export default function EntityListPage({ type }: EntityListPageProps) {
         onDeleteAll={handleDeleteAll}
         onExport={handleExport}
         onImport={handleImport}
+        onBackup={handleBackup}
+        onRestore={handleRestore}
+        onBackupExport={handleBackupExport}
+        onClear={handleClear}
         onViewChange={handleViewChange}
         onRefresh={() => void refresh()}
         columnSetting={
@@ -442,7 +509,8 @@ function blobExt(contentType: string): string {
   if (contentType.includes('csv')) return '.csv';
   if (contentType.includes('json')) return '.json';
   if (contentType.includes('xml')) return '.xml';
-  if (contentType.includes('excel')) return '.xlsx';
+  // xlsx 的 content-type 为 ...spreadsheetml.sheet（不含 excel），需单独识别
+  if (contentType.includes('spreadsheetml') || contentType.includes('excel')) return '.xlsx';
   return '.bin';
 }
 
