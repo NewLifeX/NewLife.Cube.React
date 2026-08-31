@@ -105,10 +105,12 @@
   box-shadow: 0 20px 42px rgba(15, 23, 42, 0.08);
 }
 
-/* 拖拽高亮目标卡 */
+/* 拖拽高亮目标卡：虚线框 + 浅色背景（对齐 MVC ui-sortable-placeholder 1px dashed） */
 .cube-home-kpi-card.cube-home-drag-over {
+  border-style: dashed;
   border-color: var(--cube-primary);
-  box-shadow: 0 0 0 2px var(--cube-primary-soft);
+  background: var(--cube-primary-soft);
+  box-shadow: none;
 }
 
 /* KPI 卡操作区：拖拽十字 + 隐藏菜单，绝对定位右上角（对齐 MVC widget-menu/widget-drag） */
@@ -310,6 +312,19 @@
   color: var(--cube-primary);
 }
 
+/* 内容卡头部操作区：三点菜单 + 拖拽十字（对齐 MVC widget-header：三点在左、十字最右） */
+.cube-widget-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.cube-widget-actions .ant-btn {
+  color: var(--cube-text-muted);
+  height: 22px;
+  min-width: 22px;
+}
+
 .cube-widget-title {
   display: inline-flex;
   align-items: center;
@@ -350,10 +365,11 @@
   cursor: grabbing;
 }
 
-/* 内容部件拖拽高亮目标卡 */
+/* 内容部件拖拽高亮目标卡：虚线框（对齐 MVC ui-sortable-placeholder） */
 .cube-home-widget.cube-home-drag-over .cube-home-card {
+  border-style: dashed;
   border-color: var(--cube-primary);
-  box-shadow: 0 0 0 2px var(--cube-primary-soft);
+  box-shadow: none;
 }
 
 .cube-home-quick-grid {

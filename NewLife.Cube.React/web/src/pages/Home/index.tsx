@@ -590,11 +590,8 @@ export default function HomePage() {
                   if (k.url) navigate(k.url);
                 }}
               >
-                {/* 操作区：拖拽十字 + 三点菜单，绝对定位右上角（对齐 MVC widget-kpi） */}
+                {/* 操作区：三点菜单 + 拖拽十字，绝对定位右上角（对齐 MVC：widget-menu right:22、widget-drag right:8，十字最右、菜单居左） */}
                 <span className="cube-home-kpi-actions">
-                  <span className="cube-kpi-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
-                    <DragOutlined />
-                  </span>
                   <Dropdown
                     trigger={['click']}
                     menu={{
@@ -603,6 +600,9 @@ export default function HomePage() {
                   >
                     <Button type="text" size="small" icon={<MoreOutlined />} />
                   </Dropdown>
+                  <span className="cube-kpi-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+                    <DragOutlined />
+                  </span>
                 </span>
                 <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
                 <div className="cube-home-kpi-info">
@@ -627,22 +627,25 @@ export default function HomePage() {
                   size="small"
                   title={
                     <span className="cube-widget-title">
-                      <span className="cube-widget-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
-                        <DragOutlined />
-                      </span>
                       <span className="cube-widget-icon">{resolveIcon(w.icon)}</span>
                       {w.title}
                     </span>
                   }
                   extra={
-                    <Dropdown
-                      trigger={['click']}
-                      menu={{
-                        items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏卡片', onClick: () => handleHide(item.key) }],
-                      }}
-                    >
-                      <Button type="text" size="small" icon={<MoreOutlined />} />
-                    </Dropdown>
+                    <span className="cube-widget-actions">
+                      <Dropdown
+                        trigger={['click']}
+                        menu={{
+                          items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏卡片', onClick: () => handleHide(item.key) }],
+                        }}
+                      >
+                        <Button type="text" size="small" icon={<MoreOutlined />} />
+                      </Dropdown>
+                      {/* 拖拽十字置于头部最右（对齐 MVC widget-header：图标→标题→三点→十字） */}
+                      <span className="cube-widget-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+                        <DragOutlined />
+                      </span>
+                    </span>
                   }
                 >
                   {renderWidgetBody(w)}
