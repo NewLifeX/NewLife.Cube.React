@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
 // https://vite.dev/config/
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     resolve: {
@@ -13,7 +13,8 @@ export default defineConfig(() => {
     },
     build: {
       // 构建产物输出到上级 wwwroot，供 .NET 嵌入式资源打包
-      sourcemap: true,
+      // 仅开发模式生成 sourcemap；生产构建嵌入 DLL 时关闭，避免 13MB+ 的 .map 撑大程序集
+      sourcemap: mode === 'development',
       outDir: '../wwwroot',
       emptyOutDir: true,
     },

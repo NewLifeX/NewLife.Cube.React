@@ -5,7 +5,7 @@
 ![Nuget](https://img.shields.io/nuget/v/newlife.cube.react?logo=nuget)
 ![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/newlife.cube.react?label=dev%20nuget&logo=nuget)
 
-魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**，独立 NuGet 包 + 独立仓库管理。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，对齐 Vue 皮肤功能。
+魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**，独立 NuGet 包 + 独立仓库管理。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，符合[魔方皮肤设计规范](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md)。
 
 引用 `NewLife.Cube` + `NewLife.Cube.React` 两个包，`dotnet run` 后浏览器打开即有完整管理后台——登录、动态菜单、字段元数据驱动的列表/表单、CRUD、导入导出、AI 助手等，**零前端开发**。
 
@@ -17,8 +17,8 @@
 
 - **开箱即用**：`app.UseReact(env)` 一行接入，构建产物嵌入 DLL 随 NuGet 分发，无物理文件依赖
 - **字段元数据驱动**：列表/表单/搜索/详情全部由后端 `GetPage` 元数据动态渲染，新增实体零前端开发
-- **与 Vue 皮肤功能对等**：认证登录全流程、通用列表、通用表单、LOV/上传/富文本/AI 助手等公共组件
-- **消费共享公共包**：基于 `@cube/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架无关核心与 Vue 皮肤共享
+- **符合魔方皮肤设计规范**：认证登录全流程、通用列表、通用表单、LOV/上传/富文本/AI 助手等公共组件
+- **消费共享公共包**：基于 `@cube/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架无关核心多皮肤共享
 - **单一主题 × 明暗**：antd token 驱动的原生观感，明暗切换一键完成
 - **AI 智能助手**：SSE 流式对话 + 快捷指令 + 智能填表 + 系统诊断，内置 mermaid 渲染
 - **测试完备**：单测 136 个 + E2E 48 个全过，Playwright 登录会话复用
@@ -78,7 +78,8 @@ dotnet build 魔方React.slnx -c Release
 | 仓库 | 说明 |
 |------|------|
 | [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方核心（WebAPI/权限/菜单/字段元数据）+ 前端公共包 `packages/@cube/*` |
-| NewLife.Cube.Vue | Vue 系前端皮肤（参考标杆，Vue3 + Element Plus） |
+| [魔方皮肤设计规范](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | 魔方所有皮肤应遵循的统一设计规范，React 皮肤符合该规范 |
+| NewLife.Cube.Vue | Vue 系前端皮肤（Vue3 + Element Plus） |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 本仓库（React 系前端皮肤） |
 
 ## License
