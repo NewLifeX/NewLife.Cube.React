@@ -372,52 +372,43 @@
   box-shadow: none;
 }
 
+/* 快捷入口部件：紧凑链接按钮（对齐 MVC QuickLink.cshtml quicklink-item，最近访问在前/新菜单补足） */
 .cube-home-quick-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
 }
 
 .cube-home-quick-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 10px;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
   border: 1px solid var(--cube-border-soft);
   background: var(--cube-surface-muted);
   color: inherit;
+  cursor: pointer;
   transition: all 0.2s ease;
+  font-size: 13px;
+  min-width: 0;
 }
 
 .cube-home-quick-link:hover {
   border-color: var(--cube-primary);
   background: var(--cube-primary-soft);
+  color: var(--cube-primary);
 }
 
-.cube-home-quick-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--cube-surface-bg);
+.cube-home-quick-link .anticon {
   color: var(--cube-primary);
-  font-size: 17px;
   flex: none;
 }
 
-.cube-home-quick-title {
-  font-weight: 600;
-  color: var(--cube-text);
-}
-
-.cube-home-quick-url {
-  margin-top: 4px;
-  color: var(--cube-text-muted);
-  font-size: 12px;
-  word-break: break-all;
+.cube-home-quick-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cube-home-monitor-meta {
@@ -433,7 +424,7 @@
   height: 320px;
 }
 
-/* 登录与在线部件：最近登录 + 当前在线双列 */
+/* 登录与在线部件：最近登录 + 在线用户双列，每项时间在前（对齐 MVC LoginLog.cshtml） */
 .cube-home-login-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -458,13 +449,21 @@
   gap: 8px;
   font-size: 13px;
   line-height: 1.5;
+  min-width: 0;
+}
+
+.cube-home-login-time {
+  color: var(--cube-text-muted);
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .cube-home-login-name {
   color: var(--cube-text);
   font-weight: 500;
-  flex: none;
-  max-width: 40%;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -473,15 +472,10 @@
 .cube-home-login-action {
   color: var(--cube-text-secondary);
   flex: none;
+  max-width: 40%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.cube-home-login-time {
-  color: var(--cube-text-muted);
-  margin-left: auto;
-  flex: none;
 }
 
 .cube-home-online-tag {
@@ -518,6 +512,71 @@
   color: var(--cube-text);
   text-align: right;
   word-break: break-all;
+}
+
+/* 个人信息部件：头像 + 名称/角色 + 账号表格 + 个人中心（对齐 MVC Profile.cshtml widget-profile） */
+.cube-home-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.cube-home-profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cube-primary-soft);
+  color: var(--cube-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  overflow: hidden;
+  flex: none;
+}
+
+.cube-home-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cube-home-profile-info {
+  min-width: 0;
+}
+
+.cube-home-profile-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cube-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cube-home-profile-role {
+  margin-top: 2px;
+  color: var(--cube-text-muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cube-home-profile-more {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.cube-home-profile-more a {
+  color: var(--cube-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cube-home-profile-more a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 1200px) {

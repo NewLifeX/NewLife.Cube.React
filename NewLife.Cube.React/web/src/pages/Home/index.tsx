@@ -12,8 +12,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   AppstoreOutlined,
   BugOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
   DragOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
@@ -35,6 +33,7 @@ import {
   useDashboard,
   type DashboardKpi,
   type DashboardLoginLog,
+  type DashboardProfile,
   type DashboardQuickLinkData,
   type DashboardWidget,
 } from '@/hooks/useDashboard';
@@ -49,11 +48,8 @@ const KPI_ICONS: Record<string, ReactNode> = {
   Log24h: <FileTextOutlined />,
   Error24h: <BugOutlined />,
   CpuRate: <LineChartOutlined />,
-  MyDays: <CalendarOutlined />,
-  MyLogins: <ClockCircleOutlined />,
   // 兼容旧语义名（接口不可用时的降级数据）
   users: <TeamOutlined />,
-  login: <UserOutlined />,
   online: <AppstoreOutlined />,
   log: <FileTextOutlined />,
   error: <BugOutlined />,
@@ -327,7 +323,6 @@ export default function HomePage() {
   const allKpis = useMemo<DashboardKpi[]>(() => {
     if (wb?.kpis?.length || wb?.hiddenKpis?.length) return [...(wb.kpis ?? []), ...(wb.hiddenKpis ?? [])];
     return [
-      { name: 'login', label: '我的登录', value: '—', color: 'green', trend: '累计登录次数' },
       { name: 'online', label: '在线状态', value: '在线', color: 'cyan', trend: '当前账号状态' },
       { name: 'users', label: '我的角色', value: userInfo?.roleName || '—', color: 'purple', trend: '当前角色' },
     ];
@@ -370,73 +365,104 @@ export default function HomePage() {
             ? '下午好'
             : '晚上好';
 
-  /** 快捷入口部件正文：链接网格 */
+  /** 时间格式化（对齐 MVC LoginLog：登录 MM-dd HH:mm、在线 HH:mm） */
+  const fmtTime = (t?: string, pat: 'mdhm' | 'hm' = 'mdhm'): string => {
+    if (!t) return '';
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return t;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return pat === 'mdhm'
+      ? `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+      : `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  /** 快捷入口部件正文：最近访问在前、系统最新菜单补足，紧凑链接（对齐 MVC QuickLink.cshtml quicklink-item） */
   const renderQuickLinkBody = (data?: DashboardQuickLinkData): ReactNode => (
     <div className="cube-home-quick-grid">
       {(data?.links ?? []).map((link) => (
-        <div key={link.url} className="cube-home-quick-link" onClick={() => link.url && navigate(link.url)}>
-          <div className="cube-home-quick-icon">
-            {link.icon ? <span style={{ fontSize: 16 }}>{link.icon}</span> : <AppstoreOutlined />}
-          </div>
-          <div>
-            <div className="cube-home-quick-title">{link.name}</div>
-            <div className="cube-home-quick-url">{link.url}</div>
-          </div>
+        <div key={link.url} className="cube-home-quick-link" title={link.url} onClick={() => link.url && navigate(link.url)}>
+          {resolveIcon(link.icon)}
+          <span className="cube-home-quick-name">{link.name}</span>
         </div>
       ))}
       {!data?.links?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无快捷入口" />}
     </div>
   );
 
-  /** 登录与在线部件正文：最近登录 + 当前在线双列 */
+  /** 登录与在线部件正文：最近登录 + 在线用户双列，时间在前（对齐 MVC LoginLog.cshtml list-time/list-name/list-action） */
   const renderLoginLogBody = (data?: DashboardLoginLog): ReactNode => (
     <div className="cube-home-login-grid">
       <div>
         <div className="cube-home-login-title">最近登录</div>
         <div className="cube-home-login-list">
           {(data?.logins ?? []).map((it, i) => (
-            <div key={i} className="cube-home-login-item">
+            <div key={i} className="cube-home-login-item" title={it.createIP ? `${it.action || ''} ${it.createIP}` : undefined}>
+              <span className="cube-home-login-time">{fmtTime(it.createTime)}</span>
               <span className="cube-home-login-name">{it.userName || '—'}</span>
               <span className="cube-home-login-action">{it.action || ''}</span>
-              <span className="cube-home-login-time">{it.createTime || ''}</span>
             </div>
           ))}
-          {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无登录记录" />}
+          {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="最近24h无登录记录" />}
         </div>
       </div>
       <div>
-        <div className="cube-home-login-title">当前在线</div>
+        <div className="cube-home-login-title">在线用户</div>
         <div className="cube-home-login-list">
           {(data?.onlines ?? []).map((it, i) => (
-            <div key={i} className="cube-home-login-item">
+            <div key={i} className="cube-home-login-item" title={it.oAuthProvider}>
+              <span className="cube-home-login-time">{fmtTime(it.createTime, 'hm')}</span>
               <span className="cube-home-login-name">{it.name || '—'}</span>
-              <span className="cube-home-login-time">{it.createTime || ''}</span>
+              <span className="cube-home-login-action">{it.oAuthProvider || ''}</span>
             </div>
           ))}
-          {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无在线用户" />}
+          {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前无在线用户" />}
         </div>
       </div>
     </div>
   );
 
-  /** 个人信息部件正文：账号统计 */
-  const renderProfileBody = (data?: Record<string, unknown>): ReactNode => (
-    <div className="cube-home-info-list">
-      <div className="cube-home-info-item">
-        <span className="cube-home-info-key">登录次数</span>
-        <span className="cube-home-info-value">{String(data?.logins ?? '—')}</span>
+  /** 个人信息部件正文：头像 + 名称/角色 + 账号表格（对齐 MVC Profile.cshtml widget-profile） */
+  const renderProfileBody = (p?: DashboardProfile): ReactNode => (
+    <div className="cube-home-profile">
+      <div className="cube-home-profile-main">
+        <div className="cube-home-profile-avatar">
+          {userInfo?.avatar ? <img src={userInfo.avatar} alt="avatar" /> : <UserOutlined />}
+        </div>
+        <div className="cube-home-profile-info">
+          <div className="cube-home-profile-name">{p?.displayName || displayName}</div>
+          <div className="cube-home-profile-role">{p?.roleNames || roles || '—'}</div>
+        </div>
       </div>
-      <div className="cube-home-info-item">
-        <span className="cube-home-info-key">最近登录</span>
-        <span className="cube-home-info-value">{String(data?.lastLogin ?? '—')}</span>
+      <div className="cube-home-info-list">
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">账号</span>
+          <span className="cube-home-info-value">{p?.name ?? '—'}</span>
+        </div>
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">状态</span>
+          <span className="cube-home-info-value">{p?.online ? '在线' : '离线'}</span>
+        </div>
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">登录次数</span>
+          <span className="cube-home-info-value">{p?.logins ?? '—'} 次</span>
+        </div>
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">上次登录</span>
+          <span className="cube-home-info-value">{p?.lastLogin || '—'}</span>
+        </div>
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">上次地址</span>
+          <span className="cube-home-info-value">{p?.lastLoginIP || '—'}</span>
+        </div>
+        <div className="cube-home-info-item">
+          <span className="cube-home-info-key">注册时间</span>
+          <span className="cube-home-info-value">{p?.registerTime || '—'}</span>
+        </div>
       </div>
-      <div className="cube-home-info-item">
-        <span className="cube-home-info-key">登录 IP</span>
-        <span className="cube-home-info-value">{String(data?.lastLoginIP ?? '—')}</span>
-      </div>
-      <div className="cube-home-info-item">
-        <span className="cube-home-info-key">注册时间</span>
-        <span className="cube-home-info-value">{String(data?.registerTime ?? '—')}</span>
+      <div className="cube-home-profile-more">
+        <a role="button" onClick={() => navigate('/profile')}>
+          个人中心 »
+        </a>
       </div>
     </div>
   );
@@ -474,7 +500,7 @@ export default function HomePage() {
       case 'QuickLink':
         return renderQuickLinkBody(data as DashboardQuickLinkData | undefined);
       case 'Profile':
-        return renderProfileBody(data);
+        return renderProfileBody(data as DashboardProfile | undefined);
       default:
         // 未知名部件：键值字典兜底
         return renderKvBody(data);

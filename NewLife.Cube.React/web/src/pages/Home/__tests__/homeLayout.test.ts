@@ -27,7 +27,7 @@ const widget = (name: string, cols: number, partial: Partial<DashboardWidget> = 
 describe('工作台布局 key', () => {
   it('layoutKey：部件名/卡片名统一转首字母小写', () => {
     expect(layoutKey('UserCount')).toBe('userCount');
-    expect(layoutKey('MyLogins')).toBe('myLogins');
+    expect(layoutKey('OnlineCount')).toBe('onlineCount');
     expect(layoutKey('Log24h')).toBe('log24h');
     expect(layoutKey('Monitor')).toBe('monitor');
     expect(layoutKey('SysInfo')).toBe('sysInfo');
@@ -41,18 +41,18 @@ describe('工作台布局 key', () => {
     const raw: Record<string, LayoutItem> = {
       UserCount: { sort: 0, hide: false },
       TodayLogin: { sort: 2 },
-      myLogins: { sort: 1, hide: true },
+      onlineCount: { sort: 1, hide: true },
       Monitor: { sort: 6 },
     };
     const rs = normalizeLayout(raw);
     expect(rs).toEqual({
       userCount: { sort: 0, hide: false },
       todayLogin: { sort: 2 },
-      myLogins: { sort: 1, hide: true },
+      onlineCount: { sort: 1, hide: true },
       monitor: { sort: 6 },
     });
     // 已是 camelCase 的键保持不变
-    expect(rs.myLogins).toEqual({ sort: 1, hide: true });
+    expect(rs.onlineCount).toEqual({ sort: 1, hide: true });
   });
 
   it('normalizeLayout：空对象返回空', () => {
@@ -64,11 +64,11 @@ describe('工作台统一布局项构建', () => {
   it('buildHomeItems：KPI 前、内容部件后，KPI span 2、部件 span=cols', () => {
     const kpis: DashboardKpi[] = [
       { name: 'UserCount', label: '用户总数', value: '1' },
-      { name: 'MyLogins', label: '我的登录', value: '2' },
+      { name: 'TodayLogin', label: '今日登录', value: '2' },
     ];
     const widgets = [widget('Monitor', 8), widget('SysInfo', 4), widget('QuickLink', 4)];
     const items = buildHomeItems(kpis, widgets);
-    expect(items.map((it) => it.key)).toEqual(['userCount', 'myLogins', 'monitor', 'sysInfo', 'quickLink']);
+    expect(items.map((it) => it.key)).toEqual(['userCount', 'todayLogin', 'monitor', 'sysInfo', 'quickLink']);
     expect(items[0].kind).toBe('kpi');
     expect(items[0].cols).toBe(2);
     expect(items[2].kind).toBe('widget');
@@ -116,8 +116,8 @@ describe('工作台布局排序与隐藏', () => {
   });
 
   it('sortHomeItems：无布局时保持构建序', () => {
-    const items = buildHomeItems([{ name: 'MyLogins', label: '我的登录', value: '1' }], [widget('SysInfo', 4)]);
-    expect(sortHomeItems(items, {}).map((it) => it.key)).toEqual(['myLogins', 'sysInfo']);
+    const items = buildHomeItems([{ name: 'OnlineCount', label: '在线用户', value: '1' }], [widget('SysInfo', 4)]);
+    expect(sortHomeItems(items, {}).map((it) => it.key)).toEqual(['onlineCount', 'sysInfo']);
   });
 
   it('filterHiddenItems：提取已隐藏项（KPI + 部件混合）', () => {
@@ -132,7 +132,7 @@ describe('工作台布局排序与隐藏', () => {
   });
 
   it('filterHiddenItems：无隐藏返回空', () => {
-    const items = buildHomeItems([{ name: 'MyLogins', label: '我的登录', value: '1' }], []);
+    const items = buildHomeItems([{ name: 'OnlineCount', label: '在线用户', value: '1' }], []);
     expect(filterHiddenItems(items, {})).toEqual([]);
   });
 });
