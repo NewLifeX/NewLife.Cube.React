@@ -21,6 +21,11 @@ function isFormPath(pathname: string, search: string): boolean {
   return /\/+(edit|add|new|detail)$/i.test(pathname);
 }
 
+/** 已知特殊页（不在菜单树、非实体 CRUD，如服务器信息 /Admin/Index/Main），放行给 DefaultListPage 内部按路径分发 */
+function isSpecialApiPath(pathname: string): boolean {
+  return /\/index\/main$/i.test(pathname);
+}
+
 export default function DefaultEntityPage() {
   const location = useLocation();
   // 订阅 flatMenus 而非 findMenu：findMenu 引用稳定不会触发重渲染，
@@ -35,9 +40,14 @@ export default function DefaultEntityPage() {
 
   // 隐藏菜单实体页（如 /Admin/UserOnline、/Admin/UserStat，控制器 [Menu(0,false)] 不在菜单树）：
   // 菜单未命中时探测后端 GetPage，返回 JSON 即按实体页渲染，否则 404
-  const [probe, setProbe] = useState<'idle' | 'json' | 'none'>('idle');
+  const [probe, setProbe] = useState<'idle' | 'ok' | 'none'>('idle');
   useEffect(() => {
     if (matched || config) return;
+    // 已知特殊页（如服务器信息 /Admin/Index/Main）：不探测 GetPage，直接放行给 DefaultListPage 按路径分发
+    if (isSpecialApiPath(location.pathname)) {
+      setProbe('ok');
+      return;
+    }
     let cancelled = false;
     setProbe('idle');
     api.page
@@ -45,7 +55,7 @@ export default function DefaultEntityPage() {
       .then((res) => {
         if (cancelled) return;
         // GetPage 返回 HTML（SPA 兜底）说明不是实体 CRUD 页
-        setProbe(typeof res === 'string' || typeof res?.data === 'string' ? 'none' : 'json');
+        setProbe(typeof res === 'string' || typeof res?.data === 'string' ? 'none' : 'ok');
       })
       .catch(() => {
         if (!cancelled) setProbe('none');
@@ -66,7 +76,7 @@ export default function DefaultEntityPage() {
     }
     // 后端无此实体 → 404
     if (probe === 'none') return <NotFoundPage />;
-    // 隐藏菜单实体页命中（GetPage 返回 JSON）→ 按列表页渲染（DefaultListPage 内部再探测分发）
+    // 隐藏菜单实体页命中（GetPage 返回 JSON）或特殊页放行 → 按列表页渲染（DefaultListPage 内部再探测分发）
   }
 
   const title = config?.label || matched?.title || matched?.name || '';

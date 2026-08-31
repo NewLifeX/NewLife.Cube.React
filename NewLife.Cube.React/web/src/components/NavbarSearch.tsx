@@ -2,11 +2,12 @@
  * 导航搜索（菜单快速搜索，对齐 Vue 皮肤 components/NavbarSearch.vue）
  */
 import { useMemo, useState } from 'react';
-import { AutoComplete, Input } from 'antd';
+import { AutoComplete } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useMenuStore } from '@/stores/menu';
 import { useReactSetting } from '@/stores/reactSetting';
+import FocusClearInput from '@/components/field/FocusClearInput';
 
 export default function NavbarSearch() {
   const navigate = useNavigate();
@@ -17,8 +18,9 @@ export default function NavbarSearch() {
   const options = useMemo(() => {
     if (!value) return [];
     const kw = value.toLowerCase();
+    // 仅搜索可见菜单（隐藏菜单如 UserOnline/UserStat 不出现在搜索结果）
     return flatMenus
-      .filter((m) => m.path && (m.title || m.name).toLowerCase().includes(kw))
+      .filter((m) => m.visible !== false && m.path && (m.title || m.name).toLowerCase().includes(kw))
       .slice(0, 10)
       .map((m) => ({ value: m.path, label: `${m.title || m.name}（${m.path}）` }));
   }, [flatMenus, value]);
@@ -34,7 +36,7 @@ export default function NavbarSearch() {
         setValue('');
       }}
     >
-      <Input prefix={<SearchOutlined />} placeholder="搜索菜单" allowClear={inputClear} />
+      <FocusClearInput prefix={<SearchOutlined />} showClear={inputClear} placeholder="搜索菜单" />
     </AutoComplete>
   );
 }

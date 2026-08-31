@@ -295,6 +295,17 @@ select {
   width: min(320px, 100vw - 32px);
 }
 
+/* 聚焦清除图标（FocusClearInput）：与 antd 内置清除图标一致，悬停加深 */
+.cube-input-clear {
+  font-size: 12px;
+  color: var(--cube-text-3, rgba(0, 0, 0, 0.25));
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.cube-input-clear:hover {
+  color: var(--cube-text-2, rgba(0, 0, 0, 0.45));
+}
+
 .cube-user-trigger {
   display: inline-flex;
   align-items: center;

@@ -20,6 +20,7 @@ import DbPage from '@/views/db/DbPage';
 import WidgetPage from '@/views/widget/WidgetPage';
 import AreaPage from '@/views/area/AreaPage';
 import ViewTracePage from '@/views/viewtrace/ViewTracePage';
+import ServerInfoPage from '@/views/serverinfo/ServerInfoPage';
 
 /** 页面种类：探测中 / 实体页 / 非实体页（配置或特殊页） */
 type PageKind = 'probe' | 'entity' | 'special';
@@ -33,6 +34,11 @@ export default function DefaultListPage() {
   useEffect(() => {
     let cancelled = false;
     setKind('probe');
+    // 已知特殊页（如服务器信息 /Admin/Index/Main）不探测 GetPage，直接按特殊页分发
+    if (type.toLowerCase().endsWith('/index/main')) {
+      setKind('special');
+      return;
+    }
     api.page
       .getPage(type)
       .then((res) => {
@@ -47,7 +53,7 @@ export default function DefaultListPage() {
     };
   }, [type]);
 
-  // 非实体页：按路径分发（数据库页 / 工作台部件 / 通用配置页）
+  // 非实体页：按路径分发（数据库页 / 工作台部件 / 服务器信息 / 通用配置页）
   if (kind === 'special') {
     if (type.toLowerCase().endsWith('/db')) {
       return <DbPage type={type} />;
@@ -57,6 +63,9 @@ export default function DefaultListPage() {
     }
     if (type.toLowerCase().endsWith('/cube/viewtrace') || type.toLowerCase().endsWith('/viewtrace')) {
       return <ViewTracePage type={type} />;
+    }
+    if (type.toLowerCase().endsWith('/index/main')) {
+      return <ServerInfoPage />;
     }
     return <ConfigPage type={type} />;
   }

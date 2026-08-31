@@ -12,6 +12,7 @@ import Uploader from './Uploader';
 import JsonEditor from './JsonEditor';
 import IconSelector from './IconSelector';
 import RichEditor from './RichEditor';
+import FocusClearInput from './FocusClearInput';
 import { resolveControl, isFullWidthControl, resolveNumberPrecision } from '@/utils/fieldControl';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
@@ -52,13 +53,13 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
       case 'url': {
         const typeMap = { email: 'email', tel: 'tel', url: 'url' } as const;
         return (
-          <Input
+          <FocusClearInput
             {...commonProps}
+            showClear={inputClear}
             type={control === 'input' ? 'text' : typeMap[control as 'email' | 'tel' | 'url']}
             value={(value as string) ?? ''}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            allowClear={inputClear}
             style={{ width: '100%' }}
           />
         );

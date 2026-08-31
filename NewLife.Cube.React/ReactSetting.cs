@@ -23,16 +23,9 @@ public class ReactSetting : Config<ReactSetting>
     [Category("表单")]
     public Int32 DescMode { get; set; } = 1;
 
-    /// <summary>文本框清除图标。true-输入框右侧显示清空叉叉（antd默认），false-隐藏（对齐MVC，主流表单输入框一般不带清除）</summary>
-    [Description("文本框清除图标。true-输入框右侧显示清空叉叉，false-隐藏（对齐MVC，主流表单输入框一般不带清除）")]
+    /// <summary>文本框清除图标。true-输入框聚焦且非空时显示清空叉叉，false-永不显示</summary>
+    [Description("文本框清除图标。true-输入框聚焦且非空时显示清空叉叉，false-永不显示")]
     [Category("表单")]
     public Boolean InputClear { get; set; } = false;
-    #endregion
-
-    #region 导航
-    /// <summary>配置导航排开。true-魔方设置等配置页一字排开，false-核心配置+更多下拉</summary>
-    [Description("配置导航排开。true-魔方设置等配置页一字排开，false-核心配置+更多下拉")]
-    [Category("导航")]
-    public Boolean ConfigNavFlat { get; set; } = true;
     #endregion
 }

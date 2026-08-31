@@ -6,7 +6,6 @@
  */
 import { create } from 'zustand';
 import type { MenuItem } from '@newlifex/api-core';
-import { getConfig } from '@/configure';
 
 /** 扁平菜单项 */
 export interface FlatMenuItem {
@@ -20,15 +19,10 @@ export interface FlatMenuItem {
   children?: FlatMenuItem[];
 }
 
-const { menu: menuCfg } = getConfig();
-
-/** 树形菜单 → 扁平列表 */
+/** 树形菜单 → 扁平列表（保留隐藏菜单，供标签页标题解析；导航渲染按 visible 过滤） */
 export function flattenMenu(tree: MenuItem[], parentId: string | number | null = null): FlatMenuItem[] {
   const result: FlatMenuItem[] = [];
-  const { visibleField } = menuCfg;
   for (const item of tree) {
-    // 可见性过滤
-    if (visibleField && (item as unknown as Record<string, unknown>)[visibleField] === false) continue;
     const flat: FlatMenuItem = {
       id: item.id,
       name: item.name,

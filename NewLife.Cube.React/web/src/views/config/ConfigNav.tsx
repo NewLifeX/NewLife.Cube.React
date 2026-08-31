@@ -3,18 +3,14 @@
  *
  * 魔方后台的配置控制器（基本设置/系统设置/星尘设置/数据中间件/魔方设置 + 更多配置：
  * 短信/邮件/OAuth/访问规则）在左侧菜单中全部隐藏，避免左侧菜单过多。
- * 进入任一配置页后，通过本组件在页面顶部切换各配置页。
+ * 进入任一配置页后，通过本组件在页面顶部一字排开切换各配置页。
  *
- * - 核心配置：Segmented 分段控件（5 项）
- * - 更多配置：Dropdown 下拉（短信/邮件/OAuth/访问规则）
  * - 隐藏配置页不在菜单树中（后端 MenuTree 过滤 Visible=false），
  *   由 findConfigCenter 按静态清单匹配，供路由/标题/面包屑复用。
  */
 import { useMemo } from 'react';
-import { Button, Dropdown, Segmented } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useReactSetting } from '@/stores/reactSetting';
 
 /** 配置页路径 → 显示名 */
 export interface ConfigNavItem {
@@ -77,53 +73,25 @@ export interface ConfigNavProps {
   currentPath?: string;
 }
 
-/** 配置中心切换器：ReactSetting.configNavFlat=true 时一字排开，否则 Segmented 核心 + Dropdown 更多 */
+/** 配置中心切换器：所有配置页一字排开（对齐 MVC _Object_Nav.cshtml 主导航） */
 export default function ConfigNav({ currentPath }: ConfigNavProps) {
   const navigate = useNavigate();
   // 当前配置项：精确或前缀匹配
   const current = useMemo(() => findConfigCenter(currentPath || ''), [currentPath]);
-  const inMore = !!current && MORE_NAV.some((i) => i.path === current.path);
-  const { configNavFlat } = useReactSetting();
-
-  // 配置导航排开：所有配置页一字排开（无下拉）
-  if (configNavFlat) {
-    return (
-      <div className="cube-config-nav">
-        {ALL_CONFIG_NAV.map((item) => (
-          <Button
-            key={item.path}
-            type={current?.path === item.path ? 'primary' : 'text'}
-            size="small"
-            className="cube-config-nav-item"
-            onClick={() => navigate(item.path)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
-    );
-  }
-
-  const segments = CONFIG_NAV.map((item) => ({ value: item.path, label: item.label }));
-  // 未命中核心配置（更多配置或未知路径）时用哨兵值，避免 Segmented 默认选中第一项
-  const mainValue = current && !inMore ? current.path : '__none__';
-  const moreMenu = {
-    items: MORE_NAV.map((item) => ({ key: item.path, label: item.label })),
-    onClick: ({ key }: { key: string }) => navigate(key),
-  };
 
   return (
     <div className="cube-config-nav">
-      <Segmented
-        options={segments}
-        value={mainValue}
-        onChange={(value) => navigate(String(value))}
-      />
-      <Dropdown menu={moreMenu} placement="bottomRight">
-        <Button type="text" size="small" className={`cube-config-nav-more${inMore ? ' active' : ''}`}>
-          更多配置 <DownOutlined />
+      {ALL_CONFIG_NAV.map((item) => (
+        <Button
+          key={item.path}
+          type={current?.path === item.path ? 'primary' : 'text'}
+          size="small"
+          className="cube-config-nav-item"
+          onClick={() => navigate(item.path)}
+        >
+          {item.label}
         </Button>
-      </Dropdown>
+      ))}
     </div>
   );
 }

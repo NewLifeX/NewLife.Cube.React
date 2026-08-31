@@ -15,6 +15,7 @@ import { Button, DatePicker, Input, InputNumber, Select, Space, Switch, TimePick
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LovSelect from '@/components/field/LovSelect';
+import FocusClearInput from '@/components/field/FocusClearInput';
 import { resolveSearchControl } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMapping } from '@newlifex/field-mapping';
@@ -62,8 +63,8 @@ function SearchControl({
   switch (control) {
     case 'text':
       return (
-        <Input
-          allowClear={inputClear}
+        <FocusClearInput
+          showClear={inputClear}
           placeholder={placeholder}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || undefined)}
@@ -181,8 +182,8 @@ function SearchControl({
       );
     default:
       return (
-        <Input
-          allowClear={inputClear}
+        <FocusClearInput
+          showClear={inputClear}
           placeholder={placeholder}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || undefined)}

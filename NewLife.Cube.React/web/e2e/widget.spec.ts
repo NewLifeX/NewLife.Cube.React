@@ -12,6 +12,22 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('工作台卡片（卡片三能力）', () => {
+  /** 重置布局并确认（清理测试残留）：工具栏「重置布局」已移除，恢复默认布局入口在已隐藏面板底部、
+   *  无隐藏时不可达 → 直接调服务端接口（对齐 MVC resetLayout） */
+  async function resetLayout(page: import('@playwright/test').Page) {
+    await page.evaluate(async () => {
+      const token = localStorage.getItem('token') ?? '';
+      await fetch('/api/Admin/Index/ResetWidgetLayout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    });
+    await page.waitForTimeout(400);
+  }
+
+  // 每个用例结束后重置布局：即使用例失败也恢复默认布局，避免隐藏残留污染后续用例/重试/下次运行
+  // （home.spec 与 widget.spec 共享同一登录用户的工作台布局状态）
+  test.afterEach(async ({ page }) => {
+    await resetLayout(page).catch(() => {});
+  });
+
   /** 隐藏指定内容卡片：点击卡片头「⋯」→ 隐藏卡片 */
   async function hideWidget(page: import('@playwright/test').Page, title: string) {
     const card = page.locator('.cube-home-widget', { hasText: title }).first();
@@ -31,16 +47,6 @@ test.describe('工作台卡片（卡片三能力）', () => {
   /** 等待工作台加载完成（内容部件出现） */
   async function waitHome(page: import('@playwright/test').Page) {
     await expect(page.locator('.cube-home-grid .cube-home-widget').first()).toBeVisible({ timeout: 10000 });
-  }
-
-  /** 重置布局并确认（清理测试残留）：工具栏「重置布局」已移除，恢复默认布局入口在已隐藏面板底部、
-   *  无隐藏时不可达 → 直接调服务端接口（对齐 MVC resetLayout） */
-  async function resetLayout(page: import('@playwright/test').Page) {
-    await page.evaluate(async () => {
-      const token = localStorage.getItem('token') ?? '';
-      await fetch('/api/Admin/Index/ResetWidgetLayout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-    });
-    await page.waitForTimeout(400);
   }
 
   test('隐藏内容卡片后消失，恢复后重现', async ({ page }) => {

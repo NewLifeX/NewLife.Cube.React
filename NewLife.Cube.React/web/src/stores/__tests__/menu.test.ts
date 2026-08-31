@@ -41,14 +41,21 @@ const tree: MenuItem[] = [
 describe('flattenMenu 树转扁平', () => {
   it('扁平化并保留父子关系', () => {
     const flat = flattenMenu(tree);
-    expect(flat).toHaveLength(2); // 隐藏节点被过滤
+    expect(flat).toHaveLength(3); // 隐藏节点也保留（供标签页标题解析）
     expect(flat[0].path).toBe('/Admin');
     expect(flat[1].parentId).toBe(1);
   });
 
-  it('过滤不可见节点', () => {
+  it('保留隐藏节点并标记 visible=false', () => {
     const flat = flattenMenu(tree);
-    expect(flat.some((m) => m.path === '/Admin/Hidden')).toBe(false);
+    const hidden = flat.find((m) => m.path === '/Admin/Hidden');
+    expect(hidden).toBeDefined();
+    expect(hidden?.visible).toBe(false);
+  });
+
+  it('可见节点 visible=true', () => {
+    const flat = flattenMenu(tree);
+    expect(flat.find((m) => m.path === '/Admin/User')?.visible).toBe(true);
   });
 });
 

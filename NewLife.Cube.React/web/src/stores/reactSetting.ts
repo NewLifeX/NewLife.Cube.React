@@ -7,7 +7,7 @@
  * 当前配置项：
  * - formStyle    表单风格：inline-三栏同排（对齐 MVC），vertical-标签一行控件一行（antd6 风格）
  * - descMode     字段注释显示：1-标签后小字，2-标签后问号图标悬浮，0-不显示
- * - configNavFlat 配置导航排开：true-魔方设置等配置页一字排开，false-核心+更多下拉
+ * - inputClear   文本框清除图标：聚焦且非空时显示清空叉叉
  *
  * 读取失败（未登录/无权限/网络）时回退默认值，不阻塞页面渲染。
  */
@@ -21,9 +21,7 @@ export interface ReactSetting {
   formStyle: 'inline' | 'vertical';
   /** 字段注释显示：1-标签后小字，2-标签后问号图标悬浮，0-不显示 */
   descMode: number;
-  /** 配置导航排开：true-一字排开 / false-核心+更多下拉 */
-  configNavFlat: boolean;
-  /** 文本框清除图标：true-显示清空叉叉 / false-隐藏（对齐 MVC 与主流表单输入框） */
+  /** 文本框清除图标：true-聚焦且非空时显示清空叉叉 / false-永不显示 */
   inputClear: boolean;
 }
 
@@ -31,7 +29,6 @@ export interface ReactSetting {
 export const DEFAULT_REACT_SETTING: ReactSetting = {
   formStyle: 'inline',
   descMode: 1,
-  configNavFlat: true,
   inputClear: false,
 };
 

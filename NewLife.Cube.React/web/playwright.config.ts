@@ -17,7 +17,9 @@ export default defineConfig({
   fullyParallel: false,
   // 限制并发 workers：7081 一体站点并发压力过大时 list.spec 等用例偶发时序失败（单独跑均通过）
   workers: 4,
-  retries: 0,
+  // 偶发失败重试 1 次：工作台 Dashboard 请求在服务端高负载时偶发网络失败（前端降级渲染，home/widget 卡断言语义变化），
+  // 单独跑均通过，重试可显著降低全量跑抖动（配合 widget.spec 布局 afterEach 清理）
+  retries: 1,
   reporter: [['list']],
   use: {
     baseURL,
