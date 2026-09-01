@@ -138,7 +138,8 @@
   display: block;
 }
 
-/* KPI 卡操作区：拖拽十字 + 隐藏菜单，绝对定位右上角（对齐 MVC widget-menu/widget-drag） */
+/* KPI 卡操作区：拖拽十字 + 隐藏菜单，绝对定位右上角（对齐 MVC widget-menu/widget-drag）。
+   默认透明，悬停卡片时淡入，避免遮挡数值（主流 dashboard 交互） */
 .cube-home-kpi-actions {
   position: absolute;
   top: 6px;
@@ -146,6 +147,13 @@
   display: flex;
   align-items: center;
   gap: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cube-home-kpi-card:hover .cube-home-kpi-actions,
+.cube-home-dragging-card .cube-home-kpi-actions {
+  opacity: 1;
 }
 
 .cube-kpi-drag-handle {
@@ -193,12 +201,11 @@
 .cube-home-kpi-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .cube-home-kpi-icon.grey { background: linear-gradient(135deg, #64748b, #475569); }
 
-/* KPI 头部：图标 + 数值同排，预留右侧操作区空间（数值不顶到三点/十字） */
+/* KPI 头部：图标 + 数值同排。操作区改为 hover 才显示（绝对定位不占布局），数值可完整展示 */
 .cube-home-kpi-head {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-right: 40px;
   min-width: 0;
 }
 

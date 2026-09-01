@@ -3,6 +3,9 @@
  *
  * GetChartData 返回 ECharts 配置数组（option 对象），逐个渲染；
  * 独立成视图不占表格空间，自适应容器宽度，窗口缩放时自动重绘。
+ *
+ * 布局：第一个图表（通常为主图，信息量最大）占满整行，其余图表两列并排，
+ * 避免多图表纵向堆叠时视觉拥挤、主图不突出。
  */
 import { useEffect, useRef } from 'react';
 import { Empty, Spin } from 'antd';
@@ -19,13 +22,13 @@ export default function ChartView({ charts }: ChartViewProps) {
   return (
     <div className="cube-chart-view">
       {charts.map((option, i) => (
-        <ChartPanel key={i} option={option} />
+        <ChartPanel key={i} option={option} full={i === 0} />
       ))}
     </div>
   );
 }
 
-function ChartPanel({ option }: { option: unknown }) {
+function ChartPanel({ option, full }: { option: unknown; full?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ function ChartPanel({ option }: { option: unknown }) {
   }, [option]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: 8 }}>
+    <div className={`cube-chart-panel${full ? ' cube-chart-panel-full' : ''}`}>
       <Spin spinning={!option}>
         <div ref={ref} style={{ width: '100%', height: 360 }} />
       </Spin>

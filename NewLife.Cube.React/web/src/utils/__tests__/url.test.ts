@@ -10,6 +10,7 @@ import {
   getValueByKey,
   setValueByKey,
   resolveUrl,
+  parseUrlQuery,
 } from '@/utils/url';
 
 describe('toPascalCase / toCamelCase', () => {
@@ -98,5 +99,23 @@ describe('resolveUrl 变量替换', () => {
     // 行 JSON camelCase，模板占位符 PascalCase
     expect(resolveUrl('/Admin/User/Detail?id={Id}', { id: 42 })).toBe('/Admin/User/Detail?id=42');
     expect(resolveUrl('/Admin/UserConnect?userId={ID}', { id: 7 })).toBe('/Admin/UserConnect?userId=7');
+  });
+});
+
+describe('parseUrlQuery 解析 URL 查询串', () => {
+  it('带 ? 前缀解析键值', () => {
+    expect(parseUrlQuery('?dtStart=2026-08-01&success=false')).toEqual({
+      dtStart: '2026-08-01',
+      success: 'false',
+    });
+  });
+
+  it('不带 ? 也可解析，空值忽略', () => {
+    expect(parseUrlQuery('dtStart=2026-08-01&empty=&x=1')).toEqual({ dtStart: '2026-08-01', x: '1' });
+  });
+
+  it('无参数返回空对象', () => {
+    expect(parseUrlQuery('')).toEqual({});
+    expect(parseUrlQuery('?')).toEqual({});
   });
 });

@@ -13,8 +13,11 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { App, Card } from 'antd';
+import { useLocation } from 'react-router-dom';
 import { clearPageMetaCache } from '@newlifex/api-core';
-import { getValueByKey } from '@/utils/url';
+import { getValueByKey, parseUrlQuery } from '@/utils/url';
+import { mapUrlParamsToSearchValues } from '@/utils/fieldControl';
+import { toFieldMeta } from '@/types/field';
 import { api } from '@/api';
 import { usePageStore } from '@/hooks/usePageStore';
 import SearchBar from './components/SearchBar';
@@ -35,6 +38,9 @@ export interface EntityListPageProps {
 export default function EntityListPage({ type }: EntityListPageProps) {
   const { message, modal } = App.useApp();
   const store = usePageStore(type);
+  const location = useLocation();
+  // 外部跳转携带的查询参数（如工作台指标卡跳转日志页 ?dtStart=...&success=false）
+  const urlQuery = useMemo(() => parseUrlQuery(location.search), [location.search]);
 
   // 订阅 store 状态
   const listFields = store((s) => s.listFields);
@@ -76,7 +82,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     [listFields],
   );
 
-  const [searchParams, setSearchParams] = useState<Record<string, unknown>>({});
+  const [searchParams, setSearchParams] = useState<Record<string, unknown>>(() => ({ ...urlQuery }));
   // 当前是否有搜索条件：有搜索时隐藏高级菜单「清空数据表」，防误删筛选后的数据（对齐 MVC page.Params.Count==0）
   const hasSearch = Object.keys(searchParams).length > 0;
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
@@ -100,21 +106,28 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const [canChart, setCanChart] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  // 页面加载：拉字段元数据 + 列表数据
+  // 页面加载：拉字段元数据 + 列表数据（携带 URL 查询参数，如工作台指标卡跳转）
   useEffect(() => {
     let cancelled = false;
     store
       .getState()
       .loadFields()
       .then(() => {
-        if (!cancelled) return store.getState().loadData();
+        if (cancelled) return;
+        return store.getState().loadData(urlQuery);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  }, [type, location.search]);
+
+  // URL 查询参数变化（外部跳转携带新条件）时同步 searchParams，驱动 hasSearch/刷新等
+  useEffect(() => {
+    setSearchParams(Object.keys(urlQuery).length ? { ...urlQuery } : {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   // 图表能力探测：加载一次，无图表数据的页面不显示 表格/图表 视图切换（§7.6）
   useEffect(() => {
@@ -380,10 +393,16 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const editFieldsForDialog = editFields.length ? editFields : addFields;
   const formFields = dialog.mode === 'edit' ? editFieldsForDialog : addFields;
 
+  // 外部 URL 查询参数 → 搜索控件值（回显到搜索区），如工作台指标卡跳转日志页 ?dtStart=...&success=false
+  const searchInitialValues = useMemo(
+    () => mapUrlParamsToSearchValues(urlQuery, searchFields.map((f) => toFieldMeta(f.field))),
+    [urlQuery, searchFields],
+  );
+
   return (
     // 页面名由顶栏面包屑/多标签承担，Card 不再重复标题（避免搜索区上方冗余占位）
     <Card className="cube-entity-card" size="small" styles={{ body: { paddingTop: 8 } }}>
-      <SearchBar fields={searchFields} onSearch={handleSearch} onReset={handleReset} />
+      <SearchBar fields={searchFields} onSearch={handleSearch} onReset={handleReset} initialValues={searchInitialValues} />
       <Toolbar
         canAdd={canAdd}
         canDelete={canDelete}

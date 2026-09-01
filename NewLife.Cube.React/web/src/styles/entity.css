@@ -105,9 +105,26 @@
 
 /* 图表视图（表格/图表 Segmented 切换，规范 §7.6） */
 .cube-chart-view {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
+}
+
+/* 主图占整行（通常信息量最大，如用户统计主折线图），其余图表两列并排 */
+.cube-chart-panel {
+  min-width: 0;
+  border: 1px solid var(--cube-border-soft);
+  border-radius: 10px;
+  background: var(--cube-surface-bg);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cube-chart-panel-full {
+  grid-column: 1 / -1;
 }
 
 .cube-toolbar {

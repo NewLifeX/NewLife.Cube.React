@@ -27,6 +27,8 @@ export interface SearchBarProps {
   fields: FieldMapping[];
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
+  /** 外部 URL 查询参数映射的初始搜索值（如工作台指标卡跳转日志页），变化时回填表单 */
+  initialValues?: Record<string, unknown>;
 }
 
 /** 范围类控件（占 2 格，避免被压缩） */
@@ -202,18 +204,25 @@ function SearchControl({
   }
 }
 
-export default function SearchBar({ fields, onSearch, onReset }: SearchBarProps) {
+export default function SearchBar({ fields, onSearch, onReset, initialValues }: SearchBarProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  // 字段变化时重置
+  // 字段变化时重置；外部 URL 参数（initialValues）优先回显
   useEffect(() => {
-    setFormData({});
+    setFormData(initialValues && Object.keys(initialValues).length ? { ...initialValues } : {});
     setExpanded(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fields]);
+
+  // 外部 URL 查询参数变化（如工作台指标卡再次跳转）：回填表单值
+  useEffect(() => {
+    if (!initialValues || Object.keys(initialValues).length === 0) return;
+    setFormData({ ...initialValues });
+  }, [initialValues]);
 
   // 折叠可见数：按容器宽度估算列数，折叠时最多显示 MAX_ROWS 行（范围控件占 2 格）
   useEffect(() => {
@@ -276,7 +285,11 @@ export default function SearchBar({ fields, onSearch, onReset }: SearchBarProps)
 
   if (!fields.length) return null;
 
-  const visibleFields = expanded ? fields : fields.slice(0, visibleCount);
+  // 存在已填/回显条件时自动展开，避免条件被折叠隐藏（如工作台指标卡跳转携带 dtStart/success=false）
+  const hasFilled = Object.keys(formData).some(
+    (k) => formData[k] != null && formData[k] !== '' && !(Array.isArray(formData[k]) && (formData[k] as unknown[]).length === 0),
+  );
+  const visibleFields = expanded || hasFilled ? fields : fields.slice(0, visibleCount);
   const canCollapse = fields.length > visibleCount;
 
   return (

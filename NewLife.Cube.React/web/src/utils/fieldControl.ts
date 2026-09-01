@@ -482,3 +482,61 @@ export function mapDataToFormValues(data: Record<string, unknown>, fields: Field
   }
   return out;
 }
+
+/**
+ * 把 URL 查询参数映射为搜索控件值（外部跳转携带查询条件，如工作台指标卡跳转日志页）
+ *
+ * 后端 URL 参数名（`dtStart`/`dtEnd`/`success=false` 等，MVC 老约定）与 React 搜索字段名
+ * （`CreateTime` 数组、`Success` 布尔）不一致，需按搜索字段元数据做映射：
+ * - 时间范围字段（dateRange/datetimeRange）：URL `dtStart`/`dtEnd` 或 `{字段}Start`/`{字段}End` → [start, end]
+ * - 布尔字段（switch）：URL `success` 或字段名小写 → true/false
+ * - 其余字段：URL 参数名与字段名大小写不敏感匹配 → 原值
+ *
+ * @param params URL 查询参数对象（parseUrlQuery 结果）
+ * @param fields 搜索字段元数据
+ * @returns 以搜索字段名为键的控件值对象，供 SearchBar 回显
+ * @example
+ * mapUrlParamsToSearchValues({ dtStart: '2026-08-01', dtEnd: '2026-08-31', success: 'false' }, logSearchFields)
+ * // => { CreateTime: ['2026-08-01', '2026-08-31'], Success: false }
+ */
+export function mapUrlParamsToSearchValues(
+  params: Record<string, unknown>,
+  fields: FieldMeta[],
+): Record<string, unknown> {
+  const rs: Record<string, unknown> = {};
+  const lower = (s: string) => s.toLowerCase();
+  // 小写键映射，支持大小写不敏感匹配
+  const lowerMap = new Map(Object.entries(params).map(([k, v]) => [lower(k), v]));
+
+  for (const f of fields) {
+    const control = resolveSearchControl(f);
+    const name = f.name;
+    const lk = lower(name);
+
+    if (control === 'dateRange' || control === 'datetimeRange') {
+      // 时间范围：优先 dtStart/dtEnd（后端老参数），其次 {字段}Start/{字段}End
+      const start = lowerMap.get('dtstart') ?? lowerMap.get(`${lk}start`);
+      const end = lowerMap.get('dtend') ?? lowerMap.get(`${lk}end`);
+      if (start != null || end != null) {
+        rs[name] = [start != null ? String(start) : null, end != null ? String(end) : null];
+      }
+      continue;
+    }
+
+    if (control === 'switch') {
+      // 布尔：URL 用 success 或字段名小写
+      const v = lowerMap.get('success') ?? lowerMap.get(lk);
+      if (v != null) rs[name] = v === true || v === 'true' || v === '1';
+      continue;
+    }
+
+    // 其余字段：URL 参数名与字段名大小写不敏感匹配
+    if (lowerMap.has(lk)) {
+      const v = lowerMap.get(lk);
+      // lovMulti 多选（角色/部门等）：逗号串 → 数组
+      if (control === 'lovMulti' && typeof v === 'string') rs[name] = v.split(',');
+      else rs[name] = v;
+    }
+  }
+  return rs;
+}

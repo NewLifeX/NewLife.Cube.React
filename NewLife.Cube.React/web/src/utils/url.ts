@@ -90,4 +90,30 @@ export function resolveUrl(url: string, row: Record<string, unknown>): string {
   });
 }
 
-export default { toPascalCase, toCamelCase, routeToApiPrefix, getValueByKey, setValueByKey, resolveUrl };
+/**
+ * 解析 URL 查询串为搜索参数对象（外部跳转携带查询条件，如工作台指标卡跳转日志页）
+ *
+ * 支持：
+ * - `dtStart`/`dtEnd` → 时间范围（后端老参数，React 搜索区用 `CreateTime` 数组）
+ * - 其余键值直接透传（`success=false`、`category=xxx` 等，后端按参数名解析）
+ *
+ * @param search URL 查询串（含 ? 或不含均可），如 `?dtStart=...&dtEnd=...&success=false`
+ * @returns 搜索参数对象；无查询参数时返回空对象
+ * @example
+ * parseUrlQuery('?dtStart=2026-08-01&dtEnd=2026-08-31&success=false')
+ * // => { dtStart: '2026-08-01', dtEnd: '2026-08-31', success: 'false' }
+ */
+export function parseUrlQuery(search: string): Record<string, unknown> {
+  const q = search.startsWith('?') ? search.slice(1) : search;
+  if (!q) return {};
+
+  const rs: Record<string, unknown> = {};
+  for (const [k, v] of new URLSearchParams(q).entries()) {
+    // 空值忽略，避免空参数干扰查询
+    if (v === '') continue;
+    rs[k] = v;
+  }
+  return rs;
+}
+
+export default { toPascalCase, toCamelCase, routeToApiPrefix, getValueByKey, setValueByKey, resolveUrl, parseUrlQuery };

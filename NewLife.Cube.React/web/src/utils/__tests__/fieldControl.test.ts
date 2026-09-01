@@ -17,6 +17,7 @@ import {
   resolveNumberPrecision,
   isFullWidthControl,
   resolveAreaMaxLevel,
+  mapUrlParamsToSearchValues,
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
@@ -345,5 +346,37 @@ describe('对齐 MVC：枚举类型名 / 纯日期 / dataSource 多选', () => {
   it('纯日期搜索 → dateRange，其余 datetimeRange', () => {
     expect(resolveSearchControl(f({ name: 'Birthday', typeName: 'DateTime' }))).toBe('dateRange');
     expect(resolveSearchControl(f({ name: 'CreateTime', typeName: 'DateTime' }))).toBe('datetimeRange');
+  });
+});
+
+describe('mapUrlParamsToSearchValues URL 查询 → 搜索控件值', () => {
+  it('时间范围 dtStart/dtEnd → CreateTime 数组', () => {
+    const fields = [f({ name: 'CreateTime', typeName: 'DateTime' })];
+    expect(mapUrlParamsToSearchValues({ dtStart: '2026-08-31', dtEnd: '2026-09-01' }, fields)).toEqual({
+      CreateTime: ['2026-08-31', '2026-09-01'],
+    });
+  });
+
+  it('布尔 success=false → Success false（大小写不敏感）', () => {
+    const fields = [f({ name: 'Success', typeName: 'Boolean' })];
+    expect(mapUrlParamsToSearchValues({ success: 'false' }, fields)).toEqual({ Success: false });
+    expect(mapUrlParamsToSearchValues({ success: 'true' }, fields)).toEqual({ Success: true });
+  });
+
+  it('其余字段大小写不敏感匹配透传，lovMulti 逗号串转数组', () => {
+    const fields = [
+      f({ name: 'Category', typeName: 'String' }),
+      f({ name: 'RoleIds', typeName: 'String', dataSource: { '2': '管理员' } }),
+    ];
+    expect(mapUrlParamsToSearchValues({ category: '访问', roleids: '2,3' }, fields)).toEqual({
+      Category: '访问',
+      RoleIds: ['2', '3'],
+    });
+  });
+
+  it('无关参数忽略，无匹配返回空对象', () => {
+    const fields = [f({ name: 'Name', typeName: 'String' })];
+    expect(mapUrlParamsToSearchValues({ foo: 'bar' }, fields)).toEqual({});
+    expect(mapUrlParamsToSearchValues({}, fields)).toEqual({});
   });
 });

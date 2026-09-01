@@ -36,6 +36,21 @@ test.describe('首页（/）', () => {
     await expect(page.locator('.cube-home-grid > .cube-home-widget').first()).toBeVisible();
   });
 
+  test('点击 24h异常 指标卡跳转审计日志页并携带查询条件回显', async ({ page }) => {
+    await page.goto('/');
+    const card = page.locator('.cube-home-kpi-card[data-key="error24h"]');
+    await expect(card).toBeVisible({ timeout: 10000 });
+    // 点击卡片主体（避开右上角拖拽/隐藏菜单区）
+    await card.click({ position: { x: 70, y: 40 } });
+    // 跳转到审计日志页并携带时间范围 + 失败条件
+    await page.waitForURL(/\/Admin\/Log\?.*(dtStart|success=false)/, { timeout: 10000 });
+    // 搜索区回显时间范围（开始/结束日期非空）
+    await expect(page.getByPlaceholder('开始日期')).not.toHaveValue('');
+    await expect(page.getByPlaceholder('结束日期')).not.toHaveValue('');
+    // 成功条件回显为「否」（success=false）
+    await expect(page.locator('.ant-card').getByText('成功').locator('..').getByText('否')).toBeVisible({ timeout: 5000 });
+  });
+
   test('点击横幅头像进入个人中心', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.cube-home-banner-avatar')).toBeVisible({ timeout: 10000 });
