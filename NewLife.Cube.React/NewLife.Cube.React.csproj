@@ -31,7 +31,7 @@
     <RepositoryUrl>https://github.com/NewLifeX/NewLife.Cube</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>新生命团队;X组件;NewLife;$(AssemblyName);React;AntDesign</PackageTags>
-    <PackageReleaseNotes>初始版本，基于CubeAntd迁移，提供React18+Ant Design 5内置前端</PackageReleaseNotes>
+    <PackageReleaseNotes>魔方React皮肤独立NuGet包，基于React19+Ant Design6+Zustand+Vite；字段元数据驱动通用列表/表单/搜索/详情，零前端开发；工作台仪表盘对齐MVC，KPI卡片拖拽排序即时保存；列表列自定义显隐顺序、双击编辑、导出携带查询条件；角色权限弹窗树形勾选；省市区级联选择与地区地图模式；日志TraceId星尘超链接</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -90,7 +90,7 @@
 
   <ItemGroup>
     <!-- 本地构建版本：含 DataField.ValueField 与 Index 行值注入（OnFillListValues），由 D:\X\Bin 本地 feed 提供 -->
-    <PackageReference Include="NewLife.Cube" Version="6.14.2026.831" />
+    <PackageReference Include="NewLife.Cube" Version="6.15.2026.901" />
   </ItemGroup>
 
 </Project>

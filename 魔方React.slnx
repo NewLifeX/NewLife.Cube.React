@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="CubeDemo/CubeDemo.csproj" />
+  <Project Path="CubeDemo/ReactCubeDemo.csproj" />
   <Project Path="NewLife.Cube.React/NewLife.Cube.React.csproj" />
 </Solution>
