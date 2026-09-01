@@ -538,36 +538,7 @@
   color: var(--cube-success);
 }
 
-/* 系统信息部件：两列信息网格（键小字灰 + 值重点，悬浮完整值） */
-.cube-home-sys-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.cube-home-sys-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--cube-surface-muted);
-  border: 1px solid var(--cube-border-soft);
-  min-width: 0;
-}
-
-.cube-home-sys-key {
-  display: block;
-  color: var(--cube-text-muted);
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.cube-home-sys-value {
-  display: block;
-  color: var(--cube-text);
-  font-size: 13px;
-  line-height: 1.5;
-  word-break: break-all;
-}
-
+/* KV 名值卡片（系统信息/未知部件共用）：每行键左值右，虚线分隔（对齐 MVC widget-sys） */
 .cube-home-info-list {
   display: grid;
   gap: 12px;
@@ -595,6 +566,35 @@
   color: var(--cube-text);
   text-align: right;
   word-break: break-all;
+}
+
+/* KV 名值卡片值若为后端 HTML 链接，渲染为主色链接 */
+.cube-home-info-link {
+  color: var(--cube-primary);
+  font-size: 13px;
+  word-break: break-all;
+  text-align: right;
+  cursor: pointer;
+}
+
+.cube-home-info-link:hover {
+  text-decoration: underline;
+}
+
+/* 系统信息「更多信息」：右下角超链接（对齐 MVC 系统信息卡 + 个人信息卡右下角链接） */
+.cube-home-sys-more {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.cube-home-sys-more a {
+  color: var(--cube-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cube-home-sys-more a:hover {
+  text-decoration: underline;
 }
 
 /* 个人信息部件：头像 + 名称/角色 + 账号表格 + 个人中心（对齐 MVC Profile.cshtml widget-profile） */
@@ -746,10 +746,6 @@
   }
 
   .cube-home-quick-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cube-home-sys-grid {
     grid-template-columns: 1fr;
   }
 

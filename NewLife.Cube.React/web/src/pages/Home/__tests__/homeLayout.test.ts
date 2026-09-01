@@ -6,7 +6,7 @@
  * 排序（隐藏剔除、未排序项保持构建序）、已隐藏项提取（恢复面板）。
  */
 import { describe, expect, it } from 'vitest';
-import { buildHomeItems, filterHiddenItems, layoutKey, normalizeLayout, sortHomeItems } from '../index';
+import { buildHomeItems, filterHiddenItems, layoutKey, normalizeLayout, parseHtmlLink, sortHomeItems } from '../index';
 import type { DashboardKpi, DashboardWidget } from '@/hooks/useDashboard';
 
 /** 布局项 */
@@ -134,5 +134,33 @@ describe('工作台布局排序与隐藏', () => {
   it('filterHiddenItems：无隐藏返回空', () => {
     const items = buildHomeItems([{ name: 'OnlineCount', label: '在线用户', value: '1' }], []);
     expect(filterHiddenItems(items, {})).toEqual([]);
+  });
+});
+
+describe('parseHtmlLink 解析后端 HTML 链接值', () => {
+  it('解析 <a href target>text</a>（系统信息「更多信息」）', () => {
+    expect(parseHtmlLink('<a href="/Admin/Index/Main" target="_blank">查看完整服务器信息 »</a>')).toEqual({
+      href: '/Admin/Index/Main',
+      target: '_blank',
+      text: '查看完整服务器信息 »',
+    });
+  });
+
+  it('无 target 属性时省略', () => {
+    expect(parseHtmlLink('<a href="/Admin/User">用户管理</a>')).toEqual({
+      href: '/Admin/User',
+      text: '用户管理',
+    });
+  });
+
+  it('单引号属性亦可解析', () => {
+    expect(parseHtmlLink(`<a href='/Admin/Log'>日志</a>`)).toEqual({ href: '/Admin/Log', text: '日志' });
+  });
+
+  it('纯文本/非链接 HTML/空值返回 null', () => {
+    expect(parseHtmlLink('普通文本')).toBeNull();
+    expect(parseHtmlLink('<div>不是链接</div>')).toBeNull();
+    expect(parseHtmlLink('')).toBeNull();
+    expect(parseHtmlLink('<a>无 href 链接</a>')).toBeNull();
   });
 });

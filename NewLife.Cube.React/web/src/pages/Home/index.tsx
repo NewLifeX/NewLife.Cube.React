@@ -56,6 +56,28 @@ const KPI_ICONS: Record<string, ReactNode> = {
   cpu: <LineChartOutlined />,
 };
 
+/**
+ * 解析后端下发的 HTML 链接字符串（如 `<a href="/Admin/Index/Main" target="_blank">查看完整服务器信息 »</a>`）
+ *
+ * 系统信息等 Kv 部件的值可能直接是 MVC 视图输出的链接 HTML，
+ * 前端按字符串渲染会显示标签源码而非链接，需解析为 React 链接。
+ *
+ * @param raw 原始值（可能含 `<a>` 标签）
+ * @returns { href, target, text }；非链接 HTML 或纯文本返回 null
+ * @example
+ * parseHtmlLink('<a href="/Admin/Index/Main" target="_blank">查看完整服务器信息 »</a>')
+ * // => { href: '/Admin/Index/Main', target: '_blank', text: '查看完整服务器信息 »' }
+ */
+export const parseHtmlLink = (raw: string): { href: string; target?: string; text: string } | null => {
+  const m = /^\s*<a\s+([^>]*)>([\s\S]*?)<\/a>\s*$/i.exec(raw);
+  if (!m) return null;
+  const attrs = m[1];
+  const href = /href=["']([^"']*)["']/i.exec(attrs)?.[1];
+  const target = /target=["']([^"']*)["']/i.exec(attrs)?.[1];
+  const text = m[2].replace(/<[^>]*>/g, '').trim();
+  return href ? { href, target, text } : null;
+};
+
 /** 工作台卡片布局项（排序 + 隐藏），对应后端 WidgetLayout */
 interface WidgetLayoutItem {
   sort?: number;
@@ -505,29 +527,58 @@ export default function HomePage() {
     </div>
   );
 
-  /** 系统信息部件正文：两列信息网格（键小字灰 + 值重点，悬浮完整值） */
-  const renderSysInfoBody = (data?: Record<string, unknown>): ReactNode =>
-    data ? (
-      <div className="cube-home-sys-grid">
-        {Object.entries(data).map(([k, v]) => (
-          <div key={k} className="cube-home-sys-item" title={String(v ?? '')}>
-            <span className="cube-home-sys-key">{k}</span>
-            <span className="cube-home-sys-value">{String(v ?? '')}</span>
+  /**
+   * 系统信息部件正文：每行名值（键灰左 + 值右，对齐 MVC 系统信息卡 widget-sys）；
+   * 「更多信息」值为后端 HTML 链接，解析后渲染为右下角超链接（对齐 MVC 查看完整服务器信息）
+   */
+  const renderSysInfoBody = (data?: Record<string, unknown>): ReactNode => {
+    if (!data) return null;
+    const entries = Object.entries(data);
+    const more = entries.find(([k]) => k === '更多信息');
+    const link = more ? parseHtmlLink(String(more[1] ?? '')) : null;
+    return (
+      <>
+        <div className="cube-home-info-list">
+          {entries
+            .filter(([k]) => k !== '更多信息')
+            .map(([k, v]) => (
+              <div key={k} className="cube-home-info-item" title={String(v ?? '')}>
+                <span className="cube-home-info-key">{k}</span>
+                <span className="cube-home-info-value">{String(v ?? '')}</span>
+              </div>
+            ))}
+        </div>
+        {link && (
+          <div className="cube-home-sys-more">
+            <a href={link.href} target={link.target} rel="noreferrer">
+              {link.text}
+            </a>
           </div>
-        ))}
-      </div>
-    ) : null;
+        )}
+      </>
+    );
+  };
 
-  /** 键值字典正文（未知名部件兜底） */
+  /** 键值字典正文（未知名部件兜底）；值若为后端 HTML 链接则渲染为链接，避免显示标签源码 */
   const renderKvBody = (data?: Record<string, unknown>): ReactNode =>
     data ? (
       <div className="cube-home-info-list">
-        {Object.entries(data).map(([k, v]) => (
-          <div key={k} className="cube-home-info-item">
-            <span className="cube-home-info-key">{k}</span>
-            <span className="cube-home-info-value">{String(v ?? '')}</span>
-          </div>
-        ))}
+        {Object.entries(data).map(([k, v]) => {
+          const raw = String(v ?? '');
+          const link = parseHtmlLink(raw);
+          return (
+            <div key={k} className="cube-home-info-item" title={raw}>
+              <span className="cube-home-info-key">{k}</span>
+              {link ? (
+                <a className="cube-home-info-link" href={link.href} target={link.target} rel="noreferrer">
+                  {link.text}
+                </a>
+              ) : (
+                <span className="cube-home-info-value">{raw}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     ) : null;
 
