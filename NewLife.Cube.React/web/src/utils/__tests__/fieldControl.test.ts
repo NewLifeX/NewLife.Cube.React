@@ -16,6 +16,7 @@ import {
   serializeSubmitModel,
   resolveNumberPrecision,
   isFullWidthControl,
+  resolveAreaMaxLevel,
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
@@ -58,6 +59,13 @@ describe('resolveControl 表单控件映射', () => {
   it('大文本 → textarea，普通 → input', () => {
     expect(resolveControl(f({ typeName: 'String', length: 300 }))).toBe('textarea');
     expect(resolveControl(f({ typeName: 'String', length: 50 }))).toBe('input');
+  });
+
+  it('省市区级联（itemType=area1~4）→ areaCascader', () => {
+    expect(resolveControl(f({ typeName: 'Int32', itemType: 'area1' }))).toBe('areaCascader');
+    expect(resolveControl(f({ typeName: 'Int32', itemType: 'area2' }))).toBe('areaCascader');
+    expect(resolveControl(f({ typeName: 'Int32', itemType: 'area3' }))).toBe('areaCascader');
+    expect(resolveControl(f({ typeName: 'Int32', itemType: 'area4' }))).toBe('areaCascader');
   });
 });
 
@@ -105,6 +113,22 @@ describe('resolveSearchControl 搜索控件映射', () => {
 
   it('无选项的 Int32 仍是数字范围（部门未配置数据源时兜底）', () => {
     expect(resolveSearchControl(f({ name: 'DepartmentID', typeName: 'Int32' }))).toBe('numberRange');
+  });
+
+  it('省市区级联（itemType=area1~4）→ areaCascader', () => {
+    expect(resolveSearchControl(f({ name: 'AreaId', typeName: 'Int32', itemType: 'area3' }))).toBe('areaCascader');
+    expect(resolveSearchControl(f({ name: 'AreaId', typeName: 'Int32', itemType: 'area4' }))).toBe('areaCascader');
+    expect(resolveSearchControl(f({ name: 'AreaId', typeName: 'Int32', itemType: 'area2' }))).toBe('areaCascader');
+    expect(resolveSearchControl(f({ name: 'AreaId', typeName: 'Int32', itemType: 'area1' }))).toBe('areaCascader');
+  });
+
+  it('resolveAreaMaxLevel 按 itemType 后缀推导，默认 3 级', () => {
+    expect(resolveAreaMaxLevel(f({ itemType: 'area1' }))).toBe(1);
+    expect(resolveAreaMaxLevel(f({ itemType: 'area2' }))).toBe(2);
+    expect(resolveAreaMaxLevel(f({ itemType: 'area3' }))).toBe(3);
+    expect(resolveAreaMaxLevel(f({ itemType: 'area4' }))).toBe(4);
+    expect(resolveAreaMaxLevel(f({ typeName: 'Int32' }))).toBe(3);
+    expect(resolveAreaMaxLevel(f({ itemType: 'Area3' }))).toBe(3);
   });
 });
 

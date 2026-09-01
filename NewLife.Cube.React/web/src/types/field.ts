@@ -27,6 +27,7 @@ export type ControlType =
   | 'email' // 邮箱（带校验）
   | 'tel' // 手机（带校验）
   | 'url' // 网址（带校验）
+  | 'areaCascader' // 省市区级联选择（省/市/区/乡镇，层级由 itemType 后缀 1~4 指定）
   | 'readonly'; // 只读文本（Guid 等）
 
 /** 动态搜索控件类型（搜索区子集，对齐 Vue SearchControlType） */
@@ -39,7 +40,8 @@ export type SearchControlType =
   | 'lov' // 值集单选
   | 'lovMulti' // 值集多选
   | 'switch' // 布尔（是 / 否）
-  | 'fileExists'; // 附件存在性（有 / 无）
+  | 'fileExists' // 附件存在性（有 / 无）
+  | 'areaCascader'; // 省市区级联选择（省/市/区/乡镇，层级由 itemType 后缀 1~4 指定）
 
 /** 列表单元格渲染类型（对齐 Vue ListControlType） */
 export type ListControlType =

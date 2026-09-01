@@ -16,7 +16,8 @@ import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LovSelect from '@/components/field/LovSelect';
 import FocusClearInput from '@/components/field/FocusClearInput';
-import { resolveSearchControl } from '@/utils/fieldControl';
+import AreaCascader from '@/components/field/AreaCascader';
+import { resolveSearchControl, resolveAreaMaxLevel } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import type { SearchControlType } from '@/types/field';
@@ -150,6 +151,15 @@ function SearchControl({
           placeholder={`请选择${label}`}
           value={value as string[]}
           onChange={onChange}
+        />
+      );
+    case 'areaCascader':
+      // 省市区级联选择：层级由后端 ItemType 后缀（area1~4）推导，值提交最后选中的地区编号
+      return (
+        <AreaCascader
+          maxLevel={resolveAreaMaxLevel(meta)}
+          value={typeof value === 'number' ? value : value != null && value !== '' ? Number(value) : undefined}
+          onChange={(v) => onChange(v)}
         />
       );
     case 'switch':

@@ -74,6 +74,11 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   password: 'input',
   time: 'timePicker',
   date: 'date',
+  // 省市区级联选择：area1=省、area2=省/市、area3=省/市/区、area4=省/市/区/乡镇街道（对齐 MVC _Area1~_Area4）
+  area1: 'areaCascader',
+  area2: 'areaCascader',
+  area3: 'areaCascader',
+  area4: 'areaCascader',
 };
 
 /** 解析小写 ItemType */
@@ -173,6 +178,20 @@ export function widgetToControl(widget: WidgetType): ControlType {
 }
 
 /**
+ * 解析省市区级联选择器的最大层级。
+ *
+ * 后端 ItemType 约定：area1=省、area2=省/市、area3=省/市/区、area4=省/市/区/乡镇街道（对齐 MVC _Area1~_Area4）；
+ * 未识别或未指定时默认 3 级（省/市/区）。
+ *
+ * @param field 字段元数据
+ * @returns 最大层级 1~4
+ */
+export function resolveAreaMaxLevel(field: FieldMeta): number {
+  const m = /^area([1-4])$/i.exec((field.itemType ?? '').trim());
+  return m ? Number(m[1]) : 3;
+}
+
+/**
  * 解析动态搜索控件类型。
  *
  * @param field 字段元数据（Guid / 主键已在上游过滤，不会进入搜索）
@@ -187,6 +206,9 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
   if (itemType === 'multipleselect') return 'lovMulti';
   if (itemType === 'lovtable') return 'lov';
   if (itemType === 'lovtablemulti') return 'lovMulti';
+
+  // 省市区级联选择（itemType=area1~4，层级由后缀指定）
+  if (/^area[1-4]$/.test(itemType)) return 'areaCascader';
 
   const typeName = field.typeName;
 

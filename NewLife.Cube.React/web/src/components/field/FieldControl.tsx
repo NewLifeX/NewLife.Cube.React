@@ -13,7 +13,8 @@ import JsonEditor from './JsonEditor';
 import IconSelector from './IconSelector';
 import RichEditor from './RichEditor';
 import FocusClearInput from './FocusClearInput';
-import { resolveControl, isFullWidthControl, resolveNumberPrecision } from '@/utils/fieldControl';
+import AreaCascader from './AreaCascader';
+import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel } from '@/utils/fieldControl';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
 
@@ -162,6 +163,16 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             dataSource={field.dataSource}
             multiple
             placeholder={placeholder}
+          />
+        );
+      case 'areaCascader':
+        // 省市区级联选择：层级由后端 ItemType 后缀（area1~4）推导，值提交最后选中的地区编号
+        return (
+          <AreaCascader
+            {...commonProps}
+            maxLevel={resolveAreaMaxLevel(field)}
+            value={(value as number) ?? undefined}
+            onChange={(v) => onChange?.(v)}
           />
         );
       case 'image':
