@@ -2,24 +2,20 @@
  * 角色权限配置弹窗（对齐 MVC 角色编辑页的「授权」树形表格）
  *
  * 后端 /Admin/Role/PermissionTree 返回菜单树（每项含可用权限位 flags 与当前角色已授权位 granted），
- * 前端树形 Table 逐行勾选 查看/添加/修改/删除（对齐 MVC 授权表格），并支持快捷 只读/全部/无权限。
+ * 前端树形 Table 逐行配置操作权限（对齐 MVC 授权表格：叶子行渲染全部权限位复选框，父级行提供
+ * 只读/全部/无权限级联快捷），默认仅展开一级菜单，避免表单拉长。
  * 保存时收集为 "id#flag,id#flag" 权限字符串（与后端 Role.LoadPermission 解析格式一致）提交保存。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { App, Checkbox, Modal, Space, Table, Typography } from 'antd';
 import { api } from '@/api';
-
-/** 权限树节点（与后端 PermissionTree 返回结构对应） */
-export interface PermissionNode {
-  id: number;
-  name: string;
-  displayName: string;
-  /** 该菜单可用权限位（PermissionFlags：1 查看/2 添加/4 修改/8 删除） */
-  flags?: Array<{ value: number; name: string }>;
-  /** 当前角色已授权位 */
-  granted?: number;
-  children?: PermissionNode[];
-}
+import {
+  buildQuickGranted,
+  collectSubtreeIds,
+  serializePermissions,
+  type PermissionNode,
+  type QuickMode,
+} from '@/views/list/utils/permission';
 
 interface PermissionDialogProps {
   open: boolean;
@@ -29,19 +25,11 @@ interface PermissionDialogProps {
   onSaved?: () => void;
 }
 
-/** 权限位列（对齐 MVC：查看/添加/修改/删除） */
-const FLAG_COLS = [
-  { flag: 1, key: 'detail', label: '查看' },
-  { flag: 2, key: 'insert', label: '添加' },
-  { flag: 4, key: 'update', label: '修改' },
-  { flag: 8, key: 'delete', label: '删除' },
-];
-
 export default function PermissionDialog({ open, roleId, roleName, onClose, onSaved }: PermissionDialogProps) {
   const { message } = App.useApp();
   const [tree, setTree] = useState<PermissionNode[]>([]);
   const [grantedMap, setGrantedMap] = useState<Record<number, number>>({});
-  /** 展开键（受控）。defaultExpandAllRows 对异步数据无效，数据加载后收集全部含子节点的行 */
+  /** 展开键（受控）。默认折叠：仅显示一级菜单，点击展开箭头查看子级 */
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,21 +45,17 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
         const body = res.data as { data?: { tree?: PermissionNode[] } };
         const data = body?.data?.tree ?? [];
         setTree(data);
-        // 扁平化收集已授权位 + 所有含子节点的展开键
+        // 扁平化收集已授权位；展开键保持空（默认折叠仅显示一级菜单）
         const map: Record<number, number> = {};
-        const keys: React.Key[] = [];
         const walk = (nodes: PermissionNode[]) => {
           for (const n of nodes) {
             if (n.granted) map[n.id] = n.granted;
-            if (n.children?.length) {
-              keys.push(n.id);
-              walk(n.children);
-            }
+            if (n.children?.length) walk(n.children);
           }
         };
         walk(data);
         setGrantedMap(map);
-        setExpandedKeys(keys);
+        setExpandedKeys([]);
       })
       .catch(() => message.error('加载权限树失败'))
       .finally(() => setLoading(false));
@@ -90,27 +74,27 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
     });
   };
 
-  /** 快捷设置：只读=查看(1)，全部=该菜单可用权限位并集，无权限=0 */
-  const setQuick = (id: number, flags: number) => {
+  /** 快捷设置：只读=查看(1)、全部=全部权限位(0xFFFFFFFF)、无权限=0。父级级联到当前+所有子孙，叶子仅自身 */
+  const handleQuick = (row: PermissionNode, mode: QuickMode) => {
+    const ids = collectSubtreeIds(tree, row.id);
+    const granted = buildQuickGranted(tree, row.id, mode);
     setGrantedMap((prev) => {
       const copy = { ...prev };
-      if (flags) copy[id] = flags;
-      else delete copy[id];
+      if (mode === 'none') {
+        for (const id of ids) delete copy[id];
+      } else {
+        Object.assign(copy, granted);
+      }
       return copy;
     });
   };
-
-  const allFlags = (row: PermissionNode) => row.flags?.reduce((acc, f) => acc | f.value, 0) ?? 0;
 
   const handleSave = async () => {
     if (!roleId) return;
     setSaving(true);
     try {
-      const parts = Object.entries(grantedMap)
-        .filter(([, f]) => f)
-        .map(([id, f]) => `${id}#${f}`)
-        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-      await api.client.post('/Admin/Role/SavePermission', { roleId, permission: parts.join(',') });
+      const permission = serializePermissions(grantedMap);
+      await api.client.post('/Admin/Role/SavePermission', { roleId, permission });
       message.success('权限保存成功');
       onSaved?.();
       onClose();
@@ -122,17 +106,35 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
   };
 
   const columns = useMemo(() => {
-    const renderFlag = (flag: number, label: string) => ({
-      title: label,
-      key: `f${flag}`,
-      width: 60,
-      align: 'center' as const,
-      render: (_: unknown, row: PermissionNode) => {
-        // 无该权限位的菜单显示占位，不可勾选
-        if (!row.flags?.some((f) => f.value === flag)) return <span className="cube-perm-na">-</span>;
-        return <Checkbox checked={((grantedMap[row.id] ?? 0) & flag) === flag} onChange={() => toggle(row.id, flag)} />;
-      },
-    });
+    /** 操作权限单元格：父级行显示 只读/全部/无权限 级联快捷；叶子行渲染全部权限位复选框 + 单行快捷 */
+    const renderPerm = (_: unknown, row: PermissionNode) => {
+      const quick = (
+        <Space size={6}>
+          <a onClick={() => handleQuick(row, 'readonly')}>只读</a>
+          <a onClick={() => handleQuick(row, 'all')}>全部</a>
+          <a onClick={() => handleQuick(row, 'none')}>无权限</a>
+        </Space>
+      );
+      // 父级行（含子菜单）：仅提供级联快捷，避免表单拉长
+      if (row.children?.length) return quick;
+      if (!row.flags?.length) return <span className="cube-perm-na">-</span>;
+      return (
+        <Space size={12} wrap>
+          <Space size={8}>
+            {row.flags.map((f) => (
+              <Checkbox
+                key={f.value}
+                checked={((grantedMap[row.id] ?? 0) & f.value) === f.value}
+                onChange={() => toggle(row.id, f.value)}
+              >
+                {f.name}
+              </Checkbox>
+            ))}
+          </Space>
+          {quick}
+        </Space>
+      );
+    };
 
     return [
       {
@@ -145,18 +147,10 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
           </Space>
         ),
       },
-      ...FLAG_COLS.map((c) => renderFlag(c.flag, c.label)),
       {
-        title: '快捷',
-        key: 'quick',
-        width: 150,
-        render: (_: unknown, row: PermissionNode) => (
-          <Space size={6}>
-            <a onClick={() => setQuick(row.id, 1)}>只读</a>
-            <a onClick={() => setQuick(row.id, allFlags(row))}>全部</a>
-            <a onClick={() => setQuick(row.id, 0)}>无权限</a>
-          </Space>
-        ),
+        title: '操作权限',
+        key: 'permission',
+        render: renderPerm,
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,13 +160,13 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
     <Modal
       open={open}
       title={`角色权限${roleName ? ` - ${roleName}` : ''}`}
-      width={760}
+      width={820}
       onCancel={onClose}
       onOk={handleSave}
       confirmLoading={saving}
       okText="保存"
       cancelText="取消"
-      destroyOnClose
+      destroyOnHidden
     >
       <Table<PermissionNode>
         rowKey="id"
