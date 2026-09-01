@@ -11,10 +11,21 @@ import AreaCascader, { buildAreaTree } from '../AreaCascader';
 import { api } from '@/api';
 
 const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
+const { mockAreaStyle } = vi.hoisted(() => ({ mockAreaStyle: { current: 'cascader' } }));
 
 vi.mock('@/api', () => ({
   api: { client: { get: mockGet } },
   CUBE_TOKEN_EVENT: 'cube:token-change',
+}));
+
+// 控制 AreaCascader 的方案分发（cascader 默认 / tabs MVC 风格）
+vi.mock('@/stores/reactSetting', () => ({
+  useReactSetting: () => ({
+    formStyle: 'inline',
+    descMode: 1,
+    inputClear: false,
+    areaPickerStyle: mockAreaStyle.current,
+  }),
 }));
 
 const provinces = [
@@ -74,8 +85,8 @@ describe('buildAreaTree 路径树构建', () => {
     const { root, path } = await buildAreaTree([2, 999], 3);
     expect(path).toEqual([2]);
     expect(root[1].children).toEqual([
-      { id: 20, name: '广州市', isLeaf: false },
-      { id: 21, name: '深圳市', isLeaf: false },
+      { id: 20, name: '广州市', bigArea: '', isLeaf: false },
+      { id: 21, name: '深圳市', bigArea: '', isLeaf: false },
     ]);
   });
 
@@ -153,5 +164,37 @@ describe('AreaCascader 组件', () => {
     fireEvent.mouseDown(screen.getByRole('combobox'));
     await waitFor(() => screen.getByTitle('广东省'));
     expect(mockGet.mock.calls.length).toBe(calls);
+  });
+});
+
+describe('AreaCascader 方案分发', () => {
+  beforeEach(() => {
+    mockAreaStyle.current = 'cascader';
+    setupMock();
+  });
+
+  it('areaPickerStyle=tabs 时渲染多Tab弹层（大区分组）', async () => {
+    mockAreaStyle.current = 'tabs';
+    // 省份带大区字段（tabs 方案按 bigArea 分组）
+    mockGet.mockReset();
+    mockGet.mockImplementation(async (url: unknown, cfg?: { params?: { id?: number } }) => {
+      const id = cfg?.params?.id ?? 0;
+      if (url === '/Cube/AreaChilds') {
+        if (id === 0)
+          return {
+            data: { data: [{ id: 1, name: '北京', bigArea: '华北' }, { id: 2, name: '广东', bigArea: '华南' }] },
+          };
+        return { data: { data: [] } };
+      }
+      return { data: { data: [] } };
+    });
+
+    render(<AreaCascader maxLevel={3} />);
+    fireEvent.click(screen.getByRole('textbox'));
+    await waitFor(() => expect(screen.getByTestId('area-tabs-panel')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('华北')).toBeInTheDocument());
+    expect(screen.getByTestId('area-tabs-nav-0')).toHaveTextContent('省份');
+    expect(screen.getByText('华南')).toBeInTheDocument();
+    expect(screen.getByText('广东')).toBeInTheDocument();
   });
 });

@@ -1,38 +1,22 @@
 /**
- * 省市区级联选择器（对齐 MVC _Area1~_Area4 city-picker）
+ * 省市区级联选择器（对齐 MVC _Area1~_Area4）
  *
- * 数据源：后端服务接口 GET /Cube/AreaChilds?id={parentId}（id=0 返回省级），
- * 经 api.client 的 resolveRequestUrl 自动识别服务路径（去掉 /api 前缀）。
- * 层级：maxLevel 1~4（省/市/区/乡镇街道），changeOnSelect 允许选中间级；
- * 值 = 最后选中地区编号（number），后端 Search 会按层级自动向下展开（省→市+区，市→区）。
- * 受控回显：value 为地区编号时经 /Cube/AreaParents?id=&isContainSelf=true 解析父级路径。
+ * 按 ReactSetting.areaPickerStyle 分发两种方案：
+ * - cascader（默认）：antd 级联下拉，多列并排懒加载
+ * - tabs：MVC 风格多 Tab 弹层（省份按大区分组，选一级自动切下一 tab，窄屏 Drawer 全屏）
+ * 两者共用数据层 ./areaData（/Cube/AreaChilds、/Cube/AreaParents）。
  */
 import { useEffect, useState } from 'react';
 import { Cascader } from 'antd';
-import { api } from '@/api';
+import { useReactSetting } from '@/stores/reactSetting';
+import AreaTabsPicker from './AreaTabsPicker';
+import { PLACEHOLDERS, fetchAreaPath, fetchChildren, buildAreaTree, type AreaOption } from './areaData';
 
-/** 后端地区节点（/Cube/AreaChilds、/Cube/AreaParents 返回，camelCase；兼容 PascalCase） */
-export interface AreaNode {
-  ID: number;
-  Name: string;
-  FullName?: string;
-  Level?: number;
-  ParentID?: number;
-  /** 后端 camelCase 序列化字段（与 PascalCase 二选一） */
-  id?: number;
-  name?: string;
-  fullName?: string;
-  level?: number;
-  parentId?: number;
-}
-
-/** 级联选项（antd Cascader 结构，fieldNames 映射 label=name、value=id） */
-export interface AreaOption {
-  id: number;
-  name: string;
-  children?: AreaOption[];
-  isLeaf?: boolean;
-}
+// 兼容既有导入（组件测试等）：数据层工具函数与类型
+// eslint-disable-next-line no-unused-vars
+export { buildAreaTree } from './areaData';
+// eslint-disable-next-line no-unused-vars
+export type { AreaNode, AreaOption } from './areaData';
 
 export interface AreaCascaderProps {
   /** 当前选中地区编号（number）。搜索区一般无值；表单编辑回显时传入 */
@@ -47,62 +31,7 @@ export interface AreaCascaderProps {
   style?: React.CSSProperties;
 }
 
-/** 各层级的默认占位提示（对齐 MVC _Area1~_Area4） */
-const PLACEHOLDERS = ['请选择省', '请选择省/市', '请选择省/市/区', '请选择省/市/区/乡镇街道'];
-
-/** 兼容后端 camelCase / PascalCase 字段取值 */
-function nodeId(n: AreaNode): number {
-  return n.id ?? n.ID;
-}
-function nodeName(n: AreaNode): string {
-  return n.name ?? n.Name;
-}
-
-/** 拉取指定地区的子级 */
-async function fetchChildren(parentId: number): Promise<AreaOption[]> {
-  const res = await api.client.get('/Cube/AreaChilds', { params: { id: parentId } });
-  const list = (res.data?.data ?? []) as AreaNode[];
-  return list.map((n) => ({ id: nodeId(n), name: nodeName(n), isLeaf: false }));
-}
-
-/** 解析地区编号的父级路径（含自身），用于受控回显 */
-async function fetchAreaPath(areaId: number): Promise<number[]> {
-  const res = await api.client.get('/Cube/AreaParents', { params: { id: areaId, isContainSelf: true } });
-  const list = (res.data?.data ?? []) as AreaNode[];
-  return list.map(nodeId).filter((id) => id > 0);
-}
-
-/**
- * 沿父级路径逐级构建选项树（供受控回显）
- *
- * @param pathIds 父级路径（含自身，从省到叶）
- * @param maxLevel 最大层级
- * @returns 顶层选项树与可回显的路径
- */
-export async function buildAreaTree(
-  pathIds: number[],
-  maxLevel: number,
-): Promise<{ root: AreaOption[]; path: number[] }> {
-  const root = await fetchChildren(0);
-  let nodes = root;
-  const path: number[] = [];
-  for (let i = 0; i < pathIds.length && i < maxLevel; i++) {
-    const target = nodes.find((n) => n.id === pathIds[i]);
-    if (!target) break;
-    path.push(target.id);
-    if (i < maxLevel - 1) {
-      const children = await fetchChildren(target.id);
-      target.children = children;
-      target.isLeaf = false;
-      nodes = children;
-    } else {
-      target.isLeaf = true;
-    }
-  }
-  return { root, path };
-}
-
-export default function AreaCascader({
+function AreaCascaderDropdown({
   value,
   onChange,
   maxLevel = 3,
@@ -191,4 +120,11 @@ export default function AreaCascader({
       style={{ width: '100%', ...style }}
     />
   );
+}
+
+/** 地区选择器（按 ReactSetting.areaPickerStyle 分发：cascader 级联下拉 / tabs MVC 风格多 Tab 弹层） */
+export default function AreaCascader(props: AreaCascaderProps) {
+  const { areaPickerStyle } = useReactSetting();
+  if (areaPickerStyle === 'tabs') return <AreaTabsPicker {...props} />;
+  return <AreaCascaderDropdown {...props} />;
 }

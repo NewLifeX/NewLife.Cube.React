@@ -23,6 +23,8 @@ export interface ReactSetting {
   descMode: number;
   /** 文本框清除图标：true-聚焦且非空时显示清空叉叉 / false-永不显示 */
   inputClear: boolean;
+  /** 地区选择方案：cascader-级联下拉（默认）/ tabs-MVC 风格多 Tab 弹层（大区分组逐级切换） */
+  areaPickerStyle: 'cascader' | 'tabs';
 }
 
 /** 默认设置（读取失败时回退，保证任何环境下页面可用） */
@@ -30,6 +32,7 @@ export const DEFAULT_REACT_SETTING: ReactSetting = {
   formStyle: 'inline',
   descMode: 1,
   inputClear: false,
+  areaPickerStyle: 'cascader',
 };
 
 interface ReactSettingState {

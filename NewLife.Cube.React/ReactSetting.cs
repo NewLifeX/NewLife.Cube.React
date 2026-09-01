@@ -27,5 +27,10 @@ public class ReactSetting : Config<ReactSetting>
     [Description("文本框清除图标。true-输入框聚焦且非空时显示清空叉叉，false-永不显示")]
     [Category("表单")]
     public Boolean InputClear { get; set; } = false;
+
+    /// <summary>地区选择方案。cascader-级联下拉（默认），tabs-MVC风格多Tab弹层（省份按大区分组，逐级切换）</summary>
+    [Description("地区选择方案。cascader-级联下拉（默认），tabs-MVC风格多Tab弹层（省份按大区分组，逐级切换）")]
+    [Category("表单")]
+    public String AreaPickerStyle { get; set; } = "cascader";
     #endregion
 }

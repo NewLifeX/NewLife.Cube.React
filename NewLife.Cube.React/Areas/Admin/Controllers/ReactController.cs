@@ -41,6 +41,17 @@ public class ReactController : ConfigController<ReactSetting>
             };
         }
 
+        // 地区选择方案：cascader/tabs
+        var ap = list.FirstOrDefault(e => e.Name == "AreaPickerStyle");
+        if (ap != null)
+        {
+            ap.DataSource = _ => new Dictionary<String, String>
+            {
+                ["cascader"] = "级联下拉",
+                ["tabs"] = "多Tab弹层（MVC风格，大区分组）",
+            };
+        }
+
         return list;
     }
 }
