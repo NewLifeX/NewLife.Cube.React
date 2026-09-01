@@ -231,6 +231,25 @@ test.describe('通用列表页（/Admin/User）', () => {
     expect(req.url()).toContain(encodeURIComponent('admin'));
   });
 
+  test('导出 Zip 触发 zip 下载且携带当前查询条件', async ({ page }) => {
+    // Log 页搜索区含「关键字」文本框（Q 参数）
+    await page.goto('/Admin/Log');
+    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+    // 先搜索设置查询条件，验证导出基于当前查询而非整表
+    const keyword = page.getByPlaceholder('请输入关键字');
+    await keyword.fill('admin');
+    await page.getByRole('button', { name: /搜\s*索/ }).click();
+    await page.waitForTimeout(800);
+    // 导出收纳在「高级」菜单内（规范 §7.8）
+    await page.getByRole('button', { name: /高\s*级/ }).click();
+    const reqPromise = page.waitForRequest((r) => r.url().includes('/ExportFile'), { timeout: 20000 });
+    const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
+    await page.getByText('导出 Zip').click();
+    const [req, download] = await Promise.all([reqPromise, downloadPromise]);
+    expect(download.suggestedFilename().toLowerCase()).toContain('.zip');
+    expect(req.url()).toContain(encodeURIComponent('admin'));
+  });
+
   test('导入 CSV 新增用户并落库', async ({ page }) => {
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });

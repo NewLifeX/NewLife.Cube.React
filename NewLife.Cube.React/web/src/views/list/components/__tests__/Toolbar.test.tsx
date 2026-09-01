@@ -150,7 +150,7 @@ describe('Toolbar 工具栏', () => {
       expect(screen.getByText('导出 CSV')).toBeInTheDocument();
       expect(screen.getByText('导出 JSON')).toBeInTheDocument();
       expect(screen.getByText('导出 XML')).toBeInTheDocument();
-      expect(screen.getByText('导出模板')).toBeInTheDocument();
+      expect(screen.getByText('导出 Zip')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByText('导出 CSV'));
     await waitFor(() => {

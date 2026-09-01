@@ -511,6 +511,7 @@ function downloadBlob(blob: Blob, filename: string) {
 function blobExt(contentType: string): string {
   if (contentType.includes('csv')) return '.csv';
   if (contentType.includes('json')) return '.json';
+  if (contentType.includes('zip')) return '.zip';
   // xlsx 的 content-type 为 ...openxmlformats...spreadsheetml.sheet，内含 "xml" 子串，必须在 xml 之前识别
   if (contentType.includes('spreadsheetml') || contentType.includes('excel')) return '.xlsx';
   if (contentType.includes('xml')) return '.xml';
