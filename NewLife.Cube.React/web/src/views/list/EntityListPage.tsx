@@ -56,6 +56,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const canExport = store((s) => s.canExport);
   const canImport = store((s) => s.canImport);
   const canDevelop = store((s) => s.canDevelop);
+  // 图表数据。必须在组件顶部无条件订阅（zustand selector 是 hook），
+  // 不能在 JSX 条件分支内调用，否则切到图表视图时 hooks 数量变化触发 React #310
+  const chartList = store((s) => s.chartList);
 
   // 查看权限：只读控制器或无可编辑权限时提供「查看」（规范 §7.9）
   const canView = !!pageSetting?.isReadOnly || !canEdit;
@@ -407,7 +410,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
         }
       />
       {view === 'chart' ? (
-        <ChartView charts={store((s) => s.chartList)} />
+        <ChartView charts={chartList} />
       ) : (
         <>
           <TableContent
