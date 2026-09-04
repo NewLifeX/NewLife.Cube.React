@@ -30,7 +30,7 @@ test.describe('首页（/）', () => {
     await page.goto('/');
     const kpis = page.locator('.cube-home-grid > .cube-home-kpi-card');
     await expect(kpis.first()).toBeVisible({ timeout: 10000 });
-    // 管理员默认系统 KPI 卡（UserCount/CpuRate/OnlineCount/TodayLogin/Log24h/Error24h），降级时至少 3 个
+    // 管理员默认系统 KPI 卡（UserCount/TodayLogin/OnlineCount/MaxOnline/Error24h/OnlineTime），降级时至少 3 个
     expect(await kpis.count()).toBeGreaterThanOrEqual(3);
     // KPI 卡是网格直接子元素，未包在 Card 容器内
     await expect(page.locator('.cube-home-grid > .cube-home-widget').first()).toBeVisible();

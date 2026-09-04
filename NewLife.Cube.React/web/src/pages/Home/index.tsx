@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   AppstoreOutlined,
   BugOutlined,
+  ClockCircleOutlined,
   DragOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
@@ -19,6 +20,7 @@ import {
   LineChartOutlined,
   MoreOutlined,
   ReloadOutlined,
+  RiseOutlined,
   TeamOutlined,
   UndoOutlined,
   UserOutlined,
@@ -45,9 +47,9 @@ const KPI_ICONS: Record<string, ReactNode> = {
   UserCount: <TeamOutlined />,
   TodayLogin: <UserOutlined />,
   OnlineCount: <AppstoreOutlined />,
-  Log24h: <FileTextOutlined />,
+  MaxOnline: <RiseOutlined />,
   Error24h: <BugOutlined />,
-  CpuRate: <LineChartOutlined />,
+  OnlineTime: <ClockCircleOutlined />,
   // 兼容旧语义名（接口不可用时的降级数据）
   users: <TeamOutlined />,
   online: <AppstoreOutlined />,
@@ -117,19 +119,41 @@ export const buildHomeItems = (allKpis: DashboardKpi[], allWidgets: DashboardWid
 
 /**
  * 按用户布局过滤 + 排序（隐藏项剔除）。
- * KPI 组恒在内容部件之前（指标卡直排首行）；组内按布局 sort 排，未排序项保持构建序兜底
+ * KPI 组恒在内容部件之前（指标卡直排首行）；组内：已布局卡严格按布局 sort 排，
+ * 未布局的新卡按默认位智能插入（后端已按 KPI 簇 / 业务优先排好构建序，新卡插到第一个
+ * “默认应排在它之后”的已布局卡前），避免新增卡片一律沉底
  */
+const sortGroup = (
+  group: HomeItem[],
+  layout: Record<string, WidgetLayoutItem>,
+  idx: Map<string, number>,
+): HomeItem[] => {
+  const known = group
+    .filter((it) => layout[it.key]?.sort !== undefined)
+    .sort((a, b) => (layout[a.key]?.sort ?? 0) - (layout[b.key]?.sort ?? 0));
+  const unknown = group
+    .filter((it) => layout[it.key]?.sort === undefined)
+    .sort((a, b) => (idx.get(a.key) ?? 0) - (idx.get(b.key) ?? 0));
+  // 全已布局或全未布局：直接拼接（已布局按用户序，未布局按默认序）
+  if (!known.length || !unknown.length) return [...known, ...unknown];
+
+  const rs = [...known];
+  for (const u of unknown) {
+    const ui = idx.get(u.key) ?? 0;
+    const pos = rs.findIndex((k) => (idx.get(k.key) ?? 0) > ui);
+    if (pos < 0) rs.push(u);
+    else rs.splice(pos, 0, u);
+  }
+  return rs;
+};
+
 export const sortHomeItems = (items: HomeItem[], layout: Record<string, WidgetLayoutItem>): HomeItem[] => {
-  const idx = new Map(items.map((it, i) => [it.key, i]));
-  return items
-    .filter((it) => !layout[it.key]?.hide)
-    .sort((a, b) => {
-      // KPI 卡恒在内容部件之前
-      if (a.kind !== b.kind) return a.kind === 'kpi' ? -1 : 1;
-      const sa = layout[a.key]?.sort ?? idx.get(a.key)!;
-      const sb = layout[b.key]?.sort ?? idx.get(b.key)!;
-      return sa - sb;
-    });
+  const vis = items.filter((it) => !layout[it.key]?.hide);
+  // 构建序 = 后端默认序（KPI 簇业务优先在前、内容部件随后），作为未布局新卡的默认位参照
+  const idx = new Map(vis.map((it, i) => [it.key, i]));
+  const kpis = vis.filter((it) => it.kind === 'kpi');
+  const widgets = vis.filter((it) => it.kind === 'widget');
+  return [...sortGroup(kpis, layout, idx), ...sortGroup(widgets, layout, idx)];
 };
 
 /** 用户已隐藏的项（恢复面板用） */

@@ -28,7 +28,8 @@ describe('工作台布局 key', () => {
   it('layoutKey：部件名/卡片名统一转首字母小写', () => {
     expect(layoutKey('UserCount')).toBe('userCount');
     expect(layoutKey('OnlineCount')).toBe('onlineCount');
-    expect(layoutKey('Log24h')).toBe('log24h');
+    expect(layoutKey('MaxOnline')).toBe('maxOnline');
+    expect(layoutKey('OnlineTime')).toBe('onlineTime');
     expect(layoutKey('Monitor')).toBe('monitor');
     expect(layoutKey('SysInfo')).toBe('sysInfo');
     expect(layoutKey('LoginLog')).toBe('loginLog');
@@ -97,15 +98,59 @@ describe('工作台布局排序与隐藏', () => {
     expect(rs.map((it) => it.key)).toEqual(['userCount', 'quickLink', 'sysInfo', 'monitor']);
   });
 
-  it('sortHomeItems：组内排序，未排序项保持构建序兜底', () => {
+  it('sortHomeItems：未排序项按默认位插入（相对已布局卡锚点）', () => {
     const items = buildHomeItems(
       [{ name: 'UserCount', label: '用户总数', value: '1' }],
       [widget('Monitor', 8), widget('SysInfo', 4), widget('QuickLink', 4)],
     );
     const layout: Record<string, LayoutItem> = { sysInfo: { sort: 0 } };
     const rs = sortHomeItems(items, layout);
-    // KPI 前；内容部件：sysInfo（sort=0）先，未排序的 Monitor/QuickLink 保持构建序
-    expect(rs.map((it) => it.key)).toEqual(['userCount', 'sysInfo', 'monitor', 'quickLink']);
+    // KPI 前；内容部件：Monitor（默认序在 sysInfo 前）插到 sysInfo 之前，QuickLink 无锚点追加末尾
+    expect(rs.map((it) => it.key)).toEqual(['userCount', 'monitor', 'sysInfo', 'quickLink']);
+  });
+
+  it('sortHomeItems：未布局业务新 KPI 自动上浮到已布局 KPI 簇之前', () => {
+    // 后端 kpis 已按默认序下发：[Biz, UserCount, TodayLogin, OnlineCount]（业务卡在前）
+    const items = buildHomeItems(
+      [
+        { name: 'Biz', label: '今日订单', value: '3' },
+        { name: 'UserCount', label: '用户总数', value: '1' },
+        { name: 'TodayLogin', label: '今日登录', value: '2' },
+        { name: 'OnlineCount', label: '在线用户', value: '4' },
+      ],
+      [],
+    );
+    // 用户只拖过三张魔方卡，新业务卡 Biz 未布局
+    const layout: Record<string, LayoutItem> = {
+      userCount: { sort: 0 },
+      todayLogin: { sort: 1 },
+      onlineCount: { sort: 2 },
+    };
+    const rs = sortHomeItems(items, layout);
+    // Biz 默认序最前 → 插到 UserCount 之前（业务新卡不沉底）
+    expect(rs.map((it) => it.key)).toEqual(['biz', 'userCount', 'todayLogin', 'onlineCount']);
+  });
+
+  it('sortHomeItems：魔方新 KPI 按默认位插入自然位且用户拖序不变', () => {
+    // 后端新增 MaxOnline（默认序在 OnlineCount 与 Error24h 之间）
+    const items = buildHomeItems(
+      [
+        { name: 'UserCount', label: '用户总数', value: '1' },
+        { name: 'OnlineCount', label: '在线用户', value: '3' },
+        { name: 'MaxOnline', label: '最大在线', value: '5' },
+        { name: 'Error24h', label: '24h异常', value: '9' },
+      ],
+      [],
+    );
+    // 用户拖过：UserCount 第一、Error24h 第二、OnlineCount 第三（把 Error24h 提到 OnlineCount 前）
+    const layout: Record<string, LayoutItem> = {
+      userCount: { sort: 0 },
+      error24h: { sort: 1 },
+      onlineCount: { sort: 2 },
+    };
+    const rs = sortHomeItems(items, layout);
+    // MaxOnline 默认位在 OnlineCount 与 Error24h 之间 → 插到 Error24h 前；已拖卡相对序不变
+    expect(rs.map((it) => it.key)).toEqual(['userCount', 'maxOnline', 'error24h', 'onlineCount']);
   });
 
   it('sortHomeItems：隐藏项剔除（hide=true 不渲染）', () => {
