@@ -5,12 +5,13 @@
  * 2. 验证/更换联系方式（发码 /Auth/SendCode action=bind，提交 /Auth/VerifyContact）
  * 3. 修改密码（POST /Admin/User/ChangePassword，对齐 MVC ChangePassword 页）
  * 4. MFA 双因素认证：状态/绑定（二维码+密钥）/激活（备用码）/解绑
+ * 5. 注销账号（POST /Auth/CloseAccount，不可恢复；成功后清理本地登录态并跳登录页）
  */
 import { useEffect, useState } from 'react';
 import { Alert, App, Button, Card, Descriptions, Form, Input, Modal, Space, Tag } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import { api } from '@/api';
-import { useUserStore } from '@/stores/user';
+import { useUserStore, logoutAndRedirect } from '@/stores/user';
 
 type Panel = 'mail' | 'sms' | null;
 
@@ -41,6 +42,26 @@ export default function ProfileSecurityPage() {
       message.error((err as Error)?.message || '修改失败');
     } finally {
       setPwdSubmitting(false);
+    }
+  };
+
+  // 注销账号
+  const [closeOpen, setCloseOpen] = useState(false);
+  const [closeSubmitting, setCloseSubmitting] = useState(false);
+
+  /** 注销账号：禁用并脱敏账号，通知下游清理业务数据；成功后清理本地登录态并跳转登录页（登出接口失败已容错） */
+  const handleCloseAccount = async () => {
+    setCloseSubmitting(true);
+    try {
+      await api.user.closeAccount();
+      message.success('账号已注销');
+      setCloseOpen(false);
+      await logoutAndRedirect();
+    } catch (err) {
+      // 字段级/业务错误已由全局拦截提示，这里兜底
+      message.error((err as Error)?.message || '注销失败');
+    } finally {
+      setCloseSubmitting(false);
     }
   };
 
@@ -344,6 +365,20 @@ export default function ProfileSecurityPage() {
         )}
       </Card>
 
+      {/* 注销账号（危险操作，不可恢复） */}
+      <Card title="注销账号" style={{ marginBottom: 16 }}>
+        <Alert
+          type="warning"
+          showIcon
+          message="注销后账号将被禁用，个性化数据将清空且不可恢复"
+          description="注销为不可逆操作：账号将无法再次登录，下游业务系统中与该账号关联的数据将一并删除。"
+          style={{ marginBottom: 16 }}
+        />
+        <Button danger loading={closeSubmitting} onClick={() => setCloseOpen(true)}>
+          注销账号
+        </Button>
+      </Card>
+
       <Modal
         title="关闭 MFA"
         open={disableOpen}
@@ -360,6 +395,18 @@ export default function ProfileSecurityPage() {
           value={disableCode}
           onChange={(e) => setDisableCode(e.target.value)}
         />
+      </Modal>
+
+      <Modal
+        title="注销账号"
+        open={closeOpen}
+        onCancel={() => setCloseOpen(false)}
+        onOk={() => void handleCloseAccount()}
+        confirmLoading={closeSubmitting}
+        okText="确认注销"
+        okButtonProps={{ danger: true }}
+      >
+        <p>确定要注销账号吗？注销后账号将被禁用，个性化数据将清空且不可恢复，且无法再次登录。</p>
       </Modal>
     </div>
   );
