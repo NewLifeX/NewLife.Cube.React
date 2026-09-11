@@ -370,8 +370,8 @@ export default function ProfileSecurityPage() {
         <Alert
           type="warning"
           showIcon
-          message="注销后账号将被禁用，个性化数据将清空且不可恢复"
-          description="注销为不可逆操作：账号将无法再次登录，下游业务系统中与该账号关联的数据将一并删除。"
+          message="注销后账号将被禁用，个人数据将删除或匿名化，且不可恢复"
+          description="依据《中华人民共和国个人信息保护法》与 GDPR 等法规，你享有账号删除权。注销为不可逆操作：账号将无法再次登录，下游业务系统中与该账号关联的数据将一并删除。"
           style={{ marginBottom: 16 }}
         />
         <Button danger loading={closeSubmitting} onClick={() => setCloseOpen(true)}>
@@ -406,7 +406,7 @@ export default function ProfileSecurityPage() {
         okText="确认注销"
         okButtonProps={{ danger: true }}
       >
-        <p>确定要注销账号吗？注销后账号将被禁用，个性化数据将清空且不可恢复，且无法再次登录。</p>
+        <p>确定要注销账号吗？注销后账号将被禁用，个人数据将删除或匿名化，且不可恢复，且无法再次登录。</p>
       </Modal>
     </div>
   );
