@@ -1,0 +1,40 @@
+/**
+ * 葡萄牙语语言包
+ */
+export default {
+  common: {
+    confirm: 'OK',
+    cancel: 'Cancelar',
+    delete: 'Excluir',
+    edit: 'Editar',
+    view: 'Visualizar',
+    add: 'Adicionar',
+    search: 'Pesquisar',
+    reset: 'Redefinir',
+    refresh: 'Atualizar',
+    export: 'Exportar',
+    import: 'Importar',
+    chart: 'Gráfico',
+    save: 'Salvar',
+    back: 'Voltar',
+    loading: 'Carregando',
+    empty: 'Sem dados',
+    operate: 'Ações',
+    success: 'Sucesso',
+    failed: 'Falha',
+    logout: 'Sair',
+    securityCenter: 'Centro de segurança',
+    language: 'Alterar idioma',
+  },
+  login: {
+    title: 'Entrar',
+    username: 'Usuário',
+    password: 'Senha',
+    remember: 'Salvar senha',
+    submit: 'Entrar',
+    register: 'Cadastrar',
+    forgotPassword: 'Esqueceu a senha',
+    smsLogin: 'Login por SMS',
+    mailLogin: 'Login por e-mail',
+  },
+};

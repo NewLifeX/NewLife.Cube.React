@@ -1,0 +1,40 @@
+/**
+ * 韩语语言包
+ */
+export default {
+  common: {
+    confirm: '확인',
+    cancel: '취소',
+    delete: '삭제',
+    edit: '편집',
+    view: '보기',
+    add: '추가',
+    search: '검색',
+    reset: '초기화',
+    refresh: '새로 고침',
+    export: '내보내기',
+    import: '가져오기',
+    chart: '차트',
+    save: '저장',
+    back: '뒤로',
+    loading: '로딩 중',
+    empty: '데이터 없음',
+    operate: '작업',
+    success: '성공',
+    failed: '실패',
+    logout: '로그아웃',
+    securityCenter: '보안 센터',
+    language: '언어 전환',
+  },
+  login: {
+    title: '로그인',
+    username: '사용자 이름',
+    password: '비밀번호',
+    remember: '비밀번호 저장',
+    submit: '로그인',
+    register: '회원가입',
+    forgotPassword: '비밀번호 찾기',
+    smsLogin: 'SMS 로그인',
+    mailLogin: '이메일 로그인',
+  },
+};

@@ -8,6 +8,7 @@
  */
 import { createCubeApi, clearPageMetaCache, type CubeApi, type TokenStorage } from '@newlifex/api-core';
 import { getConfig } from '@/configure';
+import { getCurrentLanguage } from '@/i18n';
 import { getMessage } from '@/utils/antdApp';
 
 /** Token 变更事件（登录/登出时派发，供响应式登录态使用） */
@@ -57,10 +58,11 @@ export const api: CubeApi = createCubeApi({
   tokenHeaderPrefix: getConfig().request.tokenHeaderPrefix ?? 'Bearer ',
   timeout: getConfig().request.timeout,
   // 接入附加请求头（如多租户 X-Tenant），实体/服务两条链均生效
+  // Accept-Language 与 i18n 当前语言保持一致，后端按同一条链路返回本地化消息
   additionalRequestHeaders: () => {
     const extra = getConfig().request.additionalRequestHeaders;
-    if (!extra) return {};
-    return typeof extra === 'function' ? extra() : extra;
+    const headers = !extra ? {} : typeof extra === 'function' ? extra() : extra;
+    return { 'Accept-Language': getCurrentLanguage(), ...headers };
   },
   onFieldError: (fieldErrors) => {
     // 统一展示字段级验证错误（如"编码不可以为空！"）

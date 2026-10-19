@@ -24,6 +24,7 @@ export default {
     failed: '操作失败',
     logout: '退出登录',
     securityCenter: '安全中心',
+    language: '切换语言',
   },
   login: {
     title: '登录',

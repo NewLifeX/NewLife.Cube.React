@@ -1,0 +1,40 @@
+/**
+ * 西班牙语语言包
+ */
+export default {
+  common: {
+    confirm: 'Aceptar',
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    view: 'Ver',
+    add: 'Agregar',
+    search: 'Buscar',
+    reset: 'Restablecer',
+    refresh: 'Actualizar',
+    export: 'Exportar',
+    import: 'Importar',
+    chart: 'Gráfico',
+    save: 'Guardar',
+    back: 'Volver',
+    loading: 'Cargando',
+    empty: 'Sin datos',
+    operate: 'Acciones',
+    success: 'Éxito',
+    failed: 'Error',
+    logout: 'Cerrar sesión',
+    securityCenter: 'Centro de seguridad',
+    language: 'Cambiar idioma',
+  },
+  login: {
+    title: 'Iniciar sesión',
+    username: 'Usuario',
+    password: 'Contraseña',
+    remember: 'Recordar contraseña',
+    submit: 'Entrar',
+    register: 'Registrarse',
+    forgotPassword: '¿Olvidó su contraseña?',
+    smsLogin: 'Inicio de sesión por SMS',
+    mailLogin: 'Inicio de sesión por correo',
+  },
+};

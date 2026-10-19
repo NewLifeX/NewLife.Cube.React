@@ -1,0 +1,40 @@
+/**
+ * 繁體中文语言包
+ */
+export default {
+  common: {
+    confirm: '確定',
+    cancel: '取消',
+    delete: '刪除',
+    edit: '編輯',
+    view: '檢視',
+    add: '新增',
+    search: '搜尋',
+    reset: '重設',
+    refresh: '重新整理',
+    export: '匯出',
+    import: '匯入',
+    chart: '圖表',
+    save: '儲存',
+    back: '返回',
+    loading: '載入中',
+    empty: '暫無資料',
+    operate: '操作',
+    success: '操作成功',
+    failed: '操作失敗',
+    logout: '登出',
+    securityCenter: '安全中心',
+    language: '切換語言',
+  },
+  login: {
+    title: '登入',
+    username: '使用者名稱',
+    password: '密碼',
+    remember: '記住密碼',
+    submit: '登入',
+    register: '註冊',
+    forgotPassword: '忘記密碼',
+    smsLogin: '簡訊登入',
+    mailLogin: '電子郵件登入',
+  },
+};

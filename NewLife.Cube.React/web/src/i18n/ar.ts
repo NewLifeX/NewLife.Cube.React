@@ -1,0 +1,40 @@
+/**
+ * 阿拉伯语语言包（RTL）
+ */
+export default {
+  common: {
+    confirm: 'موافق',
+    cancel: 'إلغاء',
+    delete: 'حذف',
+    edit: 'تعديل',
+    view: 'عرض',
+    add: 'إضافة',
+    search: 'بحث',
+    reset: 'إعادة تعيين',
+    refresh: 'تحديث',
+    export: 'تصدير',
+    import: 'استيراد',
+    chart: 'مخطط',
+    save: 'حفظ',
+    back: 'رجوع',
+    loading: 'جارٍ التحميل',
+    empty: 'لا توجد بيانات',
+    operate: 'إجراءات',
+    success: 'نجاح',
+    failed: 'فشل',
+    logout: 'تسجيل الخروج',
+    securityCenter: 'مركز الأمان',
+    language: 'تغيير اللغة',
+  },
+  login: {
+    title: 'تسجيل الدخول',
+    username: 'اسم المستخدم',
+    password: 'كلمة المرور',
+    remember: 'تذكر كلمة المرور',
+    submit: 'دخول',
+    register: 'تسجيل',
+    forgotPassword: 'هل نسيت كلمة المرور؟',
+    smsLogin: 'تسجيل الدخول عبر SMS',
+    mailLogin: 'تسجيل الدخول عبر البريد الإلكتروني',
+  },
+};

@@ -1,5 +1,5 @@
 /**
- * 英文语言包（最小集，用于语言切换演示）
+ * 英文语言包（源文与兜底）
  */
 export default {
   common: {
@@ -24,6 +24,7 @@ export default {
     failed: 'Failed',
     logout: 'Logout',
     securityCenter: 'Security Center',
+    language: 'Switch language',
   },
   login: {
     title: 'Login',

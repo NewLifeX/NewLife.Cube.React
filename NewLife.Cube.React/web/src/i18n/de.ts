@@ -1,0 +1,40 @@
+/**
+ * 德语语言包
+ */
+export default {
+  common: {
+    confirm: 'OK',
+    cancel: 'Abbrechen',
+    delete: 'Löschen',
+    edit: 'Bearbeiten',
+    view: 'Anzeigen',
+    add: 'Hinzufügen',
+    search: 'Suchen',
+    reset: 'Zurücksetzen',
+    refresh: 'Aktualisieren',
+    export: 'Exportieren',
+    import: 'Importieren',
+    chart: 'Diagramm',
+    save: 'Speichern',
+    back: 'Zurück',
+    loading: 'Wird geladen',
+    empty: 'Keine Daten',
+    operate: 'Aktionen',
+    success: 'Erfolg',
+    failed: 'Fehlgeschlagen',
+    logout: 'Abmelden',
+    securityCenter: 'Sicherheitszentrum',
+    language: 'Sprache wechseln',
+  },
+  login: {
+    title: 'Anmeldung',
+    username: 'Benutzername',
+    password: 'Passwort',
+    remember: 'Passwort speichern',
+    submit: 'Anmelden',
+    register: 'Registrieren',
+    forgotPassword: 'Passwort vergessen',
+    smsLogin: 'SMS-Anmeldung',
+    mailLogin: 'E-Mail-Anmeldung',
+  },
+};

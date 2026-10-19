@@ -1,20 +1,20 @@
 /**
  * 根组件
  *
- * - ConfigProvider：antd 主题（单一主题 × 明暗）+ 中文语言包
+ * - ConfigProvider：antd 主题（单一主题 × 明暗）+ 与 i18n 同步的组件语言包
  * - AntApp：message/notification/modal 上下文（供 App.useApp() 使用）
  * - AntdAppBinder：把 useApp 实例托管给非组件模块（api 拦截器等）
  * - RouterProvider：路由系统
  */
 import { useEffect } from 'react';
 import { App as AntApp, ConfigProvider, theme as antdTheme } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
 import { RouterProvider } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { router } from '@/router';
 import { useThemeStore } from '@/stores/theme';
 import { applyTableCellCssVars, buildThemeConfig } from '@/themes';
 import { bindAntdApp } from '@/utils/antdApp';
-import '@/i18n';
+import { getAntdLocale } from '@/i18n';
 
 /** 在 <App> 上下文内绑定 useApp 实例，供非组件模块（api 拦截器等）复用 */
 function AntdAppBinder() {
@@ -27,6 +27,8 @@ function AntdAppBinder() {
 
 export default function App() {
   const mode = useThemeStore((s) => s.mode);
+  // 订阅语言变化，使 antd 组件语言包随 i18n 同步切换
+  useTranslation();
 
   // 同步 body 明暗属性，供全局 CSS 深浅色设计令牌切换；并注入表格冻结列不透明背景变量
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function App() {
 
   return (
     <ConfigProvider
-      locale={zhCN}
+      locale={getAntdLocale()}
       theme={{
         ...themeConfig,
         algorithm: mode === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,

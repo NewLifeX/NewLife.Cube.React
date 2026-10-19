@@ -1,0 +1,40 @@
+/**
+ * 俄语语言包
+ */
+export default {
+  common: {
+    confirm: 'ОК',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    edit: 'Изменить',
+    view: 'Просмотр',
+    add: 'Добавить',
+    search: 'Поиск',
+    reset: 'Сброс',
+    refresh: 'Обновить',
+    export: 'Экспорт',
+    import: 'Импорт',
+    chart: 'Диаграмма',
+    save: 'Сохранить',
+    back: 'Назад',
+    loading: 'Загрузка',
+    empty: 'Нет данных',
+    operate: 'Действия',
+    success: 'Успешно',
+    failed: 'Ошибка',
+    logout: 'Выйти',
+    securityCenter: 'Центр безопасности',
+    language: 'Сменить язык',
+  },
+  login: {
+    title: 'Вход',
+    username: 'Имя пользователя',
+    password: 'Пароль',
+    remember: 'Запомнить пароль',
+    submit: 'Войти',
+    register: 'Регистрация',
+    forgotPassword: 'Забыли пароль?',
+    smsLogin: 'Вход по SMS',
+    mailLogin: 'Вход по email',
+  },
+};

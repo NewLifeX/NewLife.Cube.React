@@ -1,0 +1,40 @@
+/**
+ * 日语语言包
+ */
+export default {
+  common: {
+    confirm: '確定',
+    cancel: 'キャンセル',
+    delete: '削除',
+    edit: '編集',
+    view: '表示',
+    add: '追加',
+    search: '検索',
+    reset: 'リセット',
+    refresh: '更新',
+    export: 'エクスポート',
+    import: 'インポート',
+    chart: 'グラフ',
+    save: '保存',
+    back: '戻る',
+    loading: '読み込み中',
+    empty: 'データなし',
+    operate: '操作',
+    success: '成功',
+    failed: '失敗',
+    logout: 'ログアウト',
+    securityCenter: 'セキュリティセンター',
+    language: '言語を切り替え',
+  },
+  login: {
+    title: 'ログイン',
+    username: 'ユーザー名',
+    password: 'パスワード',
+    remember: 'パスワードを保存',
+    submit: 'ログイン',
+    register: '新規登録',
+    forgotPassword: 'パスワードをお忘れですか',
+    smsLogin: 'SMSログイン',
+    mailLogin: 'メールログイン',
+  },
+};
