@@ -23,12 +23,15 @@ async function loginHeaders(request: APIRequestContext): Promise<Record<string, 
   return { Authorization: `Bearer ${body.data.access_token}` };
 }
 
+/** 权限树节点 */
+type PermissionNode = { id: number; granted?: number; children?: unknown[] };
+
 /** 在权限树中递归查找节点 */
-function findNode(nodes: Array<{ id: number; children?: unknown[] }> | undefined, id: number) {
+function findNode(nodes: PermissionNode[] | undefined, id: number): PermissionNode | null {
   if (!nodes) return null;
   for (const n of nodes) {
     if (n.id === id) return n;
-    const hit = findNode(n.children as Array<{ id: number; children?: unknown[] }>, id);
+    const hit: PermissionNode | null = findNode(n.children as PermissionNode[], id);
     if (hit) return hit;
   }
   return null;
