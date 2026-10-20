@@ -10,6 +10,7 @@ import { Drawer, Layout } from 'antd';
 import SiderMenu from './SiderMenu';
 import HeaderBar from './HeaderBar';
 import TabsView from '@/components/TabsView';
+import { t } from '@/i18n';
 import AiAssistant from '@/components/ai/AiAssistant';
 import { getConfig } from '@/configure';
 
@@ -55,7 +56,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="cube-shell-brand-copy">
           <div className="cube-shell-brand-title">{brand.title}</div>
-          <div className="cube-shell-brand-subtitle">React 皮肤 · AntD6</div>
+          <div className="cube-shell-brand-subtitle">{t('React 皮肤 · AntD6')}</div>
         </div>
       </div>
       <div className="cube-shell-menu-wrap">
@@ -90,7 +91,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         </Content>
         {cfg.footer.show && (
           <Footer className="cube-shell-footer">
-            <div className="cube-shell-footer-inner">{brand.footer || '魔方 React 皮肤'}</div>
+            <div className="cube-shell-footer-inner">{brand.footer || t('魔方 React 皮肤')}</div>
           </Footer>
         )}
       </Layout>

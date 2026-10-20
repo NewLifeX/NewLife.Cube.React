@@ -7,9 +7,10 @@
  * 值 = 最后选中地区编号（number），受控 value 经 /Cube/AreaParents 解析路径回显。
  */
 import { useEffect, useState } from 'react';
+import { t } from '@/i18n';
 import { Drawer, Grid, Input, Popover, Spin } from 'antd';
 import { CloseCircleFilled, DownOutlined } from '@ant-design/icons';
-import { PLACEHOLDERS, TAB_NAMES, fetchAreaPath, fetchChildren, groupByBigArea, type AreaOption } from './areaData';
+import { placeholders, tabNames, fetchAreaPath, fetchChildren, groupByBigArea, type AreaOption } from './areaData';
 
 export interface AreaTabsPickerProps {
   /** 当前选中地区编号（number）。搜索区一般无值；表单编辑回显时传入 */
@@ -264,7 +265,7 @@ export default function AreaTabsPicker({
   const panel = (
     <div data-testid="area-tabs-panel" style={{ width: isMobile ? '100%' : PANEL_WIDTH }}>
       <div style={navStyle}>
-        {TAB_NAMES.slice(0, maxLevel).map((name, i) => (
+        {tabNames().slice(0, maxLevel).map((name, i) => (
           <span
             key={name}
             data-testid={`area-tabs-nav-${i}`}
@@ -283,7 +284,7 @@ export default function AreaTabsPicker({
     <Input
       readOnly
       value={displayText}
-      placeholder={placeholder ?? PLACEHOLDERS[Math.min(maxLevel - 1, 3)]}
+      placeholder={placeholder ?? placeholders()[Math.min(maxLevel - 1, 3)]}
       disabled={disabled}
       onClick={() => {
         // 移动端 Drawer 由输入框点击打开；PC 由 Popover trigger 管理
@@ -310,7 +311,7 @@ export default function AreaTabsPicker({
     return (
       <>
         {input}
-        <Drawer open={open} onClose={() => setOpen(false)} placement="bottom" height="70%" title="选择地区" closable>
+        <Drawer open={open} onClose={() => setOpen(false)} placement="bottom" height="70%" title={t('选择地区')} closable>
           {panel}
         </Drawer>
       </>

@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { App, Button, Image, Input, Space, Upload } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 export interface UploaderProps {
   value?: string;
@@ -28,7 +29,7 @@ export default function Uploader({ value, onChange, type, recordId, image, place
 
   const handleUpload = async (file: File) => {
     if (!type) {
-      message.warning('缺少上传路径配置');
+      message.warning(t('缺少上传路径配置'));
       return false;
     }
     setUploading(true);
@@ -37,20 +38,20 @@ export default function Uploader({ value, onChange, type, recordId, image, place
       const data = (res?.data ?? {}) as Record<string, unknown>;
       // 后端可能以 HTTP 200 + error/code 字段返回业务错误（如 User 头像仅限当前登录用户）
       if (data.error || (typeof data.code === 'number' && data.code !== 0)) {
-        message.error(String(data.error ?? data.message ?? '上传失败'));
+        message.error(String(data.error ?? data.message ?? t('上传失败')));
         return false;
       }
       // 兼容字段名差异：旧版返回 url，新版返回 filePath
       const url = String(data.url ?? data.filePath ?? '');
       if (!url) {
-        message.error('上传失败：未返回文件地址');
+        message.error(t('上传失败：未返回文件地址'));
         return false;
       }
       onChange?.(url);
-      message.success('上传成功');
+      message.success(t('上传成功'));
       return false;
     } catch {
-      message.error('上传失败');
+      message.error(t('上传失败'));
       return false;
     } finally {
       setUploading(false);
@@ -79,7 +80,7 @@ export default function Uploader({ value, onChange, type, recordId, image, place
             disabled={disabled || uploading}
           >
             <Button icon={<UploadOutlined />} loading={uploading}>
-              上传图片
+              {t('上传图片')}
             </Button>
           </Upload>
         )}
@@ -92,13 +93,13 @@ export default function Uploader({ value, onChange, type, recordId, image, place
     <Space orientation="vertical" size={8} style={{ width: '100%' }}>
       <Upload showUploadList={false} beforeUpload={handleUpload} disabled={disabled || uploading}>
         <Button icon={<UploadOutlined />} loading={uploading}>
-          上传文件
+          {t('上传文件')}
         </Button>
       </Upload>
       {value && (
         <Space>
           <a href={value} target="_blank" rel="noreferrer">
-            查看文件
+            {t('查看文件')}
           </a>
           <Button size="small" danger icon={<DeleteOutlined />} disabled={disabled} onClick={() => onChange?.(undefined)} />
         </Space>

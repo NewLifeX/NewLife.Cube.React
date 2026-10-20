@@ -12,6 +12,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FormFieldItem from './FormFieldItem';
 import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
+import { t } from '@/i18n';
 import { routeToApiPrefix, getValueByKey, setValueByKey } from '@/utils/url';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { usePageStore } from '@/hooks/usePageStore';
@@ -74,7 +75,7 @@ export default function FormPage({ title }: FormPageProps) {
               form.setFieldsValue(mapDataToFormValues(detail, fields.map((f) => toFieldMeta(f.field))));
             }
           } catch {
-            message.error('加载详情失败');
+            message.error(t('加载详情失败'));
           } finally {
             if (!cancelled) setDetailLoading(false);
           }
@@ -103,7 +104,7 @@ export default function FormPage({ title }: FormPageProps) {
       } else {
         await store.getState().add(model);
       }
-      message.success(isEdit ? '更新成功' : '新增成功');
+      message.success(isEdit ? t('更新成功') : t('新增成功'));
       navigate(-1);
     } catch (err) {
       if ((err as Error)?.message && !(err as Error)?.message.includes('validateFields')) {
@@ -120,7 +121,7 @@ export default function FormPage({ title }: FormPageProps) {
       title={
         <Space>
           <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
-          <span>{title || (isEdit ? '编辑' : '新增')}</span>
+          <span>{title || (isEdit ? t('编辑') : t('新增'))}</span>
         </Space>
       }
       size="small"
@@ -152,9 +153,9 @@ export default function FormPage({ title }: FormPageProps) {
           )}
           <div className="cube-form-actions">
             <Button type="primary" loading={submitting} onClick={() => void handleSubmit()}>
-              保存
+              {t('保存')}
             </Button>
-            <Button onClick={() => navigate(-1)}>返回</Button>
+            <Button onClick={() => navigate(-1)}>{t('返回')}</Button>
           </div>
         </Form>
       </Spin>

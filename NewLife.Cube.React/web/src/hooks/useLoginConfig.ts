@@ -3,6 +3,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import type { CaptchaResult, LoginConfig, OAuthProvider } from '@newlifex/api-core';
 
 /**
@@ -56,7 +57,7 @@ export function useLoginConfig() {
       setConfig(res.data ? normalizeLoginConfig(res.data) : null);
       setError('');
     } catch {
-      setError('登录配置加载失败');
+      setError(t('登录配置加载失败'));
     } finally {
       setLoading(false);
     }

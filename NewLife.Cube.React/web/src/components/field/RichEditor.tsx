@@ -5,6 +5,7 @@
  * html 用 wangEditor（@wangeditor/editor 核心包 + WangEditor React 封装）渲染 WYSIWYG 编辑器，对齐 MVC _Form_Html。
  */
 import { useState } from 'react';
+import { t } from '@/i18n';
 import { Input, Segmented } from 'antd';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -34,8 +35,8 @@ export default function RichEditor({ value, onChange, markdown, placeholder, dis
         <Segmented
           size="small"
           options={[
-            { label: '编辑', value: 'edit' },
-            { label: '预览', value: 'preview' },
+            { label: t('编辑'), value: 'edit' },
+            { label: t('预览'), value: 'preview' },
           ]}
           value={mode}
           onChange={(v) => setMode(v as 'edit' | 'preview')}

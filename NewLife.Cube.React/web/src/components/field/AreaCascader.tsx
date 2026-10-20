@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Cascader } from 'antd';
 import { useReactSetting } from '@/stores/reactSetting';
 import AreaTabsPicker from './AreaTabsPicker';
-import { PLACEHOLDERS, fetchAreaPath, fetchChildren, buildAreaTree, type AreaOption } from './areaData';
+import { placeholders, fetchAreaPath, fetchChildren, buildAreaTree, type AreaOption } from './areaData';
 
 // 兼容既有导入（组件测试等）：数据层工具函数与类型
 // eslint-disable-next-line no-unused-vars
@@ -116,7 +116,7 @@ function AreaCascaderDropdown({
       allowClear={allowClear}
       disabled={disabled}
       loading={loading}
-      placeholder={placeholder ?? PLACEHOLDERS[Math.min(maxLevel - 1, 3)]}
+      placeholder={placeholder ?? placeholders()[Math.min(maxLevel - 1, 3)]}
       style={{ width: '100%', ...style }}
     />
   );

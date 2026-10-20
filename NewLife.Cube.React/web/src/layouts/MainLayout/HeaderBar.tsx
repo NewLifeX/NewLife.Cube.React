@@ -36,7 +36,7 @@ export default function HeaderBar({ collapsed, onToggle }: HeaderBarProps) {
     if (!current) {
       // 配置中心页（左侧隐藏菜单，不在菜单树中）：显示 系统管理 / 配置名
       const config = findConfigCenter(location.pathname);
-      if (config) return [{ title: '系统管理' }, { title: config.label }];
+      if (config) return [{ title: t('系统管理') }, { title: config.label }];
       return [{ title: base.title }];
     }
     const chain: { title: string }[] = [];

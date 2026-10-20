@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_CATEGORY,
+  defaultCategory,
   groupByCategory,
   hasCategory,
   isDateOnlyField,
@@ -291,7 +291,7 @@ describe('hasCategory 是否需分组', () => {
 describe('groupByCategory 按分类分组', () => {
   it('全部无分类归入默认组', () => {
     const g = groupByCategory([f({ name: 'A' }), f({ name: 'B' })]);
-    expect(g).toEqual([{ category: DEFAULT_CATEGORY, fields: [f({ name: 'A' }), f({ name: 'B' })] }]);
+    expect(g).toEqual([{ category: defaultCategory(), fields: [f({ name: 'A' }), f({ name: 'B' })] }]);
   });
 
   it('按分类分组并保序，无分类归入默认组', () => {
@@ -302,7 +302,7 @@ describe('groupByCategory 按分类分组', () => {
       f({ name: 'Remark', category: '基本信息' }),
     ];
     const g = groupByCategory(fields);
-    expect(g.map((x) => x.category)).toEqual(['基本信息', DEFAULT_CATEGORY, '扩展']);
+    expect(g.map((x) => x.category)).toEqual(['基本信息', defaultCategory(), '扩展']);
     expect(g[0].fields.map((x) => x.name)).toEqual(['Name', 'Remark']);
     expect(g[1].fields.map((x) => x.name)).toEqual(['Enable']);
     expect(g[2].fields.map((x) => x.name)).toEqual(['Secret']);

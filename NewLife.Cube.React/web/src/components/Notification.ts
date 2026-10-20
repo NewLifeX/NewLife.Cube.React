@@ -4,6 +4,7 @@
  * 通过 App.useApp() 托管实例获取 notification，提示样式跟随明暗主题。
  */
 import { getNotification } from '@/utils/antdApp';
+import { t } from '@/i18n';
 
 export interface NotificationParams {
   message: string;
@@ -14,7 +15,7 @@ export interface NotificationParams {
 /** 信息通知 */
 export function notifyInfo(params: NotificationParams) {
   getNotification().info({
-    message: params.title || '信息',
+    message: params.title || t('信息'),
     description: params.message,
     duration: params.duration ?? 3,
   });
@@ -23,7 +24,7 @@ export function notifyInfo(params: NotificationParams) {
 /** 成功通知 */
 export function notifySuccess(params: NotificationParams) {
   getNotification().success({
-    message: params.title || '成功',
+    message: params.title || t('成功'),
     description: params.message,
     duration: params.duration ?? 3,
   });
@@ -32,7 +33,7 @@ export function notifySuccess(params: NotificationParams) {
 /** 错误通知 */
 export function notifyError(params: NotificationParams) {
   getNotification().error({
-    message: params.title || '错误',
+    message: params.title || t('错误'),
     description: params.message,
     duration: params.duration ?? 5,
   });
@@ -41,7 +42,7 @@ export function notifyError(params: NotificationParams) {
 /** 警告通知 */
 export function notifyWarning(params: NotificationParams) {
   getNotification().warning({
-    message: params.title || '警告',
+    message: params.title || t('警告'),
     description: params.message,
     duration: params.duration ?? 4,
   });

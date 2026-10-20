@@ -6,6 +6,7 @@
  * 自动识别服务路径（去掉 /api 前缀）。
  */
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 /** 后端地区节点（camelCase；兼容 PascalCase） */
 export interface AreaNode {
@@ -36,10 +37,10 @@ export interface AreaOption {
 }
 
 /** 各层级的默认占位提示（对齐 MVC _Area1~_Area4） */
-export const PLACEHOLDERS = ['请选择省', '请选择省/市', '请选择省/市/区', '请选择省/市/区/乡镇街道'];
+export const placeholders = () => [t('请选择省'), t('请选择省/市'), t('请选择省/市/区'), t('请选择省/市/区/乡镇街道')];
 
 /** tab 名称（对齐 MVC city-picker tab 栏） */
-export const TAB_NAMES = ['省份', '城市', '区县', '乡镇街道'];
+export const tabNames = () => [t('省份'), t('城市'), t('区县'), t('乡镇街道')];
 
 /** 兼容后端 camelCase / PascalCase 字段取值 */
 export function nodeId(n: AreaNode): number {
@@ -94,7 +95,7 @@ export async function buildAreaTree(
 export function groupByBigArea(list: AreaOption[]): { bigArea: string; list: AreaOption[] }[] {
   const map = new Map<string, AreaOption[]>();
   for (const o of list) {
-    const key = o.bigArea?.trim() || '其他';
+    const key = o.bigArea?.trim() || t('其他');
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(o);
   }

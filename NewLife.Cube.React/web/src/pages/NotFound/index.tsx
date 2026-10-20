@@ -2,6 +2,7 @@
  * 404 页
  */
 import { Button, Result } from 'antd';
+import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 
 export default function NotFoundPage() {
@@ -10,10 +11,10 @@ export default function NotFoundPage() {
     <Result
       status="404"
       title="404"
-      subTitle="抱歉，您访问的页面不存在"
+      subTitle={t('抱歉，您访问的页面不存在')}
       extra={
         <Button type="primary" onClick={() => navigate('/')}>
-          返回首页
+          {t('返回首页')}
         </Button>
       }
     />

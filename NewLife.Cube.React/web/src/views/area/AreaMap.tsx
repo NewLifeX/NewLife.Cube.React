@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, Spin } from 'antd';
 import * as echarts from 'echarts';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import chinaJson from '@/assets/map/china.json';
 
 /** 地区点（后端 Map 接口返回） */
@@ -56,7 +57,7 @@ export function buildOption(data: MapData): echarts.EChartsOption {
     },
     series: [
       {
-        name: '省份',
+        name: t('省份'),
         type: 'scatter',
         coordinateSystem: 'geo',
         data: toScatter(normal),
@@ -65,7 +66,7 @@ export function buildOption(data: MapData): echarts.EChartsOption {
         itemStyle: { color: '#3b7cf6' },
       },
       {
-        name: '城市',
+        name: t('城市'),
         type: 'scatter',
         coordinateSystem: 'geo',
         data: toScatter(cities),
@@ -73,7 +74,7 @@ export function buildOption(data: MapData): echarts.EChartsOption {
         itemStyle: { color: '#9ab7f8' },
       },
       {
-        name: '直辖市',
+        name: t('直辖市'),
         type: 'effectScatter',
         coordinateSystem: 'geo',
         data: toScatter(direct),

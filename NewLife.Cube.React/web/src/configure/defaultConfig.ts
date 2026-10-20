@@ -2,12 +2,13 @@
  * 默认配置（对齐 Vue 皮肤 configure/defaultConfig，按 React 皮肤需要精简）
  */
 import type { CubeConfig } from './types';
+import { t } from '@/i18n';
 
 export const defaultConfig: CubeConfig = {
   base: {
-    title: '魔方系统',
+    title: t('魔方系统'),
     logo: '',
-    footer: '版权所有',
+    footer: t('版权所有'),
     env: 'dev',
   },
   request: {

@@ -6,6 +6,7 @@ import { AutoComplete } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useMenuStore } from '@/stores/menu';
+import { t } from '@/i18n';
 import { useReactSetting } from '@/stores/reactSetting';
 import FocusClearInput from '@/components/field/FocusClearInput';
 
@@ -36,7 +37,7 @@ export default function NavbarSearch() {
         setValue('');
       }}
     >
-      <FocusClearInput prefix={<SearchOutlined />} showClear={inputClear} placeholder="搜索菜单" />
+      <FocusClearInput prefix={<SearchOutlined />} showClear={inputClear} placeholder={t('搜索菜单')} />
     </AutoComplete>
   );
 }

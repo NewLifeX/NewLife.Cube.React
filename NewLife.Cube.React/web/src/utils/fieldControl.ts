@@ -14,6 +14,7 @@
  */
 import type { WidgetType } from '@newlifex/field-mapping';
 import type { FieldMeta, ControlType, SearchControlType, ListControlType } from '@/types/field';
+import { t } from '@/i18n';
 import { getValueByKey } from '@/utils/url';
 
 /** 数值类型集合 */
@@ -290,7 +291,7 @@ export function resolveListControl(field: FieldMeta): ListControlType {
 }
 
 /** 默认分组名（无分类字段归入） */
-export const DEFAULT_CATEGORY = '常规设置';
+export const defaultCategory = () => t('常规设置');
 
 /** 字段分组 */
 export interface FieldGroup {
@@ -325,7 +326,7 @@ export function hasCategory(fields: FieldMeta[]): boolean {
 export function groupByCategory(fields: FieldMeta[]): FieldGroup[] {
   const map = new Map<string, FieldMeta[]>();
   for (const f of fields) {
-    const cat = f.category?.trim() || DEFAULT_CATEGORY;
+    const cat = f.category?.trim() || defaultCategory();
     if (!map.has(cat)) map.set(cat, []);
     map.get(cat)!.push(f);
   }

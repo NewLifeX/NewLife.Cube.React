@@ -10,6 +10,7 @@
 import { Col, Form } from 'antd';
 import type { RuleObject } from 'antd/es/form';
 import FieldControl from '@/components/field/FieldControl';
+import { t } from '@/i18n';
 import { isFullWidthControl, resolveControl, resolveDescription } from '@/utils/fieldControl';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
@@ -28,13 +29,13 @@ function buildRules(meta: FieldMeta): RuleObject[] {
   const rules: RuleObject[] = [];
   const label = meta.displayName || meta.name;
   if (meta.required) {
-    rules.push({ required: true, message: `请输入${label}` });
+    rules.push({ required: true, message: t('请输入{{name}}', { name: label }) });
   }
   if (meta.itemType === 'mail') {
-    rules.push({ type: 'email', message: '邮箱格式不正确' });
+    rules.push({ type: 'email', message: t('邮箱格式不正确') });
   }
   if (meta.itemType === 'mobile') {
-    rules.push({ pattern: /^1\d{10}$/, message: '手机号格式不正确' });
+    rules.push({ pattern: /^1\d{10}$/, message: t('手机号格式不正确') });
   }
   return rules;
 }

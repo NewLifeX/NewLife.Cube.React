@@ -2,6 +2,7 @@
  * JSON 编辑器（文本域 + 格式化/校验）
  */
 import { useState } from 'react';
+import { t } from '@/i18n';
 import { App, Input, Space, Tooltip } from 'antd';
 import { CheckOutlined, FormatPainterOutlined } from '@ant-design/icons';
 
@@ -22,10 +23,10 @@ export default function JsonEditor({ value, onChange, placeholder, disabled, row
       const obj = JSON.parse(value ?? '');
       onChange?.(JSON.stringify(obj, null, 2));
       setError(false);
-      message.success('格式化成功');
+      message.success(t('格式化成功'));
     } catch {
       setError(true);
-      message.error('JSON 格式不正确');
+      message.error(t('JSON 格式不正确'));
     }
   };
 
@@ -48,7 +49,7 @@ export default function JsonEditor({ value, onChange, placeholder, disabled, row
         status={error ? 'error' : undefined}
         style={{ fontFamily: 'monospace' }}
       />
-      <Tooltip title="格式化 JSON">
+      <Tooltip title={t('格式化 JSON')}>
         <Input
           type="button"
           readOnly
@@ -59,7 +60,7 @@ export default function JsonEditor({ value, onChange, placeholder, disabled, row
         />
       </Tooltip>
       {!error && value && (
-        <Tooltip title="格式正确">
+        <Tooltip title={t('格式正确')}>
           <span style={{ color: '#52c41a', padding: '6px 4px' }}>
             <CheckOutlined />
           </span>

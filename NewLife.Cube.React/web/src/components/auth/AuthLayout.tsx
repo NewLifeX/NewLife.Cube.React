@@ -4,6 +4,7 @@
  * 为登录、注册、激活、找回密码等页面提供统一的品牌区与表单区壳层。
  */
 import type { ReactNode } from 'react';
+import { t } from '@/i18n';
 import { Card, Space, Tag } from 'antd';
 
 export interface AuthHighlight {
@@ -58,9 +59,9 @@ export default function AuthLayout({
             <Tag color="blue" variant="filled" className="cube-auth-eyebrow">
               React 19 + Ant Design 6
             </Tag>
-            <h1 className="cube-auth-hero-title">管理后台，也该像个产品。</h1>
+            <h1 className="cube-auth-hero-title">{t('管理后台，也该像个产品。')}</h1>
             <p className="cube-auth-hero-desc">
-              统一身份入口、动态字段驱动、权限菜单与高频业务操作，在同一套现代化界面中自然协作。
+              {t('统一身份入口、动态字段驱动、权限菜单与高频业务操作，在同一套现代化界面中自然协作。')}
             </p>
           </div>
 

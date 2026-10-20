@@ -5,6 +5,7 @@
  * 与 Vue 皮肤功能对等：纯 UI 入口（铃铛图标 + 可选文字标签 + 未读角标），不内联拉取数据。
  */
 import { Badge, Button } from 'antd';
+import { t } from '@/i18n';
 import { BellOutlined } from '@ant-design/icons';
 
 export interface NotificationBellProps {
@@ -18,7 +19,7 @@ export interface NotificationBellProps {
   onClick?: () => void;
 }
 
-export default function NotificationBell({ showLabel, label = '通知', count = 0, onClick }: NotificationBellProps) {
+export default function NotificationBell({ showLabel, label = t('通知'), count = 0, onClick }: NotificationBellProps) {
   return (
     <Badge count={count} size="small">
       {/* 可访问名：showLabel 时取文字标签，否则取默认“通知” */}
@@ -26,8 +27,8 @@ export default function NotificationBell({ showLabel, label = '通知', count = 
         type="text"
         className="cube-header-action"
         icon={<BellOutlined />}
-        aria-label={showLabel ? label : '通知'}
-        title="通知"
+        aria-label={showLabel ? label : t('通知')}
+        title={t('通知')}
         onClick={onClick}
       >
         {showLabel ? label : null}

@@ -12,6 +12,7 @@ import { Button, Input, Modal, Table, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fetchLovMeta, fetchLovListData } from '@/api/lov';
+import { t } from '@/i18n';
 import { resolveLovType } from '@/types/lov';
 import { getValueByKey } from '@/utils/url';
 import type { LovListMeta, LovSearchField } from '@/types/lov';
@@ -238,17 +239,17 @@ export default function LovSelectTable({
       />
       <Modal
         open={open}
-        title={`选择${meta?.name ?? ''}`}
+        title={t('选择{{name}}', { name: meta?.name ?? '' })}
         width={680}
         onCancel={() => setOpen(false)}
         footer={
           multiple ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography.Text type="secondary">已选 {selectedKeys.length} 项</Typography.Text>
+              <Typography.Text type="secondary">{t('已选 {{count}} 项', { count: selectedKeys.length })}</Typography.Text>
               <div>
-                <Button onClick={() => setOpen(false)}>取消</Button>
+                <Button onClick={() => setOpen(false)}>{t('取消')}</Button>
                 <Button type="primary" style={{ marginLeft: 8 }} onClick={handleConfirm}>
-                  确定
+                  {t('确定')}
                 </Button>
               </div>
             </div>
@@ -269,7 +270,7 @@ export default function LovSelectTable({
               />
             ))}
             <Button size="small" type="primary" onClick={() => setPage(1)}>
-              搜索
+              {t('搜索')}
             </Button>
             <Button
               size="small"
@@ -278,7 +279,7 @@ export default function LovSelectTable({
                 setPage(1);
               }}
             >
-              重置
+              {t('重置')}
             </Button>
           </div>
         )}
@@ -310,7 +311,7 @@ export default function LovSelectTable({
                   pageSize,
                   total,
                   showSizeChanger: true,
-                  showTotal: (t) => `共 ${t} 条`,
+                  showTotal: (total) => t('共 {{count}} 条', { count: total }),
                   pageSizeOptions: [10, 20, 50, 100],
                   onChange: (p, ps) => {
                     setPage(p);

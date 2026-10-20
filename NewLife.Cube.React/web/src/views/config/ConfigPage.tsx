@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { App, Button, Card, Form, Spin, Tabs } from 'antd';
 import type { DataField } from '@newlifex/api-core';
 import FieldControl from '@/components/field/FieldControl';
+import { t } from '@/i18n';
 import { groupByCategory, isFullWidthControl, resolveControl, serializeSubmitModel } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { getValueByKey } from '@/utils/url';
@@ -59,7 +60,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
         if (cancelled) return;
         const fieldList = (fieldsRes?.data ?? []) as DataField[];
         if (!fieldList.length) {
-          setError(`无法获取配置字段，请确认 ${type} 为配置控制器（ConfigController）`);
+          setError(t('无法获取配置字段，请确认 {{type}} 为配置控制器（ConfigController）', { type }));
           return;
         }
         // 过滤只读字段（主键/只读不参与编辑）
@@ -94,7 +95,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
       const model = serializeSubmitModel(values, fields);
       setSaving(true);
       await api.client.put(type, model);
-      message.success('保存成功');
+      message.success(t('保存成功'));
       // React 皮肤设置：保存后刷新页面，让全局配置（表单风格/导航排开等）立即生效
       if (type.toLowerCase().endsWith('/react')) {
         setTimeout(() => window.location.reload(), 600);
@@ -122,7 +123,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
       size="small"
       extra={
         <Button type="primary" loading={saving} onClick={() => void handleSave()}>
-          保存设置
+          {t('保存设置')}
         </Button>
       }
     >
@@ -146,7 +147,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
                           // 控件列固定 340px 不收缩（0 0），描述列吸收剩余空间 → 各条配置描述左对齐，
                           // 文本框/数字框等控件均占满该列，视觉等宽（对齐 MVC _Form_Item 栅格）
                           wrapperCol={{ flex: full ? '1 1 auto' : '0 0 340px' }}
-                          rules={meta.required ? [{ required: true, message: `请输入${meta.displayName || meta.name}` }] : []}
+                          rules={meta.required ? [{ required: true, message: t('请输入{{name}}', { name: meta.displayName || meta.name }) }] : []}
                           // 非整行控件固定基础宽度（标签 200 + 控件 340，对齐 MVC _Form_Item 栅格比例），
                           // 保证「标签 | 控件 | 描述」同行；整行控件占满中间，由描述列吸收剩余空间
                           style={{ flex: full ? '1 1 auto' : '0 0 548px', minWidth: 0, marginBottom: 0 }}
@@ -167,7 +168,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
           />
           <div style={{ marginTop: 8 }}>
             <Button type="primary" loading={saving} onClick={() => void handleSave()}>
-              保存设置
+              {t('保存设置')}
             </Button>
           </div>
         </Form>

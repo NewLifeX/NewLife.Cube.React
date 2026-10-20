@@ -8,6 +8,7 @@ import { Dropdown, Tabs } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { useTabsStore } from '@/stores/tabs';
+import { t } from '@/i18n';
 import { useMenuStore, resolveMenuTitle } from '@/stores/menu';
 import { resolveConfigTitle } from '@/views/config/ConfigNav';
 import type { RouteMeta } from '@/router';
@@ -33,10 +34,10 @@ export default function TabsView() {
   // 标签标题：静态路由用 meta.title；动态实体页用菜单名，菜单未就绪时回退 meta.title；
   // 配置中心页（左侧隐藏菜单，不在菜单树中）优先按静态清单解析标题
   const tabTitle = useMemo(() => {
-    if (!isCatchAll) return meta.title || '页面';
+    if (!isCatchAll) return meta.title || t('页面');
     const configTitle = resolveConfigTitle(location.pathname);
     if (configTitle) return configTitle;
-    return resolveMenuTitle(flatMenus, location.pathname, meta.title || '页面');
+    return resolveMenuTitle(flatMenus, location.pathname, meta.title || t('页面'));
   }, [isCatchAll, meta.title, flatMenus, location.pathname]);
 
   // 路由变化或标题就绪（菜单异步加载）时自动添加/更新标签
@@ -72,8 +73,8 @@ export default function TabsView() {
 
   const moreMenu = {
     items: [
-      { key: 'others', label: '关闭其他' },
-      { key: 'all', label: '关闭全部' },
+      { key: 'others', label: t('关闭其他') },
+      { key: 'all', label: t('关闭全部') },
     ],
     onClick: ({ key }: { key: string }) => {
       if (key === 'others') closeOthers(activePath);

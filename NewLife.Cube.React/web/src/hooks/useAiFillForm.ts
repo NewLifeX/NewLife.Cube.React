@@ -6,6 +6,7 @@
  * 通过 form.setFieldsValue 填充并提示用户核对后保存。
  */
 import { useEffect } from 'react';
+import { t } from '@/i18n';
 import type { FormInstance } from 'antd';
 import { App } from 'antd';
 
@@ -37,8 +38,8 @@ export function useAiFillForm(form: FormInstance, enabled = true) {
       form.setFieldsValue(values);
 
       const names = Object.keys(detail.values).join('、');
-      const skip = detail.skipped?.length ? `（跳过：${detail.skipped.join('、')}）` : '';
-      message.success(`AI 已预填 ${Object.keys(detail.values).length} 个字段（${names}）${skip}，请检查后保存`);
+      const skip = detail.skipped?.length ? t('（跳过：{{names}}）', { names: detail.skipped.join(', ') }) : '';
+      message.success(t('AI 已预填 {{count}} 个字段（{{names}}）{{skip}}，请检查后保存', { count: Object.keys(detail.values).length, names, skip }));
     };
 
     window.addEventListener('cube:ai-fill-form', onFill);

@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Descriptions, Modal, Tabs, Tag } from 'antd';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import LovCell from '@/components/field/LovCell';
 import { getValueByKey } from '@/utils/url';
 import { groupByCategory, hasCategory, resolveListControl } from '@/utils/fieldControl';
@@ -47,7 +48,7 @@ function formatValue(field: FieldMapping, value: unknown): ReactNode {
     case 'boolean':
       return (
         <Tag color={value === true || value === 'true' || value === 1 ? 'success' : 'default'}>
-          {value === true || value === 'true' || value === 1 ? '是' : '否'}
+          {value === true || value === 'true' || value === 1 ? t('是') : t('否')}
         </Tag>
       );
     case 'date': {
@@ -63,7 +64,7 @@ function formatValue(field: FieldMapping, value: unknown): ReactNode {
     case 'file':
       return value ? (
         <a href={String(value)} target="_blank" rel="noreferrer">
-          查看文件
+          {t('查看文件')}
         </a>
       ) : (
         '-'
@@ -134,7 +135,7 @@ export default function DetailDialog({ open, apiPrefix, id, fields, row, onClose
   return (
     <Modal
       open={open}
-      title="详情"
+      title={t('详情')}
       onCancel={onClose}
       footer={null}
       width={800}

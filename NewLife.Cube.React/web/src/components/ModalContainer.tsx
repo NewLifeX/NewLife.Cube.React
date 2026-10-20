@@ -2,6 +2,7 @@
  * Modal 容器（antd Modal 薄封装，统一确认交互样式）
  */
 import { Modal } from 'antd';
+import { t } from '@/i18n';
 import type { ModalProps } from 'antd';
 
 export interface ModalContainerProps extends ModalProps {
@@ -11,6 +12,6 @@ export interface ModalContainerProps extends ModalProps {
   cancelText?: string;
 }
 
-export default function ModalContainer({ okText = '确定', cancelText = '取消', ...rest }: ModalContainerProps) {
+export default function ModalContainer({ okText = t('确定'), cancelText = t('取消'), ...rest }: ModalContainerProps) {
   return <Modal {...rest} okText={okText} cancelText={cancelText} />;
 }

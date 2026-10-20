@@ -6,6 +6,7 @@
  */
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '@/layouts/RootLayout';
+import { t } from '@/i18n';
 import LoginPage from '@/pages/Login';
 import RegisterPage from '@/pages/Register';
 import ActivatePage from '@/pages/Activate';
@@ -42,52 +43,52 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
-        handle: { title: '首页', auth: true, tab: true, fixed: true } as RouteMeta,
+        handle: { title: t('首页'), auth: true, tab: true, fixed: true } as RouteMeta,
       },
       {
         path: 'login',
         element: <LoginPage />,
-        handle: { title: '登录', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('登录'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: 'register',
         element: <RegisterPage />,
-        handle: { title: '注册', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('注册'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: 'activate',
         element: <ActivatePage />,
-        handle: { title: '账号激活', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('账号激活'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: 'forgot-password',
         element: <ForgotPasswordPage />,
-        handle: { title: '忘记密码', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('忘记密码'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: 'profile',
         element: <ProfilePage />,
-        handle: { title: '个人中心', auth: true, tab: true } as RouteMeta,
+        handle: { title: t('个人中心'), auth: true, tab: true } as RouteMeta,
       },
       {
         path: 'profile/security',
         element: <ProfileSecurityPage />,
-        handle: { title: '安全中心', auth: true, tab: true } as RouteMeta,
+        handle: { title: t('安全中心'), auth: true, tab: true } as RouteMeta,
       },
       {
         path: 'unauthorized',
         element: <UnauthorizedPage />,
-        handle: { title: '未授权', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('未授权'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: 'loading',
         element: <LoadingPage />,
-        handle: { title: '加载中', auth: false, layout: false, tab: false } as RouteMeta,
+        handle: { title: t('加载中'), auth: false, layout: false, tab: false } as RouteMeta,
       },
       {
         path: '*',
         element: <DefaultEntityPage />,
-        handle: { title: '默认页面', auth: true, tab: true, dynamic: true } as RouteMeta,
+        handle: { title: t('默认页面'), auth: true, tab: true, dynamic: true } as RouteMeta,
       },
     ],
   },

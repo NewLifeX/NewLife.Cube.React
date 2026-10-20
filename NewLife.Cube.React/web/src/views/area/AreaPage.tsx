@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Segmented } from 'antd';
 import EntityListPage from '@/views/list/EntityListPage';
+import { t } from '@/i18n';
 import AreaMap from './AreaMap';
 
 export interface AreaPageProps {
@@ -24,8 +25,8 @@ export default function AreaPage({ type }: AreaPageProps) {
         value={mode}
         onChange={(v) => setMode(v as 'list' | 'map')}
         options={[
-          { label: '列表', value: 'list' },
-          { label: '地图', value: 'map' },
+          { label: t('列表'), value: 'list' },
+          { label: t('地图'), value: 'map' },
         ]}
         style={{ marginBottom: 8 }}
       />

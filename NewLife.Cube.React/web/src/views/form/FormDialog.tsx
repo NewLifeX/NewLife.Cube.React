@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
 import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
+import { t } from '@/i18n';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { getValueByKey, setValueByKey } from '@/utils/url';
 import type { FieldMapping } from '@newlifex/field-mapping';
@@ -28,7 +29,7 @@ export interface FormDialogProps {
 
 export default function FormDialog({
   open,
-  title = '新增',
+  title = t('新增'),
   mode,
   fields,
   row,
@@ -113,8 +114,8 @@ export default function FormDialog({
       onOk={() => void handleOk()}
       onCancel={onCancel}
       confirmLoading={submitting}
-      okText="保存"
-      cancelText="取消"
+      okText={t('保存')}
+      cancelText={t('取消')}
       width={800}
       destroyOnHidden
       // 高度自适应：内容少时模态窗贴合内容，接近视口上限才出现滚动条；overflowX 兜底横向溢出
