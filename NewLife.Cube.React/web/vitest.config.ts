@@ -15,5 +15,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // antd 弹窗类用例在并行负载下偶发超过默认 5s
+    testTimeout: 20000,
   },
 });

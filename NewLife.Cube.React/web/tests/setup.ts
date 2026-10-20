@@ -1,4 +1,12 @@
 import '@testing-library/jest-dom';
+import { afterEach, vi } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// 收尾：卸载组件并清掉 antd/rc 组件留下的延时器，避免定时器在测试环境销毁后触发
+afterEach(() => {
+  cleanup();
+  vi.clearAllTimers();
+});
 
 // ── 语言固定为简体中文 ────────────────────────────────────────────
 // 界面文案以中文原文为键（见 src/i18n），测试断言依赖中文；setup 先于测试模块加载，

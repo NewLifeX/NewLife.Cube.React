@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { App, Checkbox, Modal, Space, Table, Typography } from 'antd';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import {
   buildQuickGranted,
   collectSubtreeIds,
@@ -57,7 +58,7 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
         setGrantedMap(map);
         setExpandedKeys([]);
       })
-      .catch(() => message.error('加载权限树失败'))
+      .catch(() => message.error(t('加载权限树失败')))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, roleId]);
@@ -95,11 +96,11 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
     try {
       const permission = serializePermissions(grantedMap);
       await api.client.post('/Admin/Role/SavePermission', { roleId, permission });
-      message.success('权限保存成功');
+      message.success(t('权限保存成功'));
       onSaved?.();
       onClose();
     } catch {
-      message.error('权限保存失败');
+      message.error(t('权限保存失败'));
     } finally {
       setSaving(false);
     }
@@ -110,9 +111,9 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
     const renderPerm = (_: unknown, row: PermissionNode) => {
       const quick = (
         <Space size={6}>
-          <a onClick={() => handleQuick(row, 'readonly')}>只读</a>
-          <a onClick={() => handleQuick(row, 'all')}>全部</a>
-          <a onClick={() => handleQuick(row, 'none')}>无权限</a>
+          <a onClick={() => handleQuick(row, 'readonly')}>{t('只读')}</a>
+          <a onClick={() => handleQuick(row, 'all')}>{t('全部')}</a>
+          <a onClick={() => handleQuick(row, 'none')}>{t('无权限')}</a>
         </Space>
       );
       // 父级行（含子菜单）：仅提供级联快捷，避免表单拉长
@@ -138,7 +139,7 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
 
     return [
       {
-        title: '菜单',
+        title: t('菜单'),
         key: 'menu',
         render: (_: unknown, row: PermissionNode) => (
           <Space size={8}>
@@ -148,7 +149,7 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
         ),
       },
       {
-        title: '操作权限',
+        title: t('操作权限'),
         key: 'permission',
         render: renderPerm,
       },
@@ -159,13 +160,13 @@ export default function PermissionDialog({ open, roleId, roleName, onClose, onSa
   return (
     <Modal
       open={open}
-      title={`角色权限${roleName ? ` - ${roleName}` : ''}`}
+      title={t('角色权限') + (roleName ? ` - ${roleName}` : '')}
       width={820}
       onCancel={onClose}
       onOk={handleSave}
       confirmLoading={saving}
-      okText="保存"
-      cancelText="取消"
+      okText={t('保存')}
+      cancelText={t('取消')}
       destroyOnHidden
     >
       <Table<PermissionNode>

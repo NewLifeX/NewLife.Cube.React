@@ -13,6 +13,7 @@ import { getValueByKey, resolveUrl } from '@/utils/url';
 import { resolveIcon } from '@/utils/icon';
 import LovCell from '@/components/field/LovCell';
 import type { ListControlType } from '@/types/field';
+import { t } from '@/i18n';
 
 export interface TableContentProps {
   fields: FieldMapping[];
@@ -81,7 +82,7 @@ function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string,
 
   switch (control) {
     case 'boolean':
-      return <Tag color={raw === true || raw === 'true' || raw === 1 ? 'success' : 'default'}>{raw === true || raw === 'true' || raw === 1 ? '是' : '否'}</Tag>;
+      return <Tag color={raw === true || raw === 'true' || raw === 1 ? 'success' : 'default'}>{raw === true || raw === 'true' || raw === 1 ? t('是') : t('否')}</Tag>;
     case 'date': {
       // 纯日期字段（ItemType=date 或字段名以 Date/day 结尾）只显示日期，其余显示完整时间
       const dateOnly = isDateOnlyField(meta);
@@ -112,7 +113,7 @@ function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string,
     case 'file':
       return raw ? (
         <a href={String(raw)} target="_blank" rel="noreferrer">
-          查看文件
+          {t('查看文件')}
         </a>
       ) : (
         '-'
@@ -213,7 +214,7 @@ export default function TableContent({
     const opsCount =
       (canView ? 1 : 0) + (canEdit ? 1 : 0) + (canDelete ? 1 : 0) + (rowActions?.length ?? 0);
     columns.push({
-      title: '操作',
+      title: t('操作'),
       key: '__ops',
       width: 16 + 52 * opsCount,
       fixed: 'right',
@@ -221,7 +222,7 @@ export default function TableContent({
         <span>
           {canView && (
             <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-view" onClick={() => onView?.(row)}>
-              查看
+              {t('查看')}
             </Button>
           )}
           {/* 操作列扩展按钮（如角色「权限」），渲染在编辑按钮左侧 */}
@@ -239,23 +240,23 @@ export default function TableContent({
           ))}
           {canEdit && (
             <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-edit" onClick={() => onEdit?.(row)}>
-              编辑
+              {t('编辑')}
             </Button>
           )}
           {canDelete &&
             (isSoftDeleted(row) ? (
               <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-restore" onClick={() => onRestore?.(row)}>
-                恢复
+                {t('恢复')}
               </Button>
             ) : (
               <Popconfirm
-                title="确定删除该行数据吗？"
-                okText="删除"
+                title={t('确定删除该行数据吗？')}
+                okText={t('删除')}
                 okButtonProps={{ danger: true }}
                 onConfirm={() => onDelete?.(row)}
               >
                 <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-delete" danger>
-                  删除
+                  {t('删除')}
                 </Button>
               </Popconfirm>
             ))}
@@ -275,7 +276,7 @@ export default function TableContent({
       // 双击行进入编辑（对齐 MVC：编辑链接 title「双击本行任意地方也可以进入编辑表单页」）；
       // 无编辑权限时可查看，两者都无则无操作。title 悬浮提示双击能力
       onRow={(row) => ({
-        title: canEdit ? '双击行进入编辑' : canView ? '双击行查看详情' : undefined,
+        title: canEdit ? t('双击行进入编辑') : canView ? t('双击行查看详情') : undefined,
         onDoubleClick: () => {
           if (canEdit) onEdit?.(row);
           else if (canView) onView?.(row);

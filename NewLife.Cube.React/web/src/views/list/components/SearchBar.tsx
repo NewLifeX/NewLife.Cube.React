@@ -22,6 +22,7 @@ import { toFieldMeta } from '@/types/field';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import type { SearchControlType } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
+import { t } from '@/i18n';
 
 export interface SearchBarProps {
   fields: FieldMapping[];
@@ -58,7 +59,7 @@ function SearchControl({
   onChange: (value: unknown) => void;
 }) {
   const meta = toFieldMeta(field.field);
-  const placeholder = `请输入${meta.displayName || meta.name}`;
+  const placeholder = t('请输入{{name}}', { name: meta.displayName || meta.name });
   const label = meta.displayName || meta.name;
   // React 皮肤设置：搜索文本框清除图标开关
   const { inputClear } = useReactSetting();
@@ -78,13 +79,13 @@ function SearchControl({
       return (
         <Space.Compact style={{ width: '100%' }}>
           <InputNumber
-            placeholder="最小值"
+            placeholder={t('最小值')}
             value={range[0]}
             onChange={(v) => onChange([v, range[1]])}
             style={{ width: '50%' }}
           />
           <InputNumber
-            placeholder="最大值"
+            placeholder={t('最大值')}
             value={range[1]}
             onChange={(v) => onChange([range[0], v])}
             style={{ width: '50%' }}
@@ -120,13 +121,13 @@ function SearchControl({
       return (
         <Space.Compact>
           <TimePicker
-            placeholder="起"
+            placeholder={t('起')}
             value={range[0] ? dayjs(range[0], 'HH:mm:ss') : null}
             onChange={(d) => onChange([d ? d.format('HH:mm:ss') : null, range[1]])}
             style={{ width: '100%' }}
           />
           <TimePicker
-            placeholder="止"
+            placeholder={t('止')}
             value={range[1] ? dayjs(range[1], 'HH:mm:ss') : null}
             onChange={(d) => onChange([range[0], d ? d.format('HH:mm:ss') : null])}
             style={{ width: '100%' }}
@@ -139,7 +140,7 @@ function SearchControl({
         <LovSelect
           lovCode={meta.lovCode}
           dataSource={meta.dataSource}
-          placeholder={`请选择${label}`}
+          placeholder={t('请选择{{label}}', { label })}
           value={value as string}
           onChange={onChange}
         />
@@ -150,7 +151,7 @@ function SearchControl({
           lovCode={meta.lovCode}
           dataSource={meta.dataSource}
           multiple
-          placeholder={`请选择${label}`}
+          placeholder={t('请选择{{label}}', { label })}
           value={value as string[]}
           onChange={onChange}
         />
@@ -168,12 +169,12 @@ function SearchControl({
       return (
         <Select
           allowClear
-          placeholder="全部"
+          placeholder={t('全部')}
           value={value == null ? undefined : value === true || value === 'true' ? '1' : '0'}
           onChange={(v) => onChange(v == null ? undefined : v === '1')}
           options={[
-            { value: '1', label: '是' },
-            { value: '0', label: '否' },
+            { value: '1', label: t('是') },
+            { value: '0', label: t('否') },
           ]}
           style={{ width: '100%' }}
         />
@@ -182,12 +183,12 @@ function SearchControl({
       return (
         <Select
           allowClear
-          placeholder="全部"
+          placeholder={t('全部')}
           value={value == null ? undefined : value === true || value === '1' ? '1' : '0'}
           onChange={(v) => onChange(v == null ? undefined : v === '1')}
           options={[
-            { value: '1', label: '有附件' },
-            { value: '0', label: '无附件' },
+            { value: '1', label: t('有附件') },
+            { value: '0', label: t('无附件') },
           ]}
           style={{ width: '100%' }}
         />
@@ -319,18 +320,18 @@ export default function SearchBar({ fields, onSearch, onReset, initialValues }: 
         {/* 操作按钮与条件同行，落在最后一行右侧；行满时自动换行并靠右对齐 */}
         <div ref={actionsRef} className="cube-search-actions">
           <Button type="primary" onClick={handleSearch}>
-            搜索
+            {t('搜索')}
           </Button>
-          <Button onClick={handleReset}>重置</Button>
+          <Button onClick={handleReset}>{t('重置')}</Button>
           {canCollapse && (
             <Button type="link" size="small" onClick={() => setExpanded((v) => !v)}>
               {expanded ? (
                 <>
-                  收起 <UpOutlined />
+                  {t('收起')} <UpOutlined />
                 </>
               ) : (
                 <>
-                  展开 <DownOutlined />
+                  {t('展开')} <DownOutlined />
                 </>
               )}
             </Button>

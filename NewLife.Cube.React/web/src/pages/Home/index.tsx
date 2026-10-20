@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
 import { getConfig } from '@/configure';
+import { getCurrentLanguage, t } from '@/i18n';
 import {
   useDashboard,
   type DashboardKpi,
@@ -214,7 +215,7 @@ export default function HomePage() {
     chartInstRef.current = chart;
     chart.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { data: ['CPU', '内存'], top: 0, right: 0, textStyle: { color: textColor } },
+      legend: { data: ['CPU', t('内存')], top: 0, right: 0, textStyle: { color: textColor } },
       grid: { left: 8, right: 8, top: 32, bottom: 0, containLabel: true },
       xAxis: {
         type: 'category',
@@ -232,7 +233,7 @@ export default function HomePage() {
       },
       series: [
         { name: 'CPU', type: 'line', smooth: true, showSymbol: false, data: monitor.cpu, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
-        { name: '内存', type: 'line', smooth: true, showSymbol: false, data: monitor.mem, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
+        { name: t('内存'), type: 'line', smooth: true, showSymbol: false, data: monitor.mem, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
       ],
     });
     const onResize = () => chart.resize();
@@ -292,8 +293,8 @@ export default function HomePage() {
     layoutRef.current = {};
     api.client
       .post('/Admin/Index/ResetWidgetLayout')
-      .then(() => message.success('布局已重置'))
-      .catch(() => message.error('重置失败'));
+      .then(() => message.success(t('布局已重置')))
+      .catch(() => message.error(t('重置失败')));
   };
 
   // 隐藏 / 恢复（KPI 卡与内容部件共用布局 key，即时保存服务端）
@@ -310,8 +311,8 @@ export default function HomePage() {
   const allKpis = useMemo<DashboardKpi[]>(() => {
     if (wb?.kpis?.length || wb?.hiddenKpis?.length) return [...(wb.kpis ?? []), ...(wb.hiddenKpis ?? [])];
     return [
-      { name: 'online', label: '在线状态', value: '在线', color: 'cyan', trend: '当前账号状态' },
-      { name: 'users', label: '我的角色', value: userInfo?.roleName || '—', color: 'purple', trend: '当前角色' },
+      { name: 'online', label: t('在线状态'), value: t('在线'), color: 'cyan', trend: t('当前账号状态') },
+      { name: 'users', label: t('我的角色'), value: userInfo?.roleName || '—', color: 'purple', trend: t('当前角色') },
     ];
   }, [wb, userInfo]);
 
@@ -319,12 +320,12 @@ export default function HomePage() {
   const allWidgets = useMemo<DashboardWidget[]>(() => {
     if (wb?.widgets?.length || wb?.hiddenWidgets?.length) return [...(wb.widgets ?? []), ...(wb.hiddenWidgets ?? [])];
     const rs: DashboardWidget[] = [
-      { name: 'Monitor', title: '性能监控', icon: 'fa-line-chart', cols: 8, category: '系统', widgetType: 'Chart', data: null },
-      { name: 'QuickLink', title: '快捷入口', icon: 'fa-th-large', cols: 4, category: '通用', widgetType: 'Content', data: { links: wb?.quickLinks ?? [] } },
-      { name: 'Profile', title: '个人信息', icon: 'fa-user-circle', cols: 4, category: '个人', widgetType: 'Content', data: wb?.profile },
+      { name: 'Monitor', title: t('性能监控'), icon: 'fa-line-chart', cols: 8, category: t('系统'), widgetType: 'Chart', data: null },
+      { name: 'QuickLink', title: t('快捷入口'), icon: 'fa-th-large', cols: 4, category: t('通用'), widgetType: 'Content', data: { links: wb?.quickLinks ?? [] } },
+      { name: 'Profile', title: t('个人信息'), icon: 'fa-user-circle', cols: 4, category: t('个人'), widgetType: 'Content', data: wb?.profile },
     ];
     if (wb?.sysInfo && Object.keys(wb.sysInfo).length)
-      rs.push({ name: 'SysInfo', title: '系统信息', icon: 'fa-server', cols: 4, category: '系统', widgetType: 'Kv', data: wb.sysInfo });
+      rs.push({ name: 'SysInfo', title: t('系统信息'), icon: 'fa-server', cols: 4, category: t('系统'), widgetType: 'Kv', data: wb.sysInfo });
     return rs;
   }, [wb]);
 
@@ -435,20 +436,20 @@ export default function HomePage() {
 
   const userCard = wb?.user;
 
-  const today = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 星期${'日一二三四五六'[now.getDay()]}`;
-  const displayName = userCard?.displayName || userCard?.name || userInfo?.displayName || userInfo?.name || '用户';
+  const today = new Intl.DateTimeFormat(getCurrentLanguage(), { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(now);
+  const displayName = userCard?.displayName || userCard?.name || userInfo?.displayName || userInfo?.name || t('用户');
   const roles = userCard?.roles?.join(' / ') || userInfo?.roleName || '';
   // 时间段问候（对齐 MVC Index/Dashboard：夜深了/早上好/中午好/下午好/晚上好）
   const greet =
     now.getHours() < 6
-      ? '夜深了'
+      ? t('夜深了')
       : now.getHours() < 12
-        ? '早上好'
+        ? t('早上好')
         : now.getHours() < 14
-          ? '中午好'
+          ? t('中午好')
           : now.getHours() < 18
-            ? '下午好'
-            : '晚上好';
+            ? t('下午好')
+            : t('晚上好');
 
   /** 时间格式化（对齐 MVC LoginLog：登录 MM-dd HH:mm、在线 HH:mm） */
   const fmtTime = (t?: string, pat: 'mdhm' | 'hm' = 'mdhm'): string => {
@@ -470,14 +471,14 @@ export default function HomePage() {
           <span className="cube-home-quick-name">{link.name}</span>
         </div>
       ))}
-      {!data?.links?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无快捷入口" />}
+      {!data?.links?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('暂无快捷入口')} />}
     </div>
   );
 
   /** 登录与在线部件正文：最近登录、在线用户上下分段，各显示少量行（对齐 MVC LoginLog.cshtml 上下两块） */
   const renderLoginLogBody = (data?: DashboardLoginLog): ReactNode => (
     <div className="cube-home-login">
-      <div className="cube-home-login-title">最近登录</div>
+      <div className="cube-home-login-title">{t('最近登录')}</div>
       <div className="cube-home-login-list">
         {(data?.logins ?? []).map((it, i) => (
           <div key={i} className="cube-home-login-item" title={it.createIP ? `${it.action || ''} ${it.createIP}` : undefined}>
@@ -486,9 +487,9 @@ export default function HomePage() {
             <span className="cube-home-login-action">{it.action || ''}</span>
           </div>
         ))}
-        {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="最近24h无登录记录" />}
+        {!data?.logins?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('最近24h无登录记录')} />}
       </div>
-      <div className="cube-home-login-title">在线用户</div>
+      <div className="cube-home-login-title">{t('在线用户')}</div>
       <div className="cube-home-login-list">
         {(data?.onlines ?? []).map((it, i) => (
           <div key={i} className="cube-home-login-item" title={it.oAuthProvider}>
@@ -497,7 +498,7 @@ export default function HomePage() {
             <span className="cube-home-login-action">{it.oAuthProvider || ''}</span>
           </div>
         ))}
-        {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前无在线用户" />}
+        {!data?.onlines?.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('当前无在线用户')} />}
       </div>
     </div>
   );
@@ -516,36 +517,36 @@ export default function HomePage() {
       </div>
       <div className="cube-home-profile-table">
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">账号</span>
+          <span className="cube-home-profile-k">{t('账号')}</span>
           <span className="cube-home-profile-v">{p?.name ?? '—'}</span>
         </div>
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">状态</span>
+          <span className="cube-home-profile-k">{t('状态')}</span>
           <span className="cube-home-profile-v">
             <span className={`cube-online-dot${p?.online ? ' on' : ''}`} />
-            {p?.online ? '在线' : '离线'}
+            {p?.online ? t('在线') : t('离线')}
           </span>
         </div>
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">登录次数</span>
-          <span className="cube-home-profile-v">{p?.logins ?? '—'} 次</span>
+          <span className="cube-home-profile-k">{t('登录次数')}</span>
+          <span className="cube-home-profile-v">{p?.logins == null ? '—' : t('{{count}} 次', { count: p.logins })}</span>
         </div>
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">上次登录</span>
+          <span className="cube-home-profile-k">{t('上次登录')}</span>
           <span className="cube-home-profile-v">{p?.lastLogin || '—'}</span>
         </div>
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">上次地址</span>
+          <span className="cube-home-profile-k">{t('上次地址')}</span>
           <span className="cube-home-profile-v">{p?.lastLoginIP || '—'}</span>
         </div>
         <div className="cube-home-profile-row">
-          <span className="cube-home-profile-k">注册时间</span>
+          <span className="cube-home-profile-k">{t('注册时间')}</span>
           <span className="cube-home-profile-v">{p?.registerTime || '—'}</span>
         </div>
       </div>
       <div className="cube-home-profile-more">
         <a role="button" onClick={() => navigate('/profile')}>
-          个人中心 »
+          {t('个人中心')} »
         </a>
       </div>
     </div>
@@ -558,13 +559,13 @@ export default function HomePage() {
   const renderSysInfoBody = (data?: Record<string, unknown>): ReactNode => {
     if (!data) return null;
     const entries = Object.entries(data);
-    const more = entries.find(([k]) => k === '更多信息');
+    const more = entries.find(([k]) => k === t('更多信息'));
     const link = more ? parseHtmlLink(String(more[1] ?? '')) : null;
     return (
       <>
         <div className="cube-home-info-list">
           {entries
-            .filter(([k]) => k !== '更多信息')
+            .filter(([k]) => k !== t('更多信息'))
             .map(([k, v]) => (
               <div key={k} className="cube-home-info-item" title={String(v ?? '')}>
                 <span className="cube-home-info-key">{k}</span>
@@ -615,7 +616,7 @@ export default function HomePage() {
           <>
             <div ref={chartRef} className="cube-home-monitor-chart" />
             {monitor.xs.length < 2 && (
-              <div style={{ textAlign: 'center', color: 'var(--cube-text-muted)', padding: '20px 0' }}>等待监控数据…</div>
+              <div style={{ textAlign: 'center', color: 'var(--cube-text-muted)', padding: '20px 0' }}>{t('等待监控数据…')}</div>
             )}
           </>
         );
@@ -647,11 +648,11 @@ export default function HomePage() {
         <span className="cube-home-kpi-actions">
           <Dropdown
             trigger={['click']}
-            menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏', onClick: () => handleHide(item.key) }] }}
+            menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: t('隐藏'), onClick: () => handleHide(item.key) }] }}
           >
             <Button type="text" size="small" icon={<MoreOutlined />} />
           </Dropdown>
-          <span className="cube-kpi-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+          <span className="cube-kpi-drag-handle" title={t('拖动排序')} onMouseDown={startDrag(item.key)}>
             <DragOutlined />
           </span>
         </span>
@@ -711,11 +712,11 @@ export default function HomePage() {
           <span className="cube-widget-actions">
             <Dropdown
               trigger={['click']}
-              menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: '隐藏卡片', onClick: () => handleHide(item.key) }] }}
+              menu={{ items: [{ key: 'hide', icon: <EyeInvisibleOutlined />, label: t('隐藏卡片'), onClick: () => handleHide(item.key) }] }}
             >
               <Button type="text" size="small" icon={<MoreOutlined />} />
             </Dropdown>
-            <span className="cube-widget-drag-handle" title="拖动排序" onMouseDown={startDrag(item.key)}>
+            <span className="cube-widget-drag-handle" title={t('拖动排序')} onMouseDown={startDrag(item.key)}>
               <DragOutlined />
             </span>
           </span>
@@ -738,7 +739,7 @@ export default function HomePage() {
     if (!visibleItems.length)
       return (
         <div style={{ gridColumn: '1 / -1' }}>
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无卡片" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('暂无卡片')} />
         </div>
       );
     const list: ReactNode[] = [];
@@ -783,7 +784,7 @@ export default function HomePage() {
       {/* 紧凑欢迎横幅（对齐 MVC wb-banner） */}
       <div className="cube-home-banner">
         <div className="cube-home-banner-left">
-          <div className="cube-home-banner-avatar" title="进入个人中心" role="button" onClick={() => navigate('/profile')}>
+          <div className="cube-home-banner-avatar" title={t('进入个人中心')} role="button" onClick={() => navigate('/profile')}>
             {userInfo?.avatar ? <img src={userInfo.avatar} alt="avatar" /> : <UserOutlined />}
           </div>
           <div className="cube-home-banner-copy">
@@ -791,7 +792,7 @@ export default function HomePage() {
               {greet}，{displayName}
             </div>
             <div className="cube-home-banner-sub">
-              欢迎回到 {getConfig().base.title} · {today}
+              {t('欢迎回到 {{name}}', { name: getConfig().base.title })} · {today}
               {roles ? ` · ${roles}` : ''}
             </div>
           </div>
@@ -800,8 +801,8 @@ export default function HomePage() {
           <Button
             type="text"
             icon={<ReloadOutlined />}
-            title="刷新工作台数据"
-            aria-label="刷新工作台数据"
+            title={t('刷新工作台数据')}
+            aria-label={t('刷新工作台数据')}
             onClick={() => void reloadWb()}
           />
           {/* 已隐藏 N：仅当有隐藏卡片时显示，点击弹出恢复面板（对齐 MVC btn-widget-hidden + wb-hidden-pop） */}
@@ -813,9 +814,9 @@ export default function HomePage() {
               styles={{ content: { padding: 0, borderRadius: 10 } }}
               content={
                 <div className="cube-hidden-pop">
-                  <div className="cube-hidden-pop-title">已隐藏卡片</div>
+                  <div className="cube-hidden-pop-title">{t('已隐藏卡片')}</div>
                   <ul className="cube-hidden-pop-list">
-                    {hiddenWidgets.length > 0 && <li className="cube-hidden-pop-group">内容卡片</li>}
+                    {hiddenWidgets.length > 0 && <li className="cube-hidden-pop-group">{t('内容卡片')}</li>}
                     {hiddenWidgets.map((it) => (
                       <li key={it.key} className="cube-hidden-pop-item">
                         <span className="cube-hidden-pop-name">
@@ -823,11 +824,11 @@ export default function HomePage() {
                           {it.widget?.title ?? it.key}
                         </span>
                         <Button type="primary" size="small" onClick={() => handleUnhide(it.key)}>
-                          恢复
+                          {t('恢复')}
                         </Button>
                       </li>
                     ))}
-                    {hiddenKpis.length > 0 && <li className="cube-hidden-pop-group">指标小卡</li>}
+                    {hiddenKpis.length > 0 && <li className="cube-hidden-pop-group">{t('指标小卡')}</li>}
                     {hiddenKpis.map((it) => (
                       <li key={`kpi-${it.key}`} className="cube-hidden-pop-item">
                         <span className="cube-hidden-pop-name">
@@ -835,26 +836,26 @@ export default function HomePage() {
                           {it.kpi?.label ?? it.key}
                         </span>
                         <Button type="primary" size="small" onClick={() => handleUnhide(it.key)}>
-                          恢复
+                          {t('恢复')}
                         </Button>
                       </li>
                     ))}
                   </ul>
                   <div className="cube-hidden-pop-foot">
                     <a role="button" onClick={handleResetLayout}>
-                      <UndoOutlined /> 恢复默认布局
+                      <UndoOutlined /> {t('恢复默认布局')}
                     </a>
                   </div>
                 </div>
               }
             >
               <Button type="text" icon={<EyeInvisibleOutlined />}>
-                已隐藏 {hiddenItems.length}
+                {t('已隐藏 {{count}}', { count: hiddenItems.length })}
               </Button>
             </Popover>
           )}
           <Button type="text" icon={<UserOutlined />} onClick={() => navigate('/profile')}>
-            个人中心
+            {t('个人中心')}
           </Button>
         </div>
       </div>

@@ -5,11 +5,25 @@
  * 删除选中仅选中时显示、表格/图表视图切换、高级菜单（导出5格式/导入/删除全部/备份/还原/备份导出/清空数据表、
  * 分隔线分组、开发功能仅 canDevelop 且 清空数据表 无搜索条件时显示）。
  */
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Toolbar from '../Toolbar';
+import i18n from '@/i18n';
 
 describe('Toolbar 工具栏', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('zh-CN');
+  });
+
+  it('英文环境下按钮与视图切换使用英文文案', async () => {
+    await i18n.changeLanguage('en-US');
+    render(<Toolbar canChart />);
+
+    expect(screen.getByText('New')).toBeInTheDocument();
+    expect(screen.getByText('Table')).toBeInTheDocument();
+    expect(screen.getByText('Chart')).toBeInTheDocument();
+  });
+
   it('默认权限展示新增/刷新/高级，无选中时不显示删除选中，canChart 时显示视图切换', () => {
     render(<Toolbar canChart />);
     expect(screen.getByRole('button', { name: /新\s*增/ })).toBeInTheDocument();

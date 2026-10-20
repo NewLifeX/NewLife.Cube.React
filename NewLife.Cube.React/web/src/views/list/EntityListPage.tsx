@@ -28,6 +28,7 @@ import ListPagination from './components/ListPagination';
 import ChartView from './components/ChartView';
 import FormDialog from '@/views/form/FormDialog';
 import DetailDialog from '@/views/form/DetailDialog';
+import { t } from '@/i18n';
 import PermissionDialog from './components/PermissionDialog';
 
 export interface EntityListPageProps {
@@ -188,12 +189,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .getState()
       .remove(String(id))
       .then(() => {
-        message.success('删除成功');
+        message.success(t('删除成功'));
         void refresh();
       })
       .catch((err) => {
         // 业务错误已由 api-core 统一提示，这里兜底
-        message.error((err as Error)?.message || '删除失败');
+        message.error((err as Error)?.message || t('删除失败'));
       });
   };
 
@@ -206,7 +207,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     ? [
         {
           key: 'permission',
-          label: '权限',
+          label: t('权限'),
           className: 'cube-op-btn-op-perm',
           onClick: handlePermRow,
         },
@@ -219,11 +220,11 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .getState()
       .restore(String(id))
       .then(() => {
-        message.success('恢复成功');
+        message.success(t('恢复成功'));
         void refresh();
       })
       .catch((err: unknown) => {
-        message.error((err as Error)?.message || '恢复失败');
+        message.error((err as Error)?.message || t('恢复失败'));
       });
   };
 
@@ -234,12 +235,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .getState()
       .deleteSelect(keys)
       .then(() => {
-        message.success('删除成功');
+        message.success(t('删除成功'));
         setSelectedKeys([]);
         void refresh();
       })
       .catch((err) => {
-        message.error((err as Error)?.message || '删除失败');
+        message.error((err as Error)?.message || t('删除失败'));
       });
   };
 
@@ -254,9 +255,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       const blob = res.data as Blob;
       const name = type.split('/').filter(Boolean).pop() || 'export';
       downloadBlob(blob, `${name}_${dateStamp()}${blobExt(blob.type)}`);
-      message.success('导出成功');
+      message.success(t('导出成功'));
     } catch (err) {
-      message.error((err as Error)?.message || '导出失败');
+      message.error((err as Error)?.message || t('导出失败'));
     }
   };
 
@@ -270,7 +271,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .getState()
       .importFile(file)
       .then(() => {
-        message.success('导入成功');
+        message.success(t('导入成功'));
         void refresh();
       });
   };
@@ -289,19 +290,19 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   /** 删除当前查询条件下的全部数据（高级菜单，二次确认） */
   const handleDeleteAll = () => {
     modal.confirm({
-      title: '删除全部',
-      content: '确定删除当前查询条件下的所有数据吗？此操作不可恢复！',
-      okText: '删除',
+      title: t('删除全部'),
+      content: t('确定删除当前查询条件下的所有数据吗？此操作不可恢复！'),
+      okText: t('删除'),
       okButtonProps: { danger: true },
-      cancelText: '取消',
+      cancelText: t('取消'),
       onOk: async () => {
         try {
           await store.getState().deleteAll(searchParams);
-          message.success('删除成功');
+          message.success(t('删除成功'));
           setSelectedKeys([]);
           void refresh();
         } catch (err) {
-          message.error((err as Error)?.message || '删除失败');
+          message.error((err as Error)?.message || t('删除失败'));
         }
       },
     });
@@ -311,9 +312,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const handleBackup = async () => {
     try {
       const res = await api.client.get(`${type}/Develop`, { params: { act: 'Backup' } });
-      message.success((res.data as { message?: string })?.message || '备份成功');
+      message.success((res.data as { message?: string })?.message || t('备份成功'));
     } catch (err) {
-      message.error((err as Error)?.message || '备份失败');
+      message.error((err as Error)?.message || t('备份失败'));
     }
   };
 
@@ -321,9 +322,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const handleRestore = async () => {
     try {
       const res = await api.client.get(`${type}/Develop`, { params: { act: 'Restore' } });
-      message.success((res.data as { message?: string })?.message || '还原成功');
+      message.success((res.data as { message?: string })?.message || t('还原成功'));
     } catch (err) {
-      message.error((err as Error)?.message || '还原失败');
+      message.error((err as Error)?.message || t('还原失败'));
     }
   };
 
@@ -337,28 +338,28 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       const blob = res.data as Blob;
       const name = type.split('/').filter(Boolean).pop() || 'export';
       downloadBlob(blob, `${name}_${dateStamp()}.gz`);
-      message.success('备份导出成功');
+      message.success(t('备份导出成功'));
     } catch (err) {
-      message.error((err as Error)?.message || '备份导出失败');
+      message.error((err as Error)?.message || t('备份导出失败'));
     }
   };
 
   /** 清空数据表全部数据（高级菜单，开发模式+无搜索条件，二次确认。对齐 MVC Develop?act=Clear） */
   const handleClear = () => {
     modal.confirm({
-      title: '清空数据表',
-      content: '确定删除数据表所有数据并不可恢复？确认清空？',
-      okText: '清空',
+      title: t('清空数据表'),
+      content: t('确定删除数据表所有数据并不可恢复？确认清空？'),
+      okText: t('清空'),
       okButtonProps: { danger: true },
-      cancelText: '取消',
+      cancelText: t('取消'),
       onOk: async () => {
         try {
           const res = await api.client.get(`${type}/Develop`, { params: { act: 'Clear' } });
-          message.success((res.data as { message?: string })?.message || '清空成功');
+          message.success((res.data as { message?: string })?.message || t('清空成功'));
           setSelectedKeys([]);
           void refresh();
         } catch (err) {
-          message.error((err as Error)?.message || '清空失败');
+          message.error((err as Error)?.message || t('清空失败'));
         }
       },
     });
@@ -382,11 +383,11 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       } else {
         await store.getState().add(data);
       }
-      message.success(dialog.mode === 'edit' ? '更新成功' : '新增成功');
+      message.success(dialog.mode === 'edit' ? t('更新成功') : t('新增成功'));
       setDialog({ open: false, mode: 'add', row: null });
       void refresh();
     } catch (err) {
-      message.error((err as Error)?.message || '保存失败');
+      message.error((err as Error)?.message || t('保存失败'));
     }
   };
 
@@ -470,7 +471,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       {/* 新增/编辑弹窗 */}
       <FormDialog
         open={dialog.open}
-        title={dialog.mode === 'edit' ? '编辑' : '新增'}
+        title={dialog.mode === 'edit' ? t('编辑') : t('新增')}
         mode={dialog.mode}
         fields={formFields}
         row={dialog.row}

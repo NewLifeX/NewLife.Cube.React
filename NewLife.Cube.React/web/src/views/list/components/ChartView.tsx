@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react';
 import { Empty, Spin } from 'antd';
 import * as echarts from 'echarts';
+import { t } from '@/i18n';
 
 export interface ChartViewProps {
   /** ECharts 配置数组 */
@@ -17,7 +18,7 @@ export interface ChartViewProps {
 }
 
 export default function ChartView({ charts }: ChartViewProps) {
-  if (!charts.length) return <Empty description="暂无图表数据" />;
+  if (!charts.length) return <Empty description={t('暂无图表数据')} />;
 
   return (
     <div className="cube-chart-view">
