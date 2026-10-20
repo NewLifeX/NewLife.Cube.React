@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { App, Button, Card, Input, Space, Spin, Table, Tag } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 export interface WidgetPageProps {
   /** 实体路径前缀，如 '/Cube/Widget' */
@@ -36,8 +37,8 @@ export interface WidgetItem {
 
 /** 可见性文本（对齐 MVC Index.cshtml：仅管理员 / 所有用户 / 权限列表） */
 export function visibleText(w: WidgetItem): string {
-  if (w.adminOnly) return '仅管理员';
-  return w.permission ? w.permission : '所有用户';
+  if (w.adminOnly) return t('仅管理员');
+  return w.permission ? w.permission : t('所有用户');
 }
 
 export default function WidgetPage({ type }: WidgetPageProps) {
@@ -61,7 +62,7 @@ export default function WidgetPage({ type }: WidgetPageProps) {
       }
       setGroupItems(items);
     } catch {
-      message.error('加载部件列表失败');
+      message.error(t('加载部件列表失败'));
     } finally {
       setLoading(false);
     }
@@ -76,10 +77,10 @@ export default function WidgetPage({ type }: WidgetPageProps) {
     setActing(`${name}_${enable}`);
     try {
       await api.client.post(`${type}/Enable`, null, { params: { name, enable } });
-      message.success(`${name} ${enable ? '已启用' : '已禁用'}`);
+      message.success(enable ? t('{{name}} 已启用', { name }) : t('{{name}} 已禁用', { name }));
       void load();
     } catch {
-      message.error('操作失败');
+      message.error(t('操作失败'));
     } finally {
       setActing('');
     }
@@ -89,10 +90,10 @@ export default function WidgetPage({ type }: WidgetPageProps) {
   const handleSaveGroupOrder = async () => {
     try {
       await api.client.post(`${type}/SaveGroupOrder`, null, { params: { groups: groupOrder } });
-      message.success('组顺序已保存');
+      message.success(t('组顺序已保存'));
       void load();
     } catch {
-      message.error('保存组顺序失败');
+      message.error(t('保存组顺序失败'));
     }
   };
 
@@ -104,10 +105,10 @@ export default function WidgetPage({ type }: WidgetPageProps) {
         api.client.post(`${type}/SaveGroupItemOrder`, null, { params: { group: g, names } }),
       );
       await Promise.all(posts);
-      message.success('组内顺序已保存');
+      message.success(t('组内顺序已保存'));
       void load();
     } catch {
-      message.error('保存组内顺序失败');
+      message.error(t('保存组内顺序失败'));
     } finally {
       setActing('');
     }
@@ -118,30 +119,30 @@ export default function WidgetPage({ type }: WidgetPageProps) {
       size="small"
       extra={
         <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
-          刷新
+          {t('刷新')}
         </Button>
       }
     >
       <Spin spinning={loading}>
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           {/* 分组显示顺序（对齐 MVC Index.cshtml 面板） */}
-          <Card size="small" type="inner" title="分组显示顺序" extra={<small>同组卡片默认聚合显示；未列出的组排到最后并按名称排序</small>}>
+          <Card size="small" type="inner" title={t('分组显示顺序')} extra={<small>{t('同组卡片默认聚合显示；未列出的组排到最后并按名称排序')}</small>}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
-                placeholder="系统,个人,通用"
+                placeholder={t('系统,个人,通用')}
                 value={groupOrder}
                 onChange={(e) => setGroupOrder(e.target.value)}
                 style={{ fontFamily: 'monospace' }}
               />
               <Button type="primary" onClick={() => void handleSaveGroupOrder()} loading={acting === '__group_order__'}>
-                保存
+                {t('保存')}
               </Button>
             </Space.Compact>
           </Card>
 
           {/* 组内默认顺序（对齐 MVC Index.cshtml 面板） */}
           {Object.keys(groupItems).length > 0 && (
-            <Card size="small" type="inner" title="组内默认顺序" extra={<small>每组一行，逗号分隔部件名；新部件自动排到组内末尾</small>}>
+            <Card size="small" type="inner" title={t('组内默认顺序')} extra={<small>{t('每组一行，逗号分隔部件名；新部件自动排到组内末尾')}</small>}>
               <Space direction="vertical" style={{ width: '100%' }} size={8}>
                 {Object.entries(groupItems).map(([g, names]) => (
                   <div key={g}>
@@ -154,7 +155,7 @@ export default function WidgetPage({ type }: WidgetPageProps) {
                   </div>
                 ))}
                 <Button type="primary" onClick={() => void handleSaveGroupItems()} loading={acting === '__group_items__'}>
-                  保存组内顺序
+                  {t('保存组内顺序')}
                 </Button>
               </Space>
             </Card>
@@ -166,33 +167,33 @@ export default function WidgetPage({ type }: WidgetPageProps) {
             dataSource={rows}
             size="medium"
             pagination={false}
-            locale={{ emptyText: '暂无部件' }}
+            locale={{ emptyText: t('暂无部件') }}
             columns={[
-              { title: '名称', dataIndex: 'name', width: 160 },
-              { title: '标题', dataIndex: 'title', width: 200 },
+              { title: t('名称'), dataIndex: 'name', width: 160 },
+              { title: t('标题'), dataIndex: 'title', width: 200 },
               {
-                title: '图标',
+                title: t('图标'),
                 dataIndex: 'icon',
                 width: 160,
                 render: (v?: string) => (v ? <span style={{ fontFamily: 'monospace' }}>{v}</span> : '-'),
               },
-              { title: '宽度', dataIndex: 'cols', width: 80, align: 'center', render: (v?: number) => v ?? 6 },
+              { title: t('宽度'), dataIndex: 'cols', width: 80, align: 'center', render: (v?: number) => v ?? 6 },
               {
-                title: '分类',
+                title: t('分类'),
                 dataIndex: 'category',
                 width: 120,
                 render: (v?: string) => (v ? <Tag>{v}</Tag> : '-'),
               },
-              { title: '可见性', key: 'visible', width: 140, render: (_, w) => visibleText(w) },
+              { title: t('可见性'), key: 'visible', width: 140, render: (_, w) => visibleText(w) },
               {
-                title: '状态',
+                title: t('状态'),
                 key: 'enable',
                 width: 100,
                 align: 'center',
-                render: (_, w) => (w.enable ? '✅ 启用' : '⛔ 禁用'),
+                render: (_, w) => (w.enable ? t('✅ 启用') : t('⛔ 禁用')),
               },
               {
-                title: '操作',
+                title: t('操作'),
                 key: '__ops',
                 width: 100,
                 align: 'center',
@@ -204,7 +205,7 @@ export default function WidgetPage({ type }: WidgetPageProps) {
                     loading={acting === `${w.name}_${!w.enable}`}
                     onClick={() => void handleToggle(w.name, !w.enable)}
                   >
-                    {w.enable ? '禁用' : '启用'}
+                    {w.enable ? t('禁用') : t('启用')}
                   </Button>
                 ),
               },

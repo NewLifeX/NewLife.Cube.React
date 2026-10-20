@@ -26,6 +26,7 @@ import { useLocation } from 'react-router-dom';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import { renderMermaidBlocks } from './mermaidRenderer';
 
 interface ChatMsg {
@@ -246,7 +247,7 @@ export default function AiAssistant() {
   /** 处理工具事件（规范协议：tool_call_start / tool_call_done / tool_call_error） */
   const handleToolEvent = (status: 'start' | 'done' | 'error', json: Record<string, unknown>) => {
     const toolId = String(json.toolCallId ?? json.id ?? '');
-    const name = String(json.name ?? json.tool ?? '工具');
+    const name = String(json.name ?? json.tool ?? t('工具'));
     // 后端对同一工具调用会发两次 tool_call_start（一次无参数、一次带参数），按 toolId 去重避免重复卡片
     setTools((prev) => {
       const exist = prev.find((t) => t.id === toolId);
@@ -332,7 +333,7 @@ export default function AiAssistant() {
       const ct = resp.headers.get('content-type') || '';
       if (!ct.includes('text/event-stream')) {
         const body = await resp.text();
-        let msg = 'AI 请求失败';
+        let msg = t('AI 请求失败');
         if (body) {
           try {
             const data = JSON.parse(body) as { message?: string };
@@ -354,11 +355,11 @@ export default function AiAssistant() {
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         for (const line of lines) {
-          const t = line.trim();
-          if (!t.startsWith('data: ')) continue;
+          const lineText = line.trim();
+          if (!lineText.startsWith('data: ')) continue;
           let json: Record<string, unknown>;
           try {
-            json = JSON.parse(t.substring(6)) as Record<string, unknown>;
+            json = JSON.parse(lineText.substring(6)) as Record<string, unknown>;
           } catch {
             continue;
           }
@@ -376,7 +377,7 @@ export default function AiAssistant() {
           } else if (json.type === 'run_js') {
             handleRunJs(json);
           } else if (json.type === 'error') {
-            updateAssist(`<span style="color:var(--cube-danger)">⚠️ ${String(json.message ?? 'AI 调用失败')}</span>`);
+            updateAssist(`<span style="color:var(--cube-danger)">⚠️ ${String(json.message ?? t('AI 调用失败'))}</span>`);
             scrollBottom();
           }
           // message_start / message_done / thinking_delta / heartbeat 规范事件无需处理，忽略
@@ -384,10 +385,10 @@ export default function AiAssistant() {
       }
     } catch (err) {
       updateAssist(
-        `<span style="color:var(--cube-danger)">⚠️ ${(err as Error)?.message || '请求失败'}</span><br/><small>请确认 AI 服务已启用（系统设置中开启 AISwitch）</small>`,
+        `<span style="color:var(--cube-danger)">⚠️ ${(err as Error)?.message || t('请求失败')}</span><br/><small>{t('请确认 AI 服务已启用（系统设置中开启 AISwitch）')}</small>`,
       );
     } finally {
-      setTools((prev) => prev.map((t) => (t.status === 'start' ? { ...t, status: 'error', name: t.name + '（中断）' } : t)));
+      setTools((prev) => prev.map((tool) => (tool.status === 'start' ? { ...tool, status: 'error', name: tool.name + t('（中断）') } : tool)));
       setStreaming(false);
       // 渲染 Mermaid 图表
       requestAnimationFrame(() => {
@@ -400,14 +401,14 @@ export default function AiAssistant() {
   const quickActions = useCallback((): { label: string; prompt: string }[] => {
     if (pageKind === 'form') {
       return [
-        { label: '📝 帮我填表', prompt: '帮我填写当前表单' },
-        ...(isEdit ? [{ label: '🔍 分析当前记录', prompt: '分析当前记录' }] : []),
-        { label: '🩺 系统诊断', prompt: '检查系统运行状态' },
+        { label: t('📝 帮我填表'), prompt: t('帮我填写当前表单') },
+        ...(isEdit ? [{ label: t('🔍 分析当前记录'), prompt: t('分析当前记录') }] : []),
+        { label: t('🩺 系统诊断'), prompt: t('检查系统运行状态') },
       ];
     }
     return [
-      { label: '📊 分析当前数据', prompt: '分析当前列表数据' },
-      { label: '🩺 系统诊断', prompt: '检查系统运行状态' },
+      { label: t('📊 分析当前数据'), prompt: t('分析当前列表数据') },
+      { label: t('🩺 系统诊断'), prompt: t('检查系统运行状态') },
     ];
   }, [pageKind, isEdit]);
 
@@ -418,7 +419,7 @@ export default function AiAssistant() {
     <>
       {/* 悬浮按钮 */}
       {!open && (
-        <Tooltip title="AI 助手">
+        <Tooltip title={t('AI 助手')}>
           <Button
             type="primary"
             className="cube-ai-fab"
@@ -435,7 +436,7 @@ export default function AiAssistant() {
           {/* 头部 */}
           <div className="cube-ai-header">
             <span className="cube-ai-header-title">
-              <RobotOutlined /> AI 助手
+              <RobotOutlined /> {t('AI 助手')}
               <span className="cube-ai-header-path">{location.pathname}</span>
             </span>
             <Space size={2}>
@@ -443,7 +444,7 @@ export default function AiAssistant() {
                 type="text"
                 size="small"
                 className="cube-ai-header-btn"
-                title={maximized ? '还原' : '最大化'}
+                title={maximized ? t('还原') : t('最大化')}
                 icon={maximized ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
                 onClick={toggleMaximize}
               />
@@ -451,7 +452,7 @@ export default function AiAssistant() {
                 type="text"
                 size="small"
                 className="cube-ai-header-btn"
-                title="清空会话"
+                title={t('清空会话')}
                 icon={<DeleteOutlined />}
                 onClick={handleClear}
               />
@@ -466,7 +467,7 @@ export default function AiAssistant() {
                 <div className="cube-ai-empty-icon">
                   <RobotOutlined />
                 </div>
-                <p>我是 AI 助手，可以分析数据、填写表单、检查系统状态</p>
+                <p>{t('我是 AI 助手，可以分析数据、填写表单、检查系统状态')}</p>
                 <div className="cube-ai-quick">
                   {quickActions().map((q) => (
                     <Button key={q.prompt} size="small" onClick={() => void handleSend(q.prompt)}>
@@ -485,10 +486,10 @@ export default function AiAssistant() {
               </div>
             ))}
             {/* 工具卡片 */}
-            {tools.map((t) => (
-              <div key={t.id} className="cube-ai-tool">
-                {t.status === 'start' ? '⏳' : t.status === 'done' ? '✅' : '❌'} <b>{t.name}</b>{' '}
-                {t.status === 'start' ? '调用中...' : t.status === 'done' ? '完成' : '失败'}
+            {tools.map((tool) => (
+              <div key={tool.id} className="cube-ai-tool">
+                {tool.status === 'start' ? '⏳' : tool.status === 'done' ? '✅' : '❌'} <b>{tool.name}</b>{' '}
+                {tool.status === 'start' ? t('调用中...') : tool.status === 'done' ? t('完成') : t('失败')}
               </div>
             ))}
           </div>
@@ -500,16 +501,16 @@ export default function AiAssistant() {
                 className="cube-ai-think"
                 checked={think}
                 onChange={(e) => setThink(e.target.checked)}
-                title="深度推理更准确，但耗时更长"
+                title={t('深度推理更准确，但耗时更长')}
               >
-                深度
+                {t('深度')}
               </Checkbox>
               <Space.Compact style={{ flex: 1 }}>
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onPressEnter={() => void handleSend()}
-                  placeholder="输入问题，Enter 发送"
+                  placeholder={t('输入问题，Enter 发送')}
                   disabled={streaming}
                 />
                 <Button type="primary" icon={<SendOutlined />} loading={streaming} onClick={() => void handleSend()} />
