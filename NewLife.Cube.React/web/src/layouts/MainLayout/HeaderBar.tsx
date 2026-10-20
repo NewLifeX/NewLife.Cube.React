@@ -9,6 +9,7 @@ import { useUserStore } from '@/stores/user';
 import { useMenuStore } from '@/stores/menu';
 import { findConfigCenter } from '@/views/config/ConfigNav';
 import { getConfig } from '@/configure';
+import { t } from '@/i18n';
 import ModeSwitcher from '@/components/ModeSwitcher';
 import LanguageSwitch from '@/components/LanguageSwitch';
 import NavbarSearch from '@/components/NavbarSearch';
@@ -58,7 +59,7 @@ export default function HeaderBar({ collapsed, onToggle }: HeaderBarProps) {
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={onToggle}
-            aria-label="切换导航"
+            aria-label={t('切换导航')}
           />
           <div className="cube-shell-header-copy">
             <Breadcrumb className="cube-shell-header-breadcrumb" items={crumbs} />

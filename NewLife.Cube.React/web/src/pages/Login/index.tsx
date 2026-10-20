@@ -18,6 +18,7 @@ import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
 import { useMenuStore } from '@/stores/menu';
 import { getConfig } from '@/configure';
+import { t } from '@/i18n';
 import { useLoginConfig, useCaptcha } from '@/hooks/useLoginConfig';
 import { parsePasswordRules } from '@/utils/passwordRules';
 import RegisterPanel from './RegisterPanel';
@@ -90,7 +91,7 @@ export default function LoginPage() {
   };
 
   const afterLogin = () => {
-    message.success('登录成功');
+    message.success(t('登录成功'));
     navigate(redirect, { replace: true });
   };
 
@@ -118,17 +119,17 @@ export default function LoginPage() {
       // 账号未激活
       if (data?.pendingActivation || res.message?.includes('未激活')) {
         setActivation(data ?? { pendingActivation: true, channels: [], targets: [] });
-        message.warning('账号尚未激活，请先激活');
+        message.warning(t('账号尚未激活，请先激活'));
         return;
       }
       if (data?.accessToken) {
         afterLogin();
       } else {
-        message.error(res.message || '登录失败，请检查用户名和密码');
+        message.error(res.message || t('登录失败，请检查用户名和密码'));
       }
     } catch (err) {
       if (showCaptcha) void refresh();
-      message.error((err as Error)?.message || '网络错误，请稍后重试');
+      message.error((err as Error)?.message || t('网络错误，请稍后重试'));
     } finally {
       setSubmitting(false);
     }
@@ -143,10 +144,10 @@ export default function LoginPage() {
         api.tokenManager.setToken(res.data.accessToken);
         afterLogin();
       } else {
-        message.error(res.message || '验证码错误');
+        message.error(res.message || t('验证码错误'));
       }
     } catch (err) {
-      message.error((err as Error)?.message || '验证失败');
+      message.error((err as Error)?.message || t('验证失败'));
     } finally {
       setMfaSubmitting(false);
     }
@@ -155,9 +156,9 @@ export default function LoginPage() {
   const handleResend = async (channel: string, account: string) => {
     try {
       const res = await api.user.sendActivateCode(channel === 'sms' ? 'Sms' : 'Mail', account);
-      message.success(`已发送至 ${res.data?.target ?? ''}`);
+      message.success(t('已发送至 {{target}}', { target: res.data?.target ?? '' }));
     } catch (err) {
-      message.error((err as Error)?.message || '发送失败');
+      message.error((err as Error)?.message || t('发送失败'));
     }
   };
 
@@ -171,14 +172,14 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="登 录"
-      description="登录后即可访问管理后台"
+      title={t('登录')}
+      description={t('登录后即可访问管理后台')}
       brandTitle={systemName}
-      brandSubtitle={config?.loginTip || '魔方快速开发平台'}
+      brandSubtitle={config?.loginTip || t('魔方快速开发平台')}
       highlights={[
-        { icon: <SafetyOutlined />, title: '统一认证入口', description: '密码 / 短信 / 邮箱 / 第三方，安全策略内置' },
-        { icon: <AppstoreOutlined />, title: '权限菜单驱动', description: '登录后按角色自动生成管理导航' },
-        { icon: <ThunderboltOutlined />, title: '字段元数据驱动', description: '列表与表单由后端字段配置动态渲染' },
+        { icon: <SafetyOutlined />, title: t('统一认证入口'), description: t('密码 / 短信 / 邮箱 / 第三方，安全策略内置') },
+        { icon: <AppstoreOutlined />, title: t('权限菜单驱动'), description: t('登录后按角色自动生成管理导航') },
+        { icon: <ThunderboltOutlined />, title: t('字段元数据驱动'), description: t('列表与表单由后端字段配置动态渲染') },
       ]}
       footer={config?.copyright ? <span dangerouslySetInnerHTML={{ __html: config.copyright }} /> : undefined}
     >
@@ -189,8 +190,8 @@ export default function LoginPage() {
           <Alert
             type="warning"
             showIcon
-            message="账号未激活"
-            description="请通过邮箱或手机验证激活账号后登录。"
+            message={t('账号未激活')}
+            description={t('请通过邮箱或手机验证激活账号后登录。')}
           />
           {(activation.targets ?? []).map((target, i) => {
             const channel = (activation.channels ?? [])[i] === 'sms' ? 'sms' : 'mail';
@@ -198,31 +199,31 @@ export default function LoginPage() {
               <div key={i} className="cube-auth-status-item">
                 <span>{target}</span>
                 <Button size="small" onClick={() => void handleResend(channel, target)}>
-                  重新发送
+                  {t('重新发送')}
                 </Button>
               </div>
             );
           })}
           <Button block onClick={() => setActivation(null)}>
-            返回登录
+            {t('返回登录')}
           </Button>
         </div>
       ) : mfaToken ? (
         <div style={{ display: 'grid', gap: 16 }}>
-          <Alert type="info" showIcon message="双重验证" description="请输入身份验证器应用中的 6 位动态验证码。" />
+          <Alert type="info" showIcon message={t('双重验证')} description={t('请输入身份验证器应用中的 6 位动态验证码。')} />
           <Input
             size="large"
-            placeholder="6 位动态验证码"
+            placeholder={t('6 位动态验证码')}
             maxLength={6}
             value={mfaCode}
             onChange={(e) => setMfaCode(e.target.value)}
             onPressEnter={() => void handleMfaVerify()}
           />
           <Button type="primary" block size="large" loading={mfaSubmitting} onClick={() => void handleMfaVerify()}>
-            验证
+            {t('验证')}
           </Button>
           <Button type="link" block onClick={() => setMfaToken('')}>
-            返回登录
+            {t('返回登录')}
           </Button>
         </div>
       ) : (
@@ -234,7 +235,7 @@ export default function LoginPage() {
           items={[
             {
               key: 'login',
-              label: '登 录',
+              label: t('登录'),
               children: (
                 <Form form={form} layout="vertical" requiredMark={false} initialValues={{ username: params.get('username') ?? '' }} onFinish={() => void handleLogin()}>
                   {/* 登录方式切换 */}
@@ -244,18 +245,18 @@ export default function LoginPage() {
                       value={mode}
                       onChange={(v) => setMode(v as 'password' | 'sms' | 'mail')}
                       options={[
-                        ...(showPassword ? [{ label: '密码登录', value: 'password' as const }] : []),
-                        ...(showSms ? [{ label: '短信登录', value: 'sms' as const }] : []),
-                        ...(showMail ? [{ label: '邮箱登录', value: 'mail' as const }] : []),
+                        ...(showPassword ? [{ label: t('密码登录'), value: 'password' as const }] : []),
+                        ...(showSms ? [{ label: t('短信登录'), value: 'sms' as const }] : []),
+                        ...(showMail ? [{ label: t('邮箱登录'), value: 'mail' as const }] : []),
                       ]}
                     />
                   )}
 
-                  <Form.Item name="username" label={mode === 'password' ? '用户名' : mode === 'sms' ? '手机号' : '邮箱'} rules={[{ required: true, message: '请输入' }]}>
+                  <Form.Item name="username" label={mode === 'password' ? t('用户名') : mode === 'sms' ? t('手机号') : t('邮箱')} rules={[{ required: true, message: t('请输入') }]}>
                     <Input
                       size="large"
                       prefix={<UserOutlined />}
-                      placeholder={mode === 'password' ? '用户名 / 邮箱 / 手机号' : mode === 'sms' ? '手机号' : '邮箱'}
+                      placeholder={mode === 'password' ? t('用户名 / 邮箱 / 手机号') : mode === 'sms' ? t('手机号') : t('邮箱')}
                       autoComplete="username"
                       onPressEnter={(e) => {
                         // 用户名框 Enter 不提交（密码为空），焦点跳密码框；Tab 走浏览器原生顺序
@@ -266,19 +267,19 @@ export default function LoginPage() {
                   </Form.Item>
 
                   {mode === 'password' ? (
-                    <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
+                    <Form.Item name="password" label={t('密码')} rules={[{ required: true, message: t('请输入密码') }]}>
                       <Input.Password
                         ref={passwordRef}
                         size="large"
                         prefix={<LockOutlined />}
-                        placeholder="请输入密码"
+                        placeholder={t('请输入密码')}
                         autoComplete="current-password"
                         onChange={() => form.validateFields(['password']).catch(() => {})}
                       />
                     </Form.Item>
                   ) : (
-                    <Form.Item name="code" label="验证码" rules={[{ required: true, message: '请输入验证码' }]}>
-                      <Input size="large" placeholder="验证码" autoComplete="one-time-code" />
+                    <Form.Item name="code" label={t('验证码')} rules={[{ required: true, message: t('请输入验证码') }]}>
+                      <Input size="large" placeholder={t('验证码')} autoComplete="one-time-code" />
                     </Form.Item>
                   )}
 
@@ -295,16 +296,16 @@ export default function LoginPage() {
 
                   {/* 图形验证码 */}
                   {showCaptcha && (
-                    <Form.Item name="captchaCode" label="图形验证码" rules={[{ required: true, message: '请输入图形验证码' }]}>
+                    <Form.Item name="captchaCode" label={t('图形验证码')} rules={[{ required: true, message: t('请输入图形验证码') }]}>
                       <div className="cube-auth-captcha">
-                        <Input size="large" placeholder="图形验证码" />
+                        <Input size="large" placeholder={t('图形验证码')} />
                         {captcha?.image && (
                           <img
                             src={`data:image/svg+xml;utf8,${encodeURIComponent(captcha.image)}`}
                             onClick={refresh}
                             className="cube-auth-captcha-image"
                             alt="captcha"
-                            title="点击刷新"
+                            title={t('点击刷新')}
                           />
                         )}
                       </div>
@@ -314,24 +315,24 @@ export default function LoginPage() {
                   {/* 保存密码（记住登录状态）：后端按 remember 把令牌有效期延长到 365 天，重开系统免登录 */}
                   {mode === 'password' && (
                     <Form.Item name="remember" valuePropName="checked" className="cube-auth-remember">
-                      <Checkbox>保存密码</Checkbox>
+                      <Checkbox>{t('保存密码')}</Checkbox>
                     </Form.Item>
                   )}
 
                   <Button type="primary" block size="large" htmlType="submit" loading={submitting}>
-                    登 录
+                    {t('登录')}
                   </Button>
 
                   <div className="cube-auth-inline-actions">
                     {showRegister ? (
                       <Button type="link" size="small" onClick={() => setActiveTab('register')}>
-                        注册账号
+                        {t('注册账号')}
                       </Button>
                     ) : (
                       <span />
                     )}
                     <Button type="link" size="small" onClick={() => navigate('/forgot-password')}>
-                      忘记密码
+                      {t('忘记密码')}
                     </Button>
                   </div>
                 </Form>
@@ -341,7 +342,7 @@ export default function LoginPage() {
               ? [
                   {
                     key: 'register',
-                    label: '注 册',
+                    label: t('注册'),
                     children: <RegisterPanel config={config!} onBack={() => setActiveTab('login')} />,
                   },
                 ]
@@ -354,7 +355,7 @@ export default function LoginPage() {
       {!mfaToken && !activation && oauthProviders.length > 0 && (
         <div className="cube-auth-provider-section">
           <div className="cube-auth-provider-title">
-            <span>第三方登录</span>
+            <span>{t('第三方登录')}</span>
           </div>
           <div className="cube-auth-provider-grid">
             {oauthProviders.map((p) => (

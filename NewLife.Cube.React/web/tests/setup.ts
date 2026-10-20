@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom';
 
+// ── 语言固定为简体中文 ────────────────────────────────────────────
+// 界面文案以中文原文为键（见 src/i18n），测试断言依赖中文；setup 先于测试模块加载，
+// 因此这里写入的 localStorage 会被 i18n 初始化读取。
+if (typeof localStorage !== 'undefined') localStorage.setItem('cube-language', 'zh-CN');
+
 // ── antd v5 在 jsdom 环境下需要的全局 mock ─────────────────────────
 // matchMedia：antd Grid/响应式组件在 jsdom 缺失时抛错
 if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -28,7 +33,8 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
   (window as unknown as Record<string, unknown>).ResizeObserver = ResizeObserverMock;
 }
 
-// getComputedStyle：jsdom 返回空对象可能导致 antd 计算异常，补最小实现
-if (typeof window !== 'undefined' && !window.getComputedStyle) {
-  (window as unknown as Record<string, unknown>).getComputedStyle = () => ({ getPropertyValue: () => '' });
+// getComputedStyle：jsdom 对伪元素参数抛 “Not implemented”，丢弃该参数交给 antd
+if (typeof window !== 'undefined' && window.getComputedStyle) {
+  const original = window.getComputedStyle.bind(window);
+  window.getComputedStyle = (elt: Element) => original(elt);
 }

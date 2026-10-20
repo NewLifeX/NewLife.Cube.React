@@ -18,6 +18,17 @@ import ptBR from './pt';
 import ruRU from './ru';
 import koKR from './ko';
 import arSA from './ar';
+import appZhCN from './app/zh-CN';
+import appZhTW from './app/zh-TW';
+import appEnUS from './app/en-US';
+import appEsES from './app/es';
+import appDeDE from './app/de';
+import appJaJP from './app/ja';
+import appFrFR from './app/fr';
+import appPtBR from './app/pt';
+import appRuRU from './app/ru';
+import appKoKR from './app/ko';
+import appArSA from './app/ar';
 import antdZhCN from 'antd/locale/zh_CN';
 import antdZhTW from 'antd/locale/zh_TW';
 import antdEnUS from 'antd/locale/en_US';
@@ -84,17 +95,17 @@ function applyLanguageAttributes(language: string) {
 }
 
 const resources = {
-  'zh-CN': { translation: zhCN },
-  'zh-TW': { translation: zhTW },
-  'en-US': { translation: enUS },
-  'es-ES': { translation: esES },
-  'de-DE': { translation: deDE },
-  'ja-JP': { translation: jaJP },
-  'fr-FR': { translation: frFR },
-  'pt-BR': { translation: ptBR },
-  'ru-RU': { translation: ruRU },
-  'ko-KR': { translation: koKR },
-  'ar-SA': { translation: arSA },
+  'zh-CN': { translation: zhCN, app: appZhCN },
+  'zh-TW': { translation: zhTW, app: appZhTW },
+  'en-US': { translation: enUS, app: appEnUS },
+  'es-ES': { translation: esES, app: appEsES },
+  'de-DE': { translation: deDE, app: appDeDE },
+  'ja-JP': { translation: jaJP, app: appJaJP },
+  'fr-FR': { translation: frFR, app: appFrFR },
+  'pt-BR': { translation: ptBR, app: appPtBR },
+  'ru-RU': { translation: ruRU, app: appRuRU },
+  'ko-KR': { translation: koKR, app: appKoKR },
+  'ar-SA': { translation: arSA, app: appArSA },
 };
 
 const initialLanguage = resolveLanguage();
@@ -138,6 +149,14 @@ const antdLocales: Record<CubeLocale, typeof antdZhCN> = {
 /** 获取当前语言对应的 antd 语言包 */
 export function getAntdLocale() {
   return antdLocales[getCurrentLanguage()] ?? antdEnUS;
+}
+
+/**
+ * 业务界面文案翻译：以中文原文为键，缺失译文时回退中文（defaultValue）。
+ * 组件内直接调用即可；App 已订阅语言变化，切换语言后整棵树重新渲染。
+ */
+export function t(key: string, vars?: Record<string, unknown>): string {
+  return i18n.t(key, { ns: 'app', defaultValue: key, ...vars }) as string;
 }
 
 export default i18n;

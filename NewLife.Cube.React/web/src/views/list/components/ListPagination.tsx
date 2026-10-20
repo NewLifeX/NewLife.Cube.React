@@ -2,6 +2,7 @@
  * 列表分页 + 统计行
  */
 import { Pagination, Space } from 'antd';
+import { t } from '@/i18n';
 
 export interface ListPaginationProps {
   total: number;
@@ -25,7 +26,7 @@ export default function ListPagination({ total, current, pageSize, statData, onC
       <Pagination
         showSizeChanger
         showQuickJumper
-        showTotal={(t) => `共 ${t} 条`}
+        showTotal={(total) => t('共 {{count}} 条', { count: total })}
         total={total}
         current={current}
         pageSize={pageSize}

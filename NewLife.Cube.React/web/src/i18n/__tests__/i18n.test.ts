@@ -5,7 +5,19 @@ import i18n, {
   resolveLanguage,
   setLanguage,
   supportedLanguages,
+  t,
 } from '../index';
+import appZhCN from '../app/zh-CN';
+import appZhTW from '../app/zh-TW';
+import appEnUS from '../app/en-US';
+import appEs from '../app/es';
+import appDe from '../app/de';
+import appJa from '../app/ja';
+import appFr from '../app/fr';
+import appPt from '../app/pt';
+import appRu from '../app/ru';
+import appKo from '../app/ko';
+import appAr from '../app/ar';
 
 describe('i18n', () => {
   afterEach(async () => {
@@ -55,5 +67,32 @@ describe('i18n', () => {
     await i18n.changeLanguage('sw-KE');
     expect(i18n.t('common.save')).toBe('Save');
     await i18n.changeLanguage('en-US');
+  });
+
+  it('11 个语言的应用文案键集合一致且无空值', () => {
+    const dicts = { 'zh-CN': appZhCN, 'zh-TW': appZhTW, 'en-US': appEnUS, 'es-ES': appEs, 'de-DE': appDe, 'ja-JP': appJa, 'fr-FR': appFr, 'pt-BR': appPt, 'ru-RU': appRu, 'ko-KR': appKo, 'ar-SA': appAr } as Record<string, Record<string, string>>;
+    const baseKeys = Object.keys(appZhCN).sort();
+    expect(baseKeys.length).toBeGreaterThan(100);
+
+    for (const [language, dict] of Object.entries(dicts)) {
+      expect(Object.keys(dict).sort(), language).toEqual(baseKeys);
+      for (const key of baseKeys) {
+        expect(dict[key], `${language} 缺少 [${key}]`).toBeTruthy();
+      }
+    }
+  });
+
+  it('应用文案按当前语言翻译，中文源文为兜底', async () => {
+    await i18n.changeLanguage('en-US');
+    expect(t('登录')).toBe('Sign in');
+    expect(t('已发送至 {{target}}', { target: 'a@b.com' })).toBe('Sent to a@b.com');
+    expect(t('共 {{count}} 条', { count: 12 })).toBe('12 total');
+
+    await i18n.changeLanguage('zh-CN');
+    expect(t('登录')).toBe('登录');
+    expect(t('共 {{count}} 条', { count: 12 })).toBe('共 12 条');
+
+    // 词典里没有的键回退中文原文
+    expect(t('未翻译的临时文案')).toBe('未翻译的临时文案');
   });
 });

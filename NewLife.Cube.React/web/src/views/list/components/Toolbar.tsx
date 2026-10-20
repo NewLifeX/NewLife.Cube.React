@@ -10,6 +10,7 @@ import { Button, Dropdown, Popconfirm, Segmented, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { DeleteOutlined, DownOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { EXPORT_FORMATS } from '@newlifex/page-utils';
+import { t } from '@/i18n';
 
 /** 列表视图模式：表格 / 图表 */
 export type ListViewMode = 'table' | 'chart';
@@ -85,20 +86,20 @@ export default function Toolbar({
     );
   }
   if (canImport) {
-    advItems.push({ key: 'import', label: '导入 Excel/Json/Zip', onClick: () => onImport?.() });
+    advItems.push({ key: 'import', label: t('导入 Excel/Json/Zip'), onClick: () => onImport?.() });
   }
   if (canDelete) {
     advItems.push({ type: 'divider' });
-    advItems.push({ key: 'deleteAll', label: '删除全部', danger: true, onClick: () => onDeleteAll?.() });
+    advItems.push({ key: 'deleteAll', label: t('删除全部'), danger: true, onClick: () => onDeleteAll?.() });
   }
   if (canDevelop) {
     advItems.push({ type: 'divider' });
-    advItems.push({ key: 'backup', label: '备份', onClick: () => onBackup?.() });
-    advItems.push({ key: 'restore', label: '还原', onClick: () => onRestore?.() });
-    advItems.push({ key: 'backupExport', label: '备份导出', onClick: () => onBackupExport?.() });
+    advItems.push({ key: 'backup', label: t('备份'), onClick: () => onBackup?.() });
+    advItems.push({ key: 'restore', label: t('还原'), onClick: () => onRestore?.() });
+    advItems.push({ key: 'backupExport', label: t('备份导出'), onClick: () => onBackupExport?.() });
     if (!hasSearch) {
       advItems.push({ type: 'divider' });
-      advItems.push({ key: 'clear', label: '清空数据表', danger: true, onClick: () => onClear?.() });
+      advItems.push({ key: 'clear', label: t('清空数据表'), danger: true, onClick: () => onClear?.() });
     }
   }
 
@@ -107,23 +108,23 @@ export default function Toolbar({
       <div className="cube-toolbar-main">
         {canAdd && (
           <Button type="primary" icon={<PlusOutlined />} onClick={onNew}>
-            新增
+            {t('新增')}
           </Button>
         )}
         {canDelete && selectedCount > 0 && (
           <Popconfirm
-            title={`确定删除选中的 ${selectedCount} 条数据吗？`}
+            title={t('确定删除选中的 {{count}} 条数据吗？', { count: selectedCount })}
             onConfirm={onDelete}
-            okText="删除"
+            okText={t('删除')}
             okButtonProps={{ danger: true }}
           >
             <Button danger icon={<DeleteOutlined />}>
-              删除选中 ({selectedCount})
+              {t('删除选中 ({{count}})', { count: selectedCount })}
             </Button>
           </Popconfirm>
         )}
-        <Tooltip title="刷新">
-          <Button aria-label="刷新" icon={<ReloadOutlined />} onClick={onRefresh} />
+        <Tooltip title={t('刷新')}>
+          <Button aria-label={t('刷新')} icon={<ReloadOutlined />} onClick={onRefresh} />
         </Tooltip>
       </div>
       <div className="cube-toolbar-side">
@@ -133,15 +134,15 @@ export default function Toolbar({
             size="small"
             value={view}
             options={[
-              { label: '表格', value: 'table' },
-              { label: '图表', value: 'chart' },
+              { label: t('表格'), value: 'table' },
+              { label: t('图表'), value: 'chart' },
             ]}
             onChange={(v) => onViewChange?.(v as ListViewMode)}
           />
         )}
         {advItems.length > 0 && (
           <Dropdown menu={{ items: advItems }} placement="bottomRight">
-            <Button icon={<DownOutlined />}>高级</Button>
+            <Button icon={<DownOutlined />}>{t('高级')}</Button>
           </Dropdown>
         )}
       </div>
