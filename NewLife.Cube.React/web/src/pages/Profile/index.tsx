@@ -32,20 +32,21 @@ import {
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
+import { t } from '@/i18n';
 import { useUserStore, logoutAndRedirect } from '@/stores/user';
 import { useDashboard } from '@/hooks/useDashboard';
 import type { BindsResult, UserInfo } from '@newlifex/api-core';
 
-/** 性别枚举（对齐 XCode SexKinds：0 未知 / 1 男 / 2 女） */
-const SEX_OPTIONS = [
-  { value: 0, label: '未知' },
-  { value: 1, label: '男' },
-  { value: 2, label: '女' },
+/** 性别枚举（对齐 XCode SexKinds：0 未知 / 1 男 / 2 女，标签按当前语言生成） */
+const sexOptions = () => [
+  { value: 0, label: t('未知') },
+  { value: 1, label: t('男') },
+  { value: 2, label: t('女') },
 ];
 
 /** 第三方平台显示名兜底 */
 function platformName(item: { name?: string; nickName?: string }): string {
-  return item.nickName || item.name || '第三方';
+  return item.nickName || item.name || t('第三方');
 }
 
 export default function ProfilePage() {
@@ -67,9 +68,9 @@ export default function ProfilePage() {
   // 用户卡数据：工作台接口优先，降级 userInfo / profile
   const user = wb?.user;
   const wbProfile = wb?.profile;
-  const displayName = user?.displayName || userInfo?.displayName || userInfo?.name || '用户';
+  const displayName = user?.displayName || userInfo?.displayName || userInfo?.name || t('用户');
   const userName = user?.name || userInfo?.name || '—';
-  const roles = user?.roles?.join(' / ') || userInfo?.roleName || '用户';
+  const roles = user?.roles?.join(' / ') || userInfo?.roleName || t('用户');
   const online = wbProfile?.online;
   const avatar = profile?.avatar || userInfo?.avatar;
 
@@ -115,7 +116,7 @@ export default function ProfilePage() {
       if (avatar) data.avatar = avatar;
 
       await api.user.updateProfile(data);
-      message.success('保存成功');
+      message.success(t('保存成功'));
       // 刷新本地用户信息（顶栏昵称/头像即时更新）
       void useUserStore.getState().fetchUserInfo();
       void api.user
@@ -124,7 +125,7 @@ export default function ProfilePage() {
         .catch(() => {});
     } catch (err) {
       // 字段级/业务错误已由全局拦截提示，这里兜底
-      message.error((err as Error)?.message || '保存失败');
+      message.error((err as Error)?.message || t('保存失败'));
     } finally {
       setSaving(false);
     }
@@ -138,12 +139,12 @@ export default function ProfilePage() {
       const filePath = (res.data as { filePath?: string } | undefined)?.filePath;
       if (filePath) {
         setProfile((p) => (p ? { ...p, avatar: filePath } : p));
-        message.success('头像已上传，点击保存生效');
+        message.success(t('头像已上传，点击保存生效'));
       } else {
-        message.error('上传失败：未返回文件路径');
+        message.error(t('上传失败：未返回文件路径'));
       }
     } catch (err) {
-      message.error((err as Error)?.message || '上传失败');
+      message.error((err as Error)?.message || t('上传失败'));
     } finally {
       setUploading(false);
     }
@@ -155,20 +156,20 @@ export default function ProfilePage() {
     const name = item.name || '';
     const label = platformName(item);
     modal.confirm({
-      title: '取消绑定',
-      content: `确定取消绑定「${label}」吗？取消后需重新授权才能登录。`,
-      okText: '取消绑定',
+      title: t('取消绑定'),
+      content: t('确定取消绑定「{{label}}」吗？取消后需重新授权才能登录。', { label }),
+      okText: t('取消绑定'),
       okButtonProps: { danger: true },
-      cancelText: '取消',
+      cancelText: t('取消'),
       onOk: async () => {
         setUnbinding(name);
         try {
           await api.user.unbind(name);
-          message.success('已取消绑定');
+          message.success(t('已取消绑定'));
           const res = await api.user.binds();
           setBinds(res.data ?? null);
         } catch (err) {
-          message.error((err as Error)?.message || '解绑失败');
+          message.error((err as Error)?.message || t('解绑失败'));
         } finally {
           setUnbinding(null);
         }
@@ -195,7 +196,7 @@ export default function ProfilePage() {
             <Space size={8}>
               <span style={{ fontSize: 20, fontWeight: 600 }}>{displayName}</span>
               {online !== undefined && (
-                <Tag color={online ? 'success' : 'default'}>{online ? '在线' : '离线'}</Tag>
+                <Tag color={online ? 'success' : 'default'}>{online ? t('在线') : t('离线')}</Tag>
               )}
             </Space>
             <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -216,10 +217,10 @@ export default function ProfilePage() {
           }}
         >
           {[
-            { label: '登录次数', value: profile?.logins ?? userInfo?.logins },
-            { label: '最近登录', value: profile?.lastLogin ?? userInfo?.lastLogin },
-            { label: '登录 IP', value: profile?.lastLoginIP ?? userInfo?.lastLoginIP },
-            { label: '注册时间', value: profile?.registerTime },
+            { label: t('登录次数'), value: profile?.logins ?? userInfo?.logins },
+            { label: t('最近登录'), value: profile?.lastLogin ?? userInfo?.lastLogin },
+            { label: t('登录 IP'), value: profile?.lastLoginIP ?? userInfo?.lastLoginIP },
+            { label: t('注册时间'), value: profile?.registerTime },
           ].map((item) => (
             <div key={item.label}>
               <div style={{ color: 'var(--cube-text-muted)', fontSize: 12 }}>{item.label}</div>
@@ -232,10 +233,10 @@ export default function ProfilePage() {
       </Card>
 
       {/* 基础信息：可编辑（对齐 MVC Info 编辑表单） */}
-      <Card title="基础信息" style={{ marginBottom: 16 }}>
+      <Card title={t('基础信息')} style={{ marginBottom: 16 }}>
         <Form form={form} layout="vertical" style={{ maxWidth: 520 }} onFinish={handleSave}>
           {/* 头像上传 */}
-          <Form.Item label="头像">
+          <Form.Item label={t('头像')}>
             <Space size={16} align="center">
               <Avatar size={56} src={avatar} icon={<UserOutlined />} />
               <Upload
@@ -247,51 +248,51 @@ export default function ProfilePage() {
                 }}
               >
                 <Button icon={<UploadOutlined />} loading={uploading}>
-                  上传头像
+                  {t('上传头像')}
                 </Button>
               </Upload>
             </Space>
           </Form.Item>
 
-          <Form.Item label="昵称" name="displayName" rules={[{ required: true, message: '请输入昵称' }]}>
-            <Input maxLength={20} placeholder="请输入昵称" />
+          <Form.Item label={t('昵称')} name="displayName" rules={[{ required: true, message: t('请输入昵称') }]}>
+            <Input maxLength={20} placeholder={t('请输入昵称')} />
           </Form.Item>
 
-          <Form.Item label="性别" name="sex">
-            <Select options={SEX_OPTIONS} placeholder="请选择性别" />
+          <Form.Item label={t('性别')} name="sex">
+            <Select options={sexOptions()} placeholder={t('请选择性别')} />
           </Form.Item>
 
-          <Form.Item label="生日" name="birthday">
-            <DatePicker style={{ width: '100%' }} placeholder="请选择生日" />
+          <Form.Item label={t('生日')} name="birthday">
+            <DatePicker style={{ width: '100%' }} placeholder={t('请选择生日')} />
           </Form.Item>
 
           <Form.Item
-            label="邮箱"
+            label={t('邮箱')}
             name="mail"
-            rules={[{ type: 'email', message: '邮箱格式不正确' }]}
-            extra={profile?.mailVerified ? <Tag color="success">已验证</Tag> : <Tag color="warning">未验证</Tag>}
+            rules={[{ type: 'email', message: t('邮箱格式不正确') }]}
+            extra={profile?.mailVerified ? <Tag color="success">{t('已验证')}</Tag> : <Tag color="warning">{t('未验证')}</Tag>}
           >
-            <Input placeholder="请输入邮箱" />
+            <Input placeholder={t('请输入邮箱')} />
           </Form.Item>
 
           <Form.Item
-            label="手机"
+            label={t('手机')}
             name="mobile"
-            extra={profile?.mobileVerified ? <Tag color="success">已验证</Tag> : <Tag color="warning">未验证</Tag>}
+            extra={profile?.mobileVerified ? <Tag color="success">{t('已验证')}</Tag> : <Tag color="warning">{t('未验证')}</Tag>}
           >
-            <Input placeholder="请输入手机号" />
+            <Input placeholder={t('请输入手机号')} />
           </Form.Item>
 
           <Button type="primary" htmlType="submit" loading={saving}>
-            保存
+            {t('保存')}
           </Button>
         </Form>
       </Card>
 
       {/* 第三方授权（对齐 MVC Binds 页） */}
-      <Card title="第三方授权" style={{ marginBottom: 16 }}>
+      <Card title={t('第三方授权')} style={{ marginBottom: 16 }}>
         {platforms.length === 0 ? (
-          <div style={{ color: 'var(--cube-text-muted)' }}>未配置第三方登录平台</div>
+          <div style={{ color: 'var(--cube-text-muted)' }}>{t('未配置第三方登录平台')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {platforms.map((item) => {
@@ -317,10 +318,10 @@ export default function ProfilePage() {
                     {uc ? (
                       <div style={{ color: 'var(--cube-text-muted)', fontSize: 12 }}>
                         {uc.nickName || uc.provider}
-                        {uc.createTime ? ` · 绑定于 ${String(uc.createTime).slice(0, 10)}` : ''}
+                        {uc.createTime ? ' · ' + t('绑定于 {{date}}', { date: String(uc.createTime).slice(0, 10) }) : ''}
                       </div>
                     ) : (
-                      <div style={{ color: 'var(--cube-text-muted)', fontSize: 12 }}>未绑定</div>
+                      <div style={{ color: 'var(--cube-text-muted)', fontSize: 12 }}>{t('未绑定')}</div>
                     )}
                   </div>
                   {uc ? (
@@ -331,11 +332,11 @@ export default function ProfilePage() {
                       loading={unbinding === name}
                       onClick={() => handleUnbind(item)}
                     >
-                      取消绑定
+                      {t('取消绑定')}
                     </Button>
                   ) : (
                     <Button size="small" type="primary" icon={<LinkOutlined />} onClick={() => handleBind(item)}>
-                      绑定
+                      {t('绑定')}
                     </Button>
                   )}
                 </div>
@@ -344,18 +345,18 @@ export default function ProfilePage() {
           </div>
         )}
         <div style={{ marginTop: 12, color: 'var(--cube-text-muted)', fontSize: 12 }}>
-          绑定第三方平台后，可直接使用第三方账号一键登录；取消绑定后需重新授权。
+          {t('绑定第三方平台后，可直接使用第三方账号一键登录；取消绑定后需重新授权。')}
         </div>
       </Card>
 
       {/* 账号操作：安全中心 / 退出登录 */}
-      <Card title="账号操作">
+      <Card title={t('账号操作')}>
         <Space wrap>
           <Button type="primary" icon={<SafetyOutlined />} onClick={() => navigate('/profile/security')}>
-            安全中心
+            {t('安全中心')}
           </Button>
           <Button danger icon={<LogoutOutlined />} onClick={() => void logoutAndRedirect()}>
-            退出登录
+            {t('退出登录')}
           </Button>
         </Space>
       </Card>

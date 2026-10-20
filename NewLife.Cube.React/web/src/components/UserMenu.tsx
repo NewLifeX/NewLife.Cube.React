@@ -11,6 +11,7 @@ import { ApartmentOutlined, LogoutOutlined, SafetyOutlined, UserOutlined } from 
 import { useNavigate } from 'react-router-dom';
 import { useUserStore, logoutAndRedirect } from '@/stores/user';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 export default function UserMenu() {
   const { message } = App.useApp();
@@ -21,14 +22,14 @@ export default function UserMenu() {
   // 多租户开启且用户有可切换项（所属租户列表非空，或系统管理员可进管理后台）时才显示租户区
   const showTenant = !!userInfo?.enableTenant && ((userInfo?.tenants?.length ?? 0) > 0 || !!userInfo?.isSystemAdmin);
   // 当前租户显示名：管理后台（tenantMode=1）显示"系统管理后台"，租户模式显示租户名
-  const currentTenantName = userInfo?.tenantMode === 1 ? '系统管理后台' : userInfo?.tenantName || '系统后台';
+  const currentTenantName = userInfo?.tenantMode === 1 ? t('系统管理后台') : userInfo?.tenantName || t('系统后台');
 
   const switchTenant = async (tenantId: number) => {
     if (switching) return;
     setSwitching(true);
     try {
       await api.user.switchTenant(tenantId);
-      message.success('租户切换成功');
+      message.success(t('租户切换成功'));
       // 菜单/数据/页面缓存均随租户变化，刷新页面最稳妥
       window.location.reload();
     } catch {
@@ -43,7 +44,7 @@ export default function UserMenu() {
   if (showTenant) {
     items.push({
       key: 'tenant-current',
-      label: `当前租户：${currentTenantName}`,
+      label: t('当前租户：{{name}}', { name: currentTenantName }),
       disabled: true,
     });
     items.push({ type: 'divider' });
@@ -52,17 +53,17 @@ export default function UserMenu() {
       items.push({
         key: 'tenant-0',
         icon: <ApartmentOutlined />,
-        label: '系统管理后台',
+        label: t('系统管理后台'),
         onClick: () => void switchTenant(0),
       });
     }
 
-    for (const t of userInfo?.tenants ?? []) {
+    for (const tenant of userInfo?.tenants ?? []) {
       items.push({
-        key: `tenant-${t.id}`,
+        key: `tenant-${tenant.id}`,
         icon: <ApartmentOutlined />,
-        label: t.name || t.code || `租户${t.id}`,
-        onClick: () => void switchTenant(t.id),
+        label: tenant.name || tenant.code || t('租户{{id}}', { id: tenant.id }),
+        onClick: () => void switchTenant(tenant.id),
       });
     }
 
@@ -73,20 +74,20 @@ export default function UserMenu() {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人中心',
+      label: t('个人中心'),
       onClick: () => navigate('/profile'),
     },
     {
       key: 'security',
       icon: <SafetyOutlined />,
-      label: '安全中心',
+      label: t('安全中心'),
       onClick: () => navigate('/profile/security'),
     },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('退出登录'),
       danger: true,
       onClick: () => {
         void logoutAndRedirect();
@@ -99,7 +100,7 @@ export default function UserMenu() {
       <div className="cube-user-trigger">
         <Avatar size="small" src={userInfo?.avatar} icon={<UserOutlined />} />
         <span className="cube-user-trigger-copy">
-          <span className="cube-user-trigger-name">{userInfo?.displayName || userInfo?.name || '用户'}</span>
+          <span className="cube-user-trigger-name">{userInfo?.displayName || userInfo?.name || t('用户')}</span>
           {userInfo?.roleName ? <span className="cube-user-trigger-role">{userInfo.roleName}</span> : null}
         </span>
       </div>
