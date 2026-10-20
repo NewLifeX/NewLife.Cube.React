@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Form, Input, Table } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 export interface ViewTracePageProps {
   /** 实体路径前缀，如 '/Cube/ViewTrace' */
@@ -76,8 +77,8 @@ export default function ViewTracePage({ type }: ViewTracePageProps) {
   return (
     <Card
       size="small"
-      title="视图解析诊断"
-      extra={<small>排查视图覆盖不生效</small>}
+      title={t('视图解析诊断')}
+      extra={<small>{t('排查视图覆盖不生效')}</small>}
     >
       <Form
         form={form}
@@ -86,50 +87,50 @@ export default function ViewTracePage({ type }: ViewTracePageProps) {
         onFinish={(v) => void run(v)}
         style={{ marginBottom: 16 }}
       >
-        <Form.Item name="area" label="区域">
+        <Form.Item name="area" label={t('区域')}>
           <Input placeholder="Admin" allowClear style={{ width: 140 }} />
         </Form.Item>
-        <Form.Item name="controller" label="控制器">
+        <Form.Item name="controller" label={t('控制器')}>
           <Input placeholder="User" allowClear style={{ width: 140 }} />
         </Form.Item>
-        <Form.Item name="view" label="视图">
+        <Form.Item name="view" label={t('视图')}>
           <Input placeholder="Index" allowClear style={{ width: 140 }} />
         </Form.Item>
-        <Form.Item name="theme" label="主题">
+        <Form.Item name="theme" label={t('主题')}>
           <Input placeholder="ACE" allowClear style={{ width: 120 }} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />} loading={loading}>
-            解析
+            {t('解析')}
           </Button>
         </Form.Item>
       </Form>
 
       {result && (
         <>
-          <h4 style={{ margin: '8px 0' }}>① 理论候选路径（ViewLocationHelper，6 级优先级）</h4>
+          <h4 style={{ margin: '8px 0' }}>{t('① 理论候选路径（ViewLocationHelper，6 级优先级）')}</h4>
           <Table
             size="small"
             rowKey="key"
             dataSource={rows}
             pagination={false}
-            locale={{ emptyText: '暂无候选路径' }}
+            locale={{ emptyText: t('暂无候选路径') }}
             columns={[
-              { title: '优先级', dataIndex: 'priority', width: 70, align: 'center' },
-              { title: '候选路径', dataIndex: 'path' },
+              { title: t('优先级'), dataIndex: 'priority', width: 70, align: 'center' },
+              { title: t('候选路径'), dataIndex: 'path' },
               {
-                title: '物理文件',
+                title: t('物理文件'),
                 dataIndex: 'physical',
                 width: 100,
                 align: 'center',
-                render: (v: boolean) => (v ? '✅ 存在' : '—'),
+                render: (v: boolean) => (v ? t('✅ 存在') : '—'),
               },
               {
-                title: '实际命中',
+                title: t('实际命中'),
                 dataIndex: 'hit',
                 width: 100,
                 align: 'center',
-                render: (v: boolean) => (v ? '⭐ 命中' : '—'),
+                render: (v: boolean) => (v ? t('⭐ 命中') : '—'),
               },
             ]}
             rowClassName={(r) => {
@@ -140,17 +141,17 @@ export default function ViewTracePage({ type }: ViewTracePageProps) {
             }}
           />
 
-          <h4 style={{ margin: '16px 0 8px' }}>② 视图解析结果</h4>
+          <h4 style={{ margin: '16px 0 8px' }}>{t('② 视图解析结果')}</h4>
           {hit ? (
-            <Alert type="success" showIcon message={`命中：${hit}`} />
+            <Alert type="success" showIcon message={t('命中：{{hit}}', { hit })} />
           ) : (
-            <Alert type="error" showIcon message="未命中！以下候选路径均未找到物理文件。" />
+            <Alert type="error" showIcon message={t('未命中！以下候选路径均未找到物理文件。')} />
           )}
 
           <Alert
             type="info"
             style={{ marginTop: 12 }}
-            message="提示：绿色行 = 物理文件存在（放对了位置）；橙色行 = 与命中一致。覆盖不生效时，先看 ① 中你的文件是否出现、是否被更高优先级遮蔽。"
+            message={t('提示：绿色行 = 物理文件存在（放对了位置）；橙色行 = 与命中一致。覆盖不生效时，先看 ① 中你的文件是否出现、是否被更高优先级遮蔽。')}
           />
         </>
       )}

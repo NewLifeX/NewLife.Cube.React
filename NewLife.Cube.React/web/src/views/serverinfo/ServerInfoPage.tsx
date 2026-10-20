@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { Card, Descriptions, Spin } from 'antd';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 /** 服务器信息（对应后端 BuildServerInfo 返回字段） */
 export interface ServerInfo {
@@ -52,24 +53,24 @@ export interface ServerInfo {
 /** 组装两列表格行：返回 [label, value, title?] */
 function toRows(info: ServerInfo): Array<[string, string, string?]> {
   const rows: Array<[string, string, string?]> = [
-    ['应用系统', info.system || '', ''],
-    ['目录', info.path || '', ''],
+    [t('应用系统'), info.system || '', ''],
+    [t('目录'), info.path || '', ''],
   ];
   // 域名地址：主机，本地 [远程]
   const host = info.host || '';
   const local = info.local || '';
   const remote = info.remote ? `[${info.remote}]` : '';
-  rows.push(['域名地址', [host, local, remote].filter(Boolean).join('，'), '']);
-  rows.push(['应用程序', info.application || '', info.applicationTitle]);
-  rows.push(['.Net 版本', info.version || '', '']);
-  rows.push(['操作系统', [info.os, info.osVersion].filter(Boolean).join(' '), info.machineId]);
+  rows.push([t('域名地址'), [host, local, remote].filter(Boolean).join('，'), '']);
+  rows.push([t('应用程序'), info.application || '', info.applicationTitle]);
+  rows.push([t('.Net 版本'), info.version || '', '']);
+  rows.push([t('操作系统'), [info.os, info.osVersion].filter(Boolean).join(' '), info.machineId]);
   rows.push(['CPU', info.cpu || '', '']);
-  rows.push(['内存', info.memory || '', '']);
-  rows.push(['运行时间', info.openTime || '', '']);
-  rows.push(['服务器时间', info.serverTime || '', '']);
-  rows.push(['GC 设置', info.gc || '', '']);
-  rows.push(['进程时间', info.processTime || '', '']);
-  if (info.machineProduct) rows.push(['机器型号', info.machineProduct, '']);
+  rows.push([t('内存'), info.memory || '', '']);
+  rows.push([t('运行时间'), info.openTime || '', '']);
+  rows.push([t('服务器时间'), info.serverTime || '', '']);
+  rows.push([t('GC 设置'), info.gc || '', '']);
+  rows.push([t('进程时间'), info.processTime || '', '']);
+  if (info.machineProduct) rows.push([t('机器型号'), info.machineProduct, '']);
   return rows;
 }
 
@@ -88,7 +89,7 @@ export default function ServerInfoPage() {
         setInfo(data ?? null);
       })
       .catch(() => {
-        if (!cancelled) setError('服务器信息获取失败');
+        if (!cancelled) setError(t('服务器信息获取失败'));
       });
     return () => {
       cancelled = true;
@@ -119,7 +120,7 @@ export default function ServerInfoPage() {
         bordered
         size="small"
         column={2}
-        title="服务器信息"
+        title={t('服务器信息')}
         className="cube-server-info"
         items={rows.map(([label, value, title]) => ({
           key: label,

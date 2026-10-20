@@ -11,6 +11,7 @@
 import { useMemo } from 'react';
 import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { t } from '@/i18n';
 
 /** 配置页路径 → 显示名 */
 export interface ConfigNavItem {
@@ -22,20 +23,20 @@ export interface ConfigNavItem {
 
 /** 核心配置（对齐 MVC _Object_Nav.cshtml 主导航 + React 皮肤设置） */
 export const CONFIG_NAV: ConfigNavItem[] = [
-  { path: '/Admin/Core', label: '基本设置' },
-  { path: '/Admin/Sys', label: '系统设置' },
-  { path: '/Admin/Star', label: '星尘设置' },
-  { path: '/Admin/XCode', label: '数据中间件' },
-  { path: '/Admin/Cube', label: '魔方设置' },
-  { path: '/Admin/React', label: 'React设置' },
+  { path: '/Admin/Core', label: t('基本设置') },
+  { path: '/Admin/Sys', label: t('系统设置') },
+  { path: '/Admin/Star', label: t('星尘设置') },
+  { path: '/Admin/XCode', label: t('数据中间件') },
+  { path: '/Admin/Cube', label: t('魔方设置') },
+  { path: '/Admin/React', label: t('React设置') },
 ];
 
 /** 更多配置（对齐 MVC _Object_Nav.cshtml 更多设置下拉） */
 export const MORE_NAV: ConfigNavItem[] = [
-  { path: '/Admin/SmsConfig', label: '短信设置' },
-  { path: '/Admin/MailConfig', label: '邮件设置' },
-  { path: '/Admin/OAuthConfig', label: 'OAuth设置' },
-  { path: '/Admin/AccessRule', label: '访问规则' },
+  { path: '/Admin/SmsConfig', label: t('短信设置') },
+  { path: '/Admin/MailConfig', label: t('邮件设置') },
+  { path: '/Admin/OAuthConfig', label: t('OAuth设置') },
+  { path: '/Admin/AccessRule', label: t('访问规则') },
 ];
 
 /** 全部配置项 */

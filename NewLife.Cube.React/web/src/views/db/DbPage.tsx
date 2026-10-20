@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { App, Button, Card, Popconfirm, Space, Spin, Table, Tag, Tooltip } from 'antd';
 import { CloudDownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '@/api';
+import { t } from '@/i18n';
 
 export interface DbPageProps {
   /** 实体路径前缀，如 '/Admin/Db' */
@@ -73,7 +74,7 @@ export default function DbPage({ type }: DbPageProps) {
       const data = (res.data?.data ?? []) as DbItem[];
       setRows(Array.isArray(data) ? data : []);
     } catch {
-      message.error('加载数据库列表失败');
+      message.error(t('加载数据库列表失败'));
     } finally {
       setLoading(false);
     }
@@ -89,10 +90,10 @@ export default function DbPage({ type }: DbPageProps) {
     setActing(key);
     try {
       await api.client.post(`${type}/BackupAndCompress`, null, { params: { name } });
-      message.success(`数据库 ${name} 备份成功`);
+      message.success(t('数据库 {{name}} 备份成功', { name }));
       void load();
     } catch {
-      message.error(`数据库 ${name} 备份失败`);
+      message.error(t('数据库 {{name}} 备份失败', { name }));
     } finally {
       setActing('');
     }
@@ -110,7 +111,7 @@ export default function DbPage({ type }: DbPageProps) {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      message.error('下载失败');
+      message.error(t('下载失败'));
     }
   };
 
@@ -120,7 +121,7 @@ export default function DbPage({ type }: DbPageProps) {
       size="small"
       extra={
         <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
-          刷新
+          {t('刷新')}
         </Button>
       }
     >
@@ -130,24 +131,24 @@ export default function DbPage({ type }: DbPageProps) {
           dataSource={rows}
           size="medium"
           pagination={false}
-          locale={{ emptyText: '暂无数据库连接' }}
+          locale={{ emptyText: t('暂无数据库连接') }}
           columns={[
-            { title: '连接名', dataIndex: 'name', width: 180 },
+            { title: t('连接名'), dataIndex: 'name', width: 180 },
             {
-              title: '数据库类型',
+              title: t('数据库类型'),
               dataIndex: 'type',
               width: 160,
               render: (v: string) => <Tag color={typeColor(v)}>{v}</Tag>,
             },
-            { title: '版本', dataIndex: 'version', width: 200, render: (v?: string) => v || '-' },
+            { title: t('版本'), dataIndex: 'version', width: 200, render: (v?: string) => v || '-' },
             {
-              title: '备份数',
+              title: t('备份数'),
               dataIndex: 'backups',
               width: 90,
               render: (v?: number) => (v ?? 0) > 0 ? v : 0,
             },
             {
-              title: '连接字符串',
+              title: t('连接字符串'),
               dataIndex: 'connStr',
               width: 420,
               ellipsis: true,
@@ -163,7 +164,7 @@ export default function DbPage({ type }: DbPageProps) {
               },
             },
             {
-              title: '操作',
+              title: t('操作'),
               key: '__ops',
               width: 280,
               render: (_, row) => (
@@ -175,11 +176,11 @@ export default function DbPage({ type }: DbPageProps) {
                     disabled={!!acting}
                     onClick={() => void handleBackup(row.name, false)}
                   >
-                    备份
+                    {t('备份')}
                   </Button>
                   <Popconfirm
-                    title="备份并压缩数据库？"
-                    description="将生成 zip 压缩备份文件，耗时较长"
+                    title={t('备份并压缩数据库？')}
+                    description={t('将生成 zip 压缩备份文件，耗时较长')}
                     onConfirm={() => void handleBackup(row.name, true)}
                   >
                     <Button
@@ -187,11 +188,11 @@ export default function DbPage({ type }: DbPageProps) {
                       loading={acting === `${row.name}_compress`}
                       disabled={!!acting}
                     >
-                      备份并压缩
+                      {t('备份并压缩')}
                     </Button>
                   </Popconfirm>
                   <Button size="small" icon={<CloudDownloadOutlined />} onClick={() => void handleDownload(row.name)}>
-                    下载架构
+                    {t('下载架构')}
                   </Button>
                 </Space>
               ),
