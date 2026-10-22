@@ -123,6 +123,21 @@ export const supportedLanguages = [
 
 export type CubeLocale = (typeof supportedLanguages)[number]['value'];
 
+/** 已完成全量翻译、可供用户选择的语言。新增语言时先补齐 app/translation 词典，再加入此清单 */
+export const fullyTranslatedLanguages = [
+  'zh-CN',
+  'zh-TW',
+  'en-US',
+  'es-ES',
+  'de-DE',
+  'ja-JP',
+  'fr-FR',
+  'pt-BR',
+  'ru-RU',
+  'ko-KR',
+  'ar-SA',
+] as const;
+
 const supportedValues = supportedLanguages.map((item) => item.value) as readonly string[];
 
 /** 语言存储键与服务器文化 Cookie（与 NewLife.Cube 的 CookieRequestCultureProvider 一致） */

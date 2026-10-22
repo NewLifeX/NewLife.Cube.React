@@ -549,4 +549,10 @@ export default {
   '分享': 'Teilen',
   '工单': 'Ticket',
   '跟随系统': 'Systemeinstellung folgen',
+  '设置': 'Einstellungen',
+  '密码重置成功，请重新登录': 'Passwort zurückgesetzt. Bitte melden Sie sich erneut an.',
+  '验证成功': 'Verifizierung erfolgreich',
+  '依据《中华人民共和国个人信息保护法》与 GDPR 等法规，你享有账号删除权。注销为不可逆操作：账号将无法再次登录，下游业务系统中与该账号关联的数据将一并删除。': 'Nach dem Gesetz der Volksrepublik China über den Schutz personenbezogener Daten und Vorschriften wie der DSGVO haben Sie das Recht, Ihr Konto zu löschen. Die Schließung ist unwiderruflich: Sie können sich nicht mehr anmelden, und zugehörige Daten in nachgelagerten Geschäftssystemen werden ebenfalls gelöscht.',
+  '恢复成功': 'Wiederhergestellt',
+  '恢复失败': 'Wiederherstellung fehlgeschlagen',
 };

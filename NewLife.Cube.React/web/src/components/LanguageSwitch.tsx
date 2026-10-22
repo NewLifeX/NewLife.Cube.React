@@ -9,6 +9,7 @@ import { Button, Dropdown } from 'antd';
 import { GlobalOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import {
+  fullyTranslatedLanguages,
   getCurrentLanguage,
   hasExplicitLanguage,
   setAutoLanguage,
@@ -30,10 +31,13 @@ export default function LanguageSwitch() {
   }, []);
 
   const options = useMemo(() => {
-    const known = new Set<string>(supportedLanguages.map((item) => item.value));
+    // 只展示已完成全量翻译的语言；后端新增语言时，补齐词典并加入 fullyTranslatedLanguages 即自动出现
+    const known = new Set<string>(fullyTranslatedLanguages);
     const list = server?.languages?.length
       ? server.languages.filter((item) => known.has(item.value))
-      : supportedLanguages.map((item) => ({ value: item.value, label: item.label }));
+      : supportedLanguages
+          .filter((item) => known.has(item.value))
+          .map((item) => ({ value: item.value, label: item.label }));
 
     return [{ value: AUTO_KEY, label: server?.autoLabel || t('跟随系统') }, ...list];
   }, [server, t]);
