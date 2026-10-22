@@ -4,16 +4,16 @@ using NewLife.Cube.ViewModels;
 
 namespace NewLife.Cube.Areas.Admin.Controllers;
 
-/// <summary>React皮肤设置控制器</summary>
-[DisplayName("React皮肤设置")]
-[Description("React前端皮肤专属配置，如表单风格等，数据存数据库参数字典表")]
+/// <summary>React skin settings controller</summary>
+[DisplayName("React skin settings")]
+[Description("React skin specific settings, such as form style, stored in the parameter dictionary")]
 [AdminArea]
 [Menu(31, true, Icon = "Skin")]
 public class ReactController : ConfigController<ReactSetting>
 {
-    /// <summary>获取字段。为多选项配置（表单风格/注释显示方式）补充下拉选项，前端渲染为下拉选择</summary>
-    /// <param name="kind">视图类型</param>
-    /// <returns>字段元数据列表</returns>
+    /// <summary>Get fields. Add dropdown options for multi-choice settings (form style, description display), rendered as a select by the front end</summary>
+    /// <param name="kind">View kind</param>
+    /// <returns>Field metadata list</returns>
     public override IList<DataField> GetFields(ViewKinds kind)
     {
         var list = base.GetFields(kind);
@@ -24,8 +24,8 @@ public class ReactController : ConfigController<ReactSetting>
         {
             fs.DataSource = _ => new Dictionary<String, String>
             {
-                ["inline"] = "三栏同排（对齐MVC）",
-                ["vertical"] = "标签一行控件一行（antd6风格）",
+                ["inline"] = L.T("Three columns in one row (MVC style)"),
+                ["vertical"] = L.T("Label on one line, control on the next (antd style)"),
             };
         }
 
@@ -35,9 +35,9 @@ public class ReactController : ConfigController<ReactSetting>
         {
             dm.DataSource = _ => new Dictionary<String, String>
             {
-                ["1"] = "标签后小字",
-                ["2"] = "问号图标悬浮提示",
-                ["0"] = "不显示",
+                ["1"] = L.T("Small text after the label"),
+                ["2"] = L.T("Question mark tooltip"),
+                ["0"] = L.T("Hidden"),
             };
         }
 
@@ -47,8 +47,8 @@ public class ReactController : ConfigController<ReactSetting>
         {
             ap.DataSource = _ => new Dictionary<String, String>
             {
-                ["cascader"] = "级联下拉",
-                ["tabs"] = "多Tab弹层（MVC风格，大区分组）",
+                ["cascader"] = L.T("Cascading dropdown"),
+                ["tabs"] = L.T("Tabbed popup (MVC style, grouped by region)"),
             };
         }
 

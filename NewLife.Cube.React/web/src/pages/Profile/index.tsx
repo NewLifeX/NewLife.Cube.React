@@ -32,7 +32,7 @@ import {
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
-import { t } from '@/i18n';
+import { getCurrentLanguage, t } from '@/i18n';
 import { useUserStore, logoutAndRedirect } from '@/stores/user';
 import { useDashboard } from '@/hooks/useDashboard';
 import type { BindsResult, UserInfo } from '@newlifex/api-core';
@@ -180,7 +180,9 @@ export default function ProfilePage() {
   /** 绑定第三方：新窗口走 /Sso/Bind/{name} OAuth 授权流，返回后刷新列表 */
   const handleBind = (item: { name?: string; nickName?: string }) => {
     const name = item.name || '';
-    window.open(`${window.location.origin}/Sso/Bind/${name}`, '_blank', 'noopener');
+    // 服务端页面按 lang 参数/文化 Cookie 选择语言，显式携带当前语言避免回退到浏览器语言
+    const lang = encodeURIComponent(getCurrentLanguage());
+    window.open(`${window.location.origin}/Sso/Bind/${name}?lang=${lang}`, '_blank', 'noopener');
   };
 
   const connects = binds?.connects ?? [];

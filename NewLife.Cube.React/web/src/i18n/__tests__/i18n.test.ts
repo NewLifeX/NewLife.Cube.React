@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import i18n, {
+  CULTURE_COOKIE_NAME,
   getCurrentLanguage,
+  isRtl,
   normalizeLanguage,
   resolveLanguage,
   setLanguage,
@@ -22,6 +24,8 @@ import appAr from '../app/ar';
 describe('i18n', () => {
   afterEach(async () => {
     localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    document.cookie = `${CULTURE_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     await i18n.changeLanguage('en-US');
     document.documentElement.removeAttribute('dir');
   });
@@ -34,10 +38,31 @@ describe('i18n', () => {
   it('语言代码按精确、主语言前缀、英文兜底归一化', () => {
     expect(normalizeLanguage('zh-TW')).toBe('zh-TW');
     expect(normalizeLanguage('zh-HK')).toBe('zh-TW');
+    expect(normalizeLanguage('zh-Hant')).toBe('zh-TW');
     expect(normalizeLanguage('zh-Hans')).toBe('zh-CN');
     expect(normalizeLanguage('fr-CA')).toBe('fr-FR');
     expect(normalizeLanguage('de-AT')).toBe('de-DE');
+    expect(normalizeLanguage('pt-PT')).toBe('pt-BR');
+    expect(normalizeLanguage('en-GB')).toBe('en-US');
     expect(normalizeLanguage('sw-KE')).toBe('en-US');
+  });
+
+  it('兼容服务端旧语言别名', () => {
+    // in/iw/no/mo 分别映射到 id/he/nb/ro，当前皮肤未内置这些语言时回退英文
+    expect(normalizeLanguage('in')).toBe('en-US');
+    expect(normalizeLanguage('iw')).toBe('en-US');
+    expect(normalizeLanguage('no')).toBe('en-US');
+    expect(normalizeLanguage('mo')).toBe('en-US');
+  });
+
+  it('URL 的 lang 参数优先于本地存储', () => {
+    localStorage.setItem('cube-language', 'de-DE');
+    window.history.replaceState(null, '', '/?lang=ja-JP');
+    expect(resolveLanguage()).toBe('ja-JP');
+
+    // 裸语言码同样归一化
+    window.history.replaceState(null, '', '/?lang=fr');
+    expect(resolveLanguage()).toBe('fr-FR');
   });
 
   it('从 localStorage 恢复语言', () => {
@@ -45,12 +70,21 @@ describe('i18n', () => {
     expect(resolveLanguage()).toBe('ja-JP');
   });
 
-  it('切换语言写入存储并同步 html 属性', async () => {
+  it('从服务端文化 Cookie 恢复语言', () => {
+    const value = encodeURIComponent('c=ko-KR|uic=ko-KR');
+    document.cookie = `${CULTURE_COOKIE_NAME}=${value}; path=/`;
+    expect(resolveLanguage()).toBe('ko-KR');
+  });
+
+  it('切换语言写入存储、服务端 Cookie 并同步 URL 与 html 属性', async () => {
+    window.history.replaceState(null, '', '/admin/user?lang=en-US');
     setLanguage('ja-JP');
     await i18n.changeLanguage('ja-JP');
 
     expect(localStorage.getItem('cube-language')).toBe('ja-JP');
     expect(getCurrentLanguage()).toBe('ja-JP');
+    expect(window.location.search).toBe('?lang=ja-JP');
+    expect(document.cookie).toContain(`${CULTURE_COOKIE_NAME}=${encodeURIComponent('c=ja-JP|uic=ja-JP')}`);
     expect(document.documentElement.getAttribute('lang')).toBe('ja-JP');
     expect(i18n.t('common.save')).toBe('保存');
   });
@@ -59,6 +93,7 @@ describe('i18n', () => {
     setLanguage('ar-SA');
     await i18n.changeLanguage('ar-SA');
 
+    expect(isRtl('ar-SA')).toBe(true);
     expect(document.documentElement.getAttribute('dir')).toBe('rtl');
     expect(i18n.t('common.logout')).toBe('تسجيل الخروج');
   });

@@ -4,33 +4,35 @@ using XCode.Configuration;
 
 namespace NewLife.Cube;
 
-/// <summary>React皮肤设置</summary>
-[DisplayName("React皮肤设置")]
+/// <summary>React skin settings</summary>
+/// <remarks>Source text is English; translations live in Locales/*.yml and are resolved per request language.</remarks>
+[DisplayName("React skin settings")]
+[Description("React skin specific settings, such as form style, stored in the parameter dictionary")]
 [Config("React")]
 public class ReactSetting : Config<ReactSetting>
 {
-    /// <summary>指向数据库参数字典表</summary>
+    /// <summary>Point to the parameter dictionary table</summary>
     static ReactSetting() => Provider = new DbConfigProvider { UserId = 0, Category = "React" };
 
     #region 表单
-    /// <summary>表单风格。inline-三栏同排（对齐MVC），vertical-标签一行控件一行（antd6风格）</summary>
-    [Description("表单风格。inline-三栏同排（对齐MVC），vertical-标签一行控件一行（antd6风格）")]
-    [Category("表单")]
+    /// <summary>Form style. inline - three columns in one row (MVC style); vertical - label on one line and control on the next (antd style)</summary>
+    [Description("Form style. inline - three columns in one row (MVC style); vertical - label on one line and control on the next (antd style)")]
+    [Category("Form")]
     public String FormStyle { get; set; } = "inline";
 
-    /// <summary>字段注释显示方式。1-标签后小字，2-标签后问号图标悬浮提示，0-不显示</summary>
-    [Description("字段注释显示方式。1-标签后小字，2-标签后问号图标悬浮提示，0-不显示")]
-    [Category("表单")]
+    /// <summary>Field description display. 1 - small text after the label; 2 - question mark tooltip after the label; 0 - hidden</summary>
+    [Description("Field description display. 1 - small text after the label; 2 - question mark tooltip after the label; 0 - hidden")]
+    [Category("Form")]
     public Int32 DescMode { get; set; } = 1;
 
-    /// <summary>文本框清除图标。true-输入框聚焦且非空时显示清空叉叉，false-永不显示</summary>
-    [Description("文本框清除图标。true-输入框聚焦且非空时显示清空叉叉，false-永不显示")]
-    [Category("表单")]
+    /// <summary>Text box clear icon. true - show a clear icon when the input is focused and not empty; false - never show</summary>
+    [Description("Text box clear icon. true - show a clear icon when the input is focused and not empty; false - never show")]
+    [Category("Form")]
     public Boolean InputClear { get; set; } = false;
 
-    /// <summary>地区选择方案。cascader-级联下拉（默认），tabs-MVC风格多Tab弹层（省份按大区分组，逐级切换）</summary>
-    [Description("地区选择方案。cascader-级联下拉（默认），tabs-MVC风格多Tab弹层（省份按大区分组，逐级切换）")]
-    [Category("表单")]
+    /// <summary>Region picker. cascader - cascading dropdown (default); tabs - MVC-style tabbed popup with provinces grouped by region</summary>
+    [Description("Region picker. cascader - cascading dropdown (default); tabs - MVC-style tabbed popup with provinces grouped by region")]
+    [Category("Form")]
     public String AreaPickerStyle { get; set; } = "cascader";
     #endregion
 }

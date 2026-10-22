@@ -116,8 +116,8 @@ export default function LoginPage() {
         return;
       }
 
-      // 账号未激活
-      if (data?.pendingActivation || res.message?.includes('未激活')) {
+      // 账号未激活（结构化字段，不依赖服务端消息文案，兼容多语言）
+      if (data?.pendingActivation) {
         setActivation(data ?? { pendingActivation: true, channels: [], targets: [] });
         message.warning(t('账号尚未激活，请先激活'));
         return;

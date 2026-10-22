@@ -38,8 +38,8 @@ public static class ReactService
     }
 }
 
-/// <summary>React前端皮肤模块</summary>
-[DisplayName("React前端皮肤")]
+/// <summary>React front-end skin module</summary>
+[DisplayName("React front-end skin")]
 internal class ReactModule : IModule
 {
     /// <summary>添加模块</summary>

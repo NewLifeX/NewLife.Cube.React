@@ -1,0 +1,4 @@
+# 英文源文之外，旧版中文菜单/模块名 → 英文。
+# 界面元数据以源文为词表 key；旧版本落库的中文名称在此提供英文译文，避免英文界面回退中文。
+"React皮肤设置": "React skin settings"
+"React前端皮肤": "React front-end skin"

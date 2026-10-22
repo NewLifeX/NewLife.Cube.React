@@ -1,9 +1,11 @@
 /**
  * 国际化（react-i18next）
  *
+ * 对齐 NewLife.Core / NewLife.Cube 的请求语言语义：
  * - 11 种语言，英文为源文与兜底
- * - 启动顺序：localStorage['cube-language'] → 浏览器语言 → 英文
- * - 切换语言时同步 localStorage、<html lang> 与 <html dir>（阿拉伯语 RTL）
+ * - 启动顺序：?lang= → localStorage['cube-language'] → 服务端文化 Cookie → 浏览器语言 → 英文
+ * - 语言代码归一化与服务端 Localization.NormalizeCulture 一致（裸语言码、旧别名、区域映射、zh-Hans/zh-Hant）
+ * - 切换语言时同步 localStorage、服务端 `.AspNet.Culture` Cookie、URL 的 lang 参数、<html lang> 与 <html dir>
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -60,29 +62,79 @@ export type CubeLocale = (typeof supportedLanguages)[number]['value'];
 
 const supportedValues = supportedLanguages.map((item) => item.value) as readonly string[];
 
+/** 语言存储键与服务器文化 Cookie（与 NewLife.Cube 的 CookieRequestCultureProvider 一致） */
+export const LANGUAGE_STORAGE_KEY = 'cube-language';
+export const CULTURE_COOKIE_NAME = '.AspNet.Culture';
+
+/** 从右到左书写的语言 */
+const rtlLanguages: readonly string[] = ['ar-SA'];
+
+/** 旧版语言别名，对应 NewLife.Core NormalizeCulture 的映射 */
+const legacyAliases: Record<string, string> = { in: 'id', iw: 'he', no: 'nb', mo: 'ro' };
+
 /** 语言代码归一化：精确匹配优先，其次按主语言前缀匹配，未命中回退英文 */
 export function normalizeLanguage(language: string): CubeLocale {
+  if (!language) return 'en-US';
   if (supportedValues.includes(language)) return language as CubeLocale;
 
-  const lower = language.toLowerCase();
+  const lower = language.trim().toLowerCase().replace(/_/g, '-');
   if (lower.startsWith('zh')) {
     const isHant =
-      lower.includes('hant') || lower.endsWith('-tw') || lower.endsWith('-hk') || lower.endsWith('-mo');
+      lower.includes('hant') ||
+      lower.endsWith('-tw') ||
+      lower.endsWith('-hk') ||
+      lower.endsWith('-mo');
     return isHant ? 'zh-TW' : 'zh-CN';
   }
 
-  const prefix = lower.split('-')[0];
+  const rawPrefix = lower.split('-')[0];
+  const prefix = legacyAliases[rawPrefix] ?? rawPrefix;
   const matched = supportedLanguages.find((item) => item.value.split('-')[0].toLowerCase() === prefix);
   return matched ? matched.value : 'en-US';
 }
 
-/** 读取本地存储或浏览器语言 */
+/** 读取 URL 中的 lang 参数（服务端 RequestLocalization 的最高优先级来源） */
+function readQueryLanguage(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('lang');
+}
+
+/** 读取服务端文化 Cookie（值为 c=zh-CN|uic=zh-CN 的 URL 编码形式） */
+function readCultureCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const match = document.cookie.match(/(?:^|;\s*)\.AspNet\.Culture=([^;]*)/);
+  if (!match) return null;
+
+  let value: string;
+  try {
+    value = decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+
+  const ui = /(?:^|\|)uic=([^|]+)/.exec(value);
+  return ui ? ui[1] : null;
+}
+
+/** 读取 URL、本地存储、服务端 Cookie 或浏览器语言 */
 export function resolveLanguage(): CubeLocale {
-  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('cube-language') : null;
+  const query = readQueryLanguage();
+  if (query) return normalizeLanguage(query);
+
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(LANGUAGE_STORAGE_KEY) : null;
   if (stored) return normalizeLanguage(stored);
+
+  const cookie = readCultureCookie();
+  if (cookie) return normalizeLanguage(cookie);
 
   const browser = typeof navigator !== 'undefined' ? navigator.language : '';
   return normalizeLanguage(browser || 'en-US');
+}
+
+/** 是否从右到左书写 */
+export function isRtl(language: string): boolean {
+  return rtlLanguages.includes(normalizeLanguage(language));
 }
 
 /** 同步 <html lang> 与 <html dir> */
@@ -91,7 +143,26 @@ function applyLanguageAttributes(language: string) {
 
   const locale = normalizeLanguage(language);
   document.documentElement.setAttribute('lang', locale);
-  document.documentElement.setAttribute('dir', locale === 'ar-SA' ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute('dir', isRtl(locale) ? 'rtl' : 'ltr');
+}
+
+/** 写入服务端文化 Cookie，使后续服务端响应（文件下载、新窗口页面等）跟随当前语言 */
+function writeCultureCookie(language: CubeLocale) {
+  if (typeof document === 'undefined') return;
+
+  const value = encodeURIComponent(`c=${language}|uic=${language}`);
+  document.cookie = `${CULTURE_COOKIE_NAME}=${value}; path=/; SameSite=Lax`;
+}
+
+/** 同步 URL 中已有的 lang 参数，避免刷新后被旧语言覆盖 */
+function syncQueryLanguage(language: CubeLocale) {
+  if (typeof window === 'undefined') return;
+
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('lang')) return;
+
+  url.searchParams.set('lang', language);
+  window.history.replaceState(null, '', url.pathname + url.search + url.hash);
 }
 
 const resources = {
@@ -120,10 +191,14 @@ void i18n.use(initReactI18next).init({
 i18n.on('languageChanged', applyLanguageAttributes);
 applyLanguageAttributes(initialLanguage);
 
-/** 切换语言并持久化 */
+/** 切换语言并持久化到本地存储、服务端 Cookie 与 URL */
 export function setLanguage(language: CubeLocale) {
-  void i18n.changeLanguage(language);
-  if (typeof localStorage !== 'undefined') localStorage.setItem('cube-language', language);
+  const locale = normalizeLanguage(language);
+  void i18n.changeLanguage(locale);
+  if (typeof localStorage !== 'undefined') localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+
+  writeCultureCookie(locale);
+  syncQueryLanguage(locale);
 }
 
 /** 获取当前语言 */

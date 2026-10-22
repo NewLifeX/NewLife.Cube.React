@@ -12,7 +12,13 @@ export default function LanguageSwitch() {
   const items = supportedLanguages.map((l) => ({
     key: l.value,
     label: l.label,
-    onClick: () => setLanguage(l.value as CubeLocale),
+    onClick: () => {
+      if (l.value === getCurrentLanguage()) return;
+      setLanguage(l.value as CubeLocale);
+      // 菜单、实体元数据与运行时消息均由服务端按请求语言返回，刷新页面以重新拉取，
+      // 避免只切换静态文案而服务端数据仍停留在旧语言
+      window.location.reload();
+    },
   }));
 
   return (
