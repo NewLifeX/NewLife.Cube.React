@@ -92,8 +92,8 @@ export default function FormPage({ title }: FormPageProps) {
     try {
       const values = await form.validateFields();
       const model = serializeSubmitModel(values, metas);
-      // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键，
-      // 从路由 ?id= 显式合并，保证更新请求携带主键
+      // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键；
+      // 从路由 ?id= 显式合并到 body，api-core 据此拼出 PUT {type}/{id}（后端以路径主键为准）
       if (isEdit) {
         const pk = fields.find((f) => f.field.primaryKey)?.field.name;
         if (pk && getValueByKey(model, pk) === undefined) setValueByKey(model, pk, params.get('id') ?? '');
