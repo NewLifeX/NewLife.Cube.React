@@ -548,4 +548,5 @@ export default {
   '上传': 'Hochladen',
   '分享': 'Teilen',
   '工单': 'Ticket',
+  '跟随系统': 'Systemeinstellung folgen',
 };

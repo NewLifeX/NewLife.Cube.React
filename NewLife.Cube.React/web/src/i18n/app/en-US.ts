@@ -548,4 +548,5 @@ export default {
   '上传': 'Upload',
   '分享': 'Share',
   '工单': 'Ticket',
+  '跟随系统': 'Follow system',
 };

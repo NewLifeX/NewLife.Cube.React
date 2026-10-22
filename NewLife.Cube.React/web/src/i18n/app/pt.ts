@@ -548,4 +548,5 @@ export default {
   '上传': 'Enviar',
   '分享': 'Compartilhar',
   '工单': 'Chamado',
+  '跟随系统': 'Seguir o sistema',
 };

@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import i18n, {
   CULTURE_COOKIE_NAME,
   getCurrentLanguage,
+  hasExplicitLanguage,
   isRtl,
   normalizeLanguage,
   resolveLanguage,
+  setAutoLanguage,
   setLanguage,
   supportedLanguages,
   t,
@@ -30,8 +32,8 @@ describe('i18n', () => {
     document.documentElement.removeAttribute('dir');
   });
 
-  it('支持 11 种语言且前三固定', () => {
-    expect(supportedLanguages).toHaveLength(11);
+  it('支持 32 种语言且前三固定', () => {
+    expect(supportedLanguages).toHaveLength(32);
     expect(supportedLanguages.slice(0, 3).map((item) => item.value)).toEqual(['zh-CN', 'zh-TW', 'en-US']);
   });
 
@@ -48,11 +50,10 @@ describe('i18n', () => {
   });
 
   it('兼容服务端旧语言别名', () => {
-    // in/iw/no/mo 分别映射到 id/he/nb/ro，当前皮肤未内置这些语言时回退英文
-    expect(normalizeLanguage('in')).toBe('en-US');
-    expect(normalizeLanguage('iw')).toBe('en-US');
-    expect(normalizeLanguage('no')).toBe('en-US');
-    expect(normalizeLanguage('mo')).toBe('en-US');
+    expect(normalizeLanguage('in')).toBe('id-ID');
+    expect(normalizeLanguage('iw')).toBe('he-IL');
+    expect(normalizeLanguage('no')).toBe('nb-NO');
+    expect(normalizeLanguage('mo')).toBe('ro-RO');
   });
 
   it('URL 的 lang 参数优先于本地存储', () => {
@@ -98,10 +99,45 @@ describe('i18n', () => {
     expect(i18n.t('common.logout')).toBe('تسجيل الخروج');
   });
 
+  it('希伯来语与波斯语切换为 RTL', async () => {
+    expect(isRtl('he-IL')).toBe(true);
+    expect(isRtl('fa-IR')).toBe(true);
+
+    setLanguage('he-IL');
+    await i18n.changeLanguage('he-IL');
+    expect(document.documentElement.getAttribute('dir')).toBe('rtl');
+  });
+
   it('缺失语言回退英文', async () => {
     await i18n.changeLanguage('sw-KE');
     expect(i18n.t('common.save')).toBe('Save');
     await i18n.changeLanguage('en-US');
+  });
+
+  it('新增语言缺失词条回退英文', async () => {
+    await i18n.changeLanguage('bn-BD');
+
+    // translation 命名空间未提供该语言，回退 en-US
+    expect(i18n.t('common.save')).toBe('Save');
+    // 业务词典为部分译文，已翻译词条生效，未翻译词条回退英文
+    expect(t('跟随系统')).toBe('Follow system');
+    expect(t('保存')).toBe('সংরক্ষণ');
+
+    await i18n.changeLanguage('en-US');
+  });
+
+  it('自动语言清除本地存储、服务端 Cookie 与 URL 参数', () => {
+    localStorage.setItem('cube-language', 'de-DE');
+    document.cookie = `${CULTURE_COOKIE_NAME}=${encodeURIComponent('c=de-DE|uic=de-DE')}; path=/`;
+    window.history.replaceState(null, '', '/?lang=de-DE');
+    expect(hasExplicitLanguage()).toBe(true);
+
+    setAutoLanguage();
+
+    expect(localStorage.getItem('cube-language')).toBeNull();
+    expect(document.cookie).not.toContain(CULTURE_COOKIE_NAME);
+    expect(window.location.search).toBe('');
+    expect(hasExplicitLanguage()).toBe(false);
   });
 
   it('11 个语言的应用文案键集合一致且无空值', () => {
@@ -117,7 +153,7 @@ describe('i18n', () => {
     }
   });
 
-  it('应用文案按当前语言翻译，中文源文为兜底', async () => {
+  it('应用文案按当前语言翻译，缺失回退英文/中文原文', async () => {
     await i18n.changeLanguage('en-US');
     expect(t('登录')).toBe('Sign in');
     expect(t('已发送至 {{target}}', { target: 'a@b.com' })).toBe('Sent to a@b.com');
@@ -127,7 +163,7 @@ describe('i18n', () => {
     expect(t('登录')).toBe('登录');
     expect(t('共 {{count}} 条', { count: 12 })).toBe('共 12 条');
 
-    // 词典里没有的键回退中文原文
+    // 词典里没有的键：英文词典也没有时回退中文原文
     expect(t('未翻译的临时文案')).toBe('未翻译的临时文案');
   });
 });
