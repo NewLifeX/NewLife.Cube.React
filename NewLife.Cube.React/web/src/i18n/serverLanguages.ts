@@ -6,7 +6,7 @@
  * 不再硬编码语言列表。接口不可用时回退前端内置清单。
  */
 import { getConfig } from '@/configure';
-import { getCurrentLanguage } from './index';
+import { fullyTranslatedLanguages, getCurrentLanguage, supportedLanguages } from './index';
 
 /** 语言选项 */
 export interface ServerLanguageOption {
@@ -32,6 +32,26 @@ export interface ServerLanguageInfo {
 
 /** 后端语言清单接口（ReactController.Languages） */
 export const LANGUAGE_ENDPOINT = '/api/Admin/React/Languages';
+
+/**
+ * 可选语言 = 后端支持语言 ∩ 前端全量翻译语言
+ *
+ * - 后端清单存在时：按后端顺序与显示名取交集（后端运行时新增、前端未翻译的语言不出现）
+ * - 后端清单不可用时：回退前端全量翻译语言
+ * @param serverLanguages 后端返回的语言清单
+ * @returns 可提供给用户选择的语言
+ */
+export function resolveSelectableLanguages(
+  serverLanguages?: ServerLanguageOption[] | null,
+): ServerLanguageOption[] {
+  const supported = new Set<string>(fullyTranslatedLanguages);
+
+  if (serverLanguages?.length) return serverLanguages.filter((item) => supported.has(item.value));
+
+  return supportedLanguages
+    .filter((item) => supported.has(item.value))
+    .map((item) => ({ value: item.value, label: item.label, nativeName: item.label }));
+}
 
 /** 获取后端语言清单；失败时返回 null，由调用方回退内置清单 */
 export async function fetchServerLanguages(): Promise<ServerLanguageInfo | null> {

@@ -9,14 +9,13 @@ import { Button, Dropdown } from 'antd';
 import { GlobalOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import {
-  fullyTranslatedLanguages,
   getCurrentLanguage,
   hasExplicitLanguage,
   setAutoLanguage,
   setLanguage,
-  supportedLanguages,
   type CubeLocale,
 } from '@/i18n';
+import { resolveSelectableLanguages } from '@/i18n/serverLanguages';
 import { useServerLanguageStore } from '@/stores/serverLanguage';
 
 /** 「跟随系统」菜单项键 */
@@ -31,13 +30,8 @@ export default function LanguageSwitch() {
   }, []);
 
   const options = useMemo(() => {
-    // 只展示已完成全量翻译的语言；后端新增语言时，补齐词典并加入 fullyTranslatedLanguages 即自动出现
-    const known = new Set<string>(fullyTranslatedLanguages);
-    const list = server?.languages?.length
-      ? server.languages.filter((item) => known.has(item.value))
-      : supportedLanguages
-          .filter((item) => known.has(item.value))
-          .map((item) => ({ value: item.value, label: item.label }));
+    // 可选语言 = 后端支持语言 ∩ 前端全量翻译语言（后端顺序与显示名优先）
+    const list = resolveSelectableLanguages(server?.languages);
 
     return [{ value: AUTO_KEY, label: server?.autoLabel || t('跟随系统') }, ...list];
   }, [server, t]);
