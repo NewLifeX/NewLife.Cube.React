@@ -91,13 +91,13 @@ describe('setValueByKey 大小写不敏感写入', () => {
 
 describe('resolveUrl 变量替换', () => {
   it('替换 {Id} 模板', () => {
-    expect(resolveUrl('/Admin/User/Detail?id={Id}', { Id: 42 })).toBe('/Admin/User/Detail?id=42');
-    expect(resolveUrl('/Admin/User/Detail?id={id}', { id: 7 })).toBe('/Admin/User/Detail?id=7');
+    expect(resolveUrl('/Admin/User/{Id}', { Id: 42 })).toBe('/Admin/User/42');
+    expect(resolveUrl('/Admin/User/{id}', { id: 7 })).toBe('/Admin/User/7');
   });
 
   it('占位符与行键大小写不一致时仍可替换', () => {
     // 行 JSON camelCase，模板占位符 PascalCase
-    expect(resolveUrl('/Admin/User/Detail?id={Id}', { id: 42 })).toBe('/Admin/User/Detail?id=42');
+    expect(resolveUrl('/Admin/User/{Id}', { id: 42 })).toBe('/Admin/User/42');
     expect(resolveUrl('/Admin/UserConnect?userId={ID}', { id: 7 })).toBe('/Admin/UserConnect?userId=7');
   });
 });
