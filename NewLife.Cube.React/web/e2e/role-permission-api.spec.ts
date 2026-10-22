@@ -78,8 +78,8 @@ test.describe('角色权限 API 集成（/Admin/Role）', () => {
       expect(n32!.granted).toBe(17);
       expect(n47!.granted).toBe(1);
     } finally {
-      // 4. 清理：删除测试角色（DELETE /api/Admin/Role?id={id}）
-      const del = await request.delete('/api/Admin/Role', { headers, params: { id: roleId } });
+      // 4. 清理：删除测试角色（DELETE /api/Admin/Role/{id}）
+      const del = await request.delete(`/api/Admin/Role/${roleId}`, { headers });
       expect(del.ok(), `删除角色失败: ${await del.text()}`).toBeTruthy();
     }
   });
@@ -108,7 +108,7 @@ test.describe('角色权限 API 集成（/Admin/Role）', () => {
       expect(n25!.granted).toBe(0);
       expect(n32!.granted).toBe(0);
     } finally {
-      await request.delete('/api/Admin/Role', { headers, params: { id: roleId } });
+      await request.delete(`/api/Admin/Role/${roleId}`, { headers });
     }
   });
 });
