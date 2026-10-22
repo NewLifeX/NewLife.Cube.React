@@ -9,7 +9,7 @@
 🌐 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキン**です。独立した NuGet パッケージ兼リポジトリとして提供されます。**React 19 + Ant Design 6 + Zustand + Vite** を採用し、バックエンドのフィールドメタデータ（`GetPage`）に駆動されて汎用リストページ／フォームページを動的描画します。[魔方スキン設計仕様](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) に準拠しています。
+Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキン**です。独立した NuGet パッケージ兼リポジトリとして提供されます。**React 19 + Ant Design 6 + Zustand + Vite** を採用し、バックエンドのフィールドメタデータ（`meta`）に駆動されて汎用リストページ／フォームページを動的描画します。[魔方スキン設計仕様](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) に準拠しています。
 
 `NewLife.Cube` と `NewLife.Cube.React` の2つのパッケージを参照し、`dotnet run` 後にブラウザを開くだけで完全な管理画面が使えます。ログイン、動的メニュー、フィールドメタデータ駆動のリスト／フォーム、CRUD、インポート／エクスポート、AI アシスタントなどを備え、**フロントエンド開発はゼロ**です。
 
@@ -22,7 +22,7 @@ Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキ�
 ## ハイライト
 
 - **すぐに使える**：`app.UseReact(env)` の1行で導入。ビルド成果物は DLL に埋め込まれ NuGet パッケージとして配布されるため、実ファイルへの依存はありません
-- **フィールドメタデータ駆動**：リスト／フォーム／検索／詳細はすべてバックエンドの `GetPage` メタデータから動的に描画。エンティティ追加時のフロントエンド開発は不要です
+- **フィールドメタデータ駆動**：リスト／フォーム／検索／詳細はすべてバックエンドの `meta` メタデータから動的に描画。エンティティ追加時のフロントエンド開発は不要です
 - **魔方スキン設計仕様に準拠**：認証ログイン全フロー、汎用リスト、汎用フォーム、LOV／アップロード／リッチテキスト／AI アシスタントなどの共通コンポーネントを提供
 - **共有パッケージを利用**：`@cube/*`（api-core/auth-logic/page-logic/field-mapping/page-utils）に基づき、フレームワーク非依存のコアを複数スキンで共有
 - **単一テーマ × ライト／ダーク**：antd トークンによるネイティブな見た目、ライト／ダーク切り替えはワンクリック

@@ -9,7 +9,7 @@
 🌐 [English](README.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮膚**，獨立 NuGet 套件 + 獨立儲存庫管理。基於 **React 19 + Ant Design 6 + Zustand + Vite**，由後端欄位中繼資料（`GetPage`）驅動，動態渲染通用清單頁 / 表單頁，符合[魔方皮膚設計規範](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md)。
+魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮膚**，獨立 NuGet 套件 + 獨立儲存庫管理。基於 **React 19 + Ant Design 6 + Zustand + Vite**，由後端欄位中繼資料（`meta`）驅動，動態渲染通用清單頁 / 表單頁，符合[魔方皮膚設計規範](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md)。
 
 引用 `NewLife.Cube` + `NewLife.Cube.React` 兩個套件，`dotnet run` 後瀏覽器開啟即有完整管理後台——登入、動態選單、欄位中繼資料驅動的清單/表單、CRUD、匯入匯出、AI 助理等，**零前端開發**。
 
@@ -22,7 +22,7 @@
 ## 亮點
 
 - **開箱即用**：`app.UseReact(env)` 一行接入，建置產物內嵌 DLL 隨 NuGet 散布，無實體檔案依賴
-- **欄位中繼資料驅動**：清單/表單/搜尋/詳情全部由後端 `GetPage` 中繼資料動態渲染，新增實體零前端開發
+- **欄位中繼資料驅動**：清單/表單/搜尋/詳情全部由後端 `meta` 中繼資料動態渲染，新增實體零前端開發
 - **符合魔方皮膚設計規範**：認證登入全流程、通用清單、通用表單、LOV/上傳/富文字/AI 助理等公共元件
 - **消費共享公共套件**：基於 `@cube/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架無關核心多皮膚共享
 - **單一主題 × 明暗**：antd token 驅動的原生觀感，明暗切換一鍵完成

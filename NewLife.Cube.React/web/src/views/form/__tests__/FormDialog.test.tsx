@@ -66,7 +66,7 @@ describe('FormDialog 表单弹窗', () => {
   });
 
   it('编辑模式回填 camelCase 行数据（后端实体 JSON 大小写）', () => {
-    // 回归：后端 GetList/Detail 返回 camelCase（{id,name,displayName,...}），
+    // 回归：后端列表/详情接口返回 camelCase（{id,name,displayName,...}），
     // 而字段名为 PascalCase，直接 setFieldsValue 会全部落空（旧版编辑看不到数据）
     const { unmount } = render(
       <FormDialog

@@ -9,7 +9,7 @@
 🌐 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독립 NuGet 패키지와 저장소로 제공됩니다. **React 19 + Ant Design 6 + Zustand + Vite** 기반이며 백엔드 필드 메타데이터(`GetPage`)에 의해 구동되어 범용 목록/폼 페이지를 동적으로 렌더링하고, [큐브 스킨 디자인 규격](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md)을 준수합니다.
+Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독립 NuGet 패키지와 저장소로 제공됩니다. **React 19 + Ant Design 6 + Zustand + Vite** 기반이며 백엔드 필드 메타데이터(`meta`)에 의해 구동되어 범용 목록/폼 페이지를 동적으로 렌더링하고, [큐브 스킨 디자인 규격](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md)을 준수합니다.
 
 `NewLife.Cube`와 `NewLife.Cube.React` 두 패키지를 참조하고 `dotnet run` 후 브라우저를 열면 로그인, 동적 메뉴, 필드 메타데이터 기반 목록/폼, CRUD, 가져오기/내보내기, AI 어시스턴트 등이 포함된 완전한 관리 콘솔을 바로 사용할 수 있습니다. **프런트엔드 개발은 전혀 필요 없습니다.**
 
@@ -22,7 +22,7 @@ Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독
 ## 주요 특징
 
 - **즉시 사용 가능**: `app.UseReact(env)` 한 줄로 연동되며, 빌드 산출물이 DLL에 내장되어 NuGet 패키지로 배포되므로 물리 파일 의존성이 없습니다
-- **필드 메타데이터 기반**: 목록/폼/검색/상세 화면이 모두 백엔드 `GetPage` 메타데이터로 동적 렌더링되며, 엔티티 추가 시 프런트엔드 개발이 필요 없습니다
+- **필드 메타데이터 기반**: 목록/폼/검색/상세 화면이 모두 백엔드 `meta` 메타데이터로 동적 렌더링되며, 엔티티 추가 시 프런트엔드 개발이 필요 없습니다
 - **큐브 스킨 디자인 규격 준수**: 인증 로그인 전체 흐름, 범용 목록, 범용 폼, LOV/업로드/리치 텍스트/AI 어시스턴트 등 공용 컴포넌트 제공
 - **공용 패키지 사용**: `@cube/*`(api-core/auth-logic/page-logic/field-mapping/page-utils) 기반이며, 프레임워크 독립 코어를 여러 스킨이 공유합니다
 - **단일 테마 × 라이트/다크**: antd 토큰 기반의 네이티브한 느낌, 라이트/다크 전환은 클릭 한 번

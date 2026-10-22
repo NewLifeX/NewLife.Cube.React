@@ -9,7 +9,7 @@
 🌐 [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-The **React skin** for the third-generation Web API front end of Cube (NewLife.Cube), delivered as a standalone NuGet package and repository. Built with **React 19 + Ant Design 6 + Zustand + Vite** and driven by backend field metadata (`GetPage`), it dynamically renders generic list and form pages and conforms to the [Cube skin design specification](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
+The **React skin** for the third-generation Web API front end of Cube (NewLife.Cube), delivered as a standalone NuGet package and repository. Built with **React 19 + Ant Design 6 + Zustand + Vite** and driven by backend field metadata (`meta`), it dynamically renders generic list and form pages and conforms to the [Cube skin design specification](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
 
 Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`, and open the browser to get a complete admin console — sign-in, dynamic menus, metadata-driven lists and forms, CRUD, import/export, an AI assistant and more, with **zero front-end development**.
 
@@ -20,7 +20,7 @@ Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`
 ## Highlights
 
 - **Out of the box**: one line `app.UseReact(env)`; the build output is embedded in the DLL and shipped with the NuGet package, with no physical file dependency
-- **Field metadata driven**: lists, forms, search and detail views are all rendered dynamically from backend `GetPage` metadata; adding an entity requires zero front-end work
+- **Field metadata driven**: lists, forms, search and detail views are all rendered dynamically from backend `meta` metadata; adding an entity requires zero front-end work
 - **Conforms to the Cube skin design specification**: complete authentication flow, generic list, generic form, LOV/upload/rich text/AI assistant and other shared components
 - **Consumes the shared packages**: built on `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), with a framework-agnostic core shared by multiple skins
 - **Single theme × light/dark**: native look driven by antd tokens, with one-click light/dark switching

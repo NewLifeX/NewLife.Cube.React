@@ -42,7 +42,7 @@ export function routeToApiPrefix(path: string): string {
  *
  * 后端实体 JSON 为 camelCase（name/displayName），字段元数据为 PascalCase（Name/DisplayName），
  * 且注入的扩展字段（IExtend.Items）保持原键大小写（如 AvatarImage），
- * 故统一按小写比对，避免 GetPage / 数据接口字段名大小写不一致导致取不到值。
+ * 故统一按小写比对，避免 meta / 数据接口字段名大小写不一致导致取不到值。
  * 后端约定同一表不会出现仅大小写不同的字段，此匹配安全。
  */
 export function getValueByKey(data: Record<string, unknown>, key: string): unknown {

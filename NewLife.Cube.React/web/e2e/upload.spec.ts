@@ -2,7 +2,7 @@
  * 上传组件 E2E（CMP-2 Uploader）
  *
  * 以 /Admin/User 新增表单的"头像"图片字段为例，验证：
- * 选择文件 → 调用 UploadFile API → 显示图片预览 + 成功反馈 → 可清除恢复上传按钮。
+ * 选择文件 → 调用附件上传 API（POST {type}/attachments）→ 显示图片预览 + 成功反馈 → 可清除恢复上传按钮。
  * 不保存记录，避免污染用户数据。
  */
 import { expect, test } from '@playwright/test';

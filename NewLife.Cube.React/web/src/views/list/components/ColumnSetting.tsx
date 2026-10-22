@@ -2,7 +2,7 @@
  * 表格列设置（齿轮按钮 + 弹层）
  *
  * 勾选显示/隐藏列、上下调整顺序、{t('恢复默认')}，持久化到后端（Parameter 表 Page-React 分类，用户级）。
- * 渲染由后端 GetPage 干预：保存后重新加载页面元数据，GetPage 返回已按配置排序/过滤的字段。
+ * 渲染由后端 meta 干预：保存后重新加载页面元数据，meta 返回已按配置排序/过滤的字段。
  */
 import { useEffect, useState } from 'react';
 import { App, Button, Checkbox, Popover, Tooltip } from 'antd';
@@ -15,9 +15,9 @@ import type { FieldMapping } from '@newlifex/field-mapping';
 export interface ColumnSettingProps {
   /** 页面路径，如 /Cube/Area */
   type: string;
-  /** 全部可用字段（GetPage.allList，应用配置前） */
+  /** 全部可用字段（meta.allList，应用配置前） */
   allFields: FieldMapping[];
-  /** 当前可见字段名列表（GetPage.list 中 visible 未隐藏的） */
+  /** 当前可见字段名列表（meta.list 中 visible 未隐藏的） */
   visibleFields: string[];
   /** 保存/{t('恢复默认')}后回调（重新加载页面元数据） */
   onChanged: () => void;
@@ -26,7 +26,7 @@ export interface ColumnSettingProps {
 /** 列配置持久化 kind（对应后端 PageService 的 Page-React 分类） */
 export const COLUMN_CONFIG_KIND = 'React';
 
-/** 过滤可见字段：visible !== false 的字段参与渲染（后端 GetPage 按用户配置标记隐藏） */
+/** 过滤可见字段：visible !== false 的字段参与渲染（后端 meta 按用户配置标记隐藏） */
 export function filterVisibleFields(fields: FieldMapping[]): FieldMapping[] {
   return fields.filter((f) => f.field.visible !== false);
 }

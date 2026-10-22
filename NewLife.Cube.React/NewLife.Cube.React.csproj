@@ -91,7 +91,7 @@
 
   <ItemGroup>
     <!-- 多语言基线：Cube 6.15.2026.1022 起内置请求级本地化（UseCubeLocalization），界面元数据按请求语言翻译 -->
-    <PackageReference Include="NewLife.Cube" Version="6.15.2026.1022" />
+    <PackageReference Include="NewLife.Cube" Version="6.15.2026.1023" />
     <!-- 直接引用 Core：导入 build/NewLife.Core.props，使本包 Locales/*.yml 自动编译进词表 -->
     <PackageReference Include="NewLife.Core" Version="12.0.2026.1021-beta121526" />
   </ItemGroup>

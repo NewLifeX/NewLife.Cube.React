@@ -222,7 +222,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.waitForTimeout(800);
     // 导出收纳在「高级」菜单内（规范 §7.8）
     await page.getByRole('button', { name: /高\s*级/ }).click();
-    const reqPromise = page.waitForRequest((r) => r.url().includes('/ExportFile'), { timeout: 20000 });
+    const reqPromise = page.waitForRequest((r) => r.url().includes('/export'), { timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
     await page.getByText('导出 Excel').click();
     const [req, download] = await Promise.all([reqPromise, downloadPromise]);
@@ -242,7 +242,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.waitForTimeout(800);
     // 导出收纳在「高级」菜单内（规范 §7.8）
     await page.getByRole('button', { name: /高\s*级/ }).click();
-    const reqPromise = page.waitForRequest((r) => r.url().includes('/ExportFile'), { timeout: 20000 });
+    const reqPromise = page.waitForRequest((r) => r.url().includes('/export'), { timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
     await page.getByText('导出 Zip').click();
     const [req, download] = await Promise.all([reqPromise, downloadPromise]);

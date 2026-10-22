@@ -1,6 +1,6 @@
 # NewLife.Cube.React
 
-魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`GetPage`）驱动，动态渲染通用列表页 / 表单页，符合魔方皮肤设计规范。
+魔方（NewLife.Cube）第三代 WebAPI 前端的 **React 皮肤**。基于 **React 19 + Ant Design 6 + Zustand + Vite**，由后端字段元数据（`meta`）驱动，动态渲染通用列表页 / 表单页，符合魔方皮肤设计规范。
 
 > 本项目为**全新重构**（原 UMI Max 版本已废弃），依赖公共前端库 `@newlifex/*`（`file:` 本地引用 `../NewLife.Cube/packages`，见[架构设计](../../Doc/架构设计.md) §3）。
 

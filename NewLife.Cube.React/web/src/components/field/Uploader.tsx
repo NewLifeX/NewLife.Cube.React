@@ -1,7 +1,7 @@
 /**
  * 上传组件（图片 / 文件）
  *
- * 调用 UploadFile API（POST /{type}/UploadFile），返回 URL 写入表单值。
+ * 调用附件上传 API（POST /{type}/attachments），返回 URL 写入表单值。
  * 图片模式带预览，文件模式带下载链接。
  */
 import { useState } from 'react';
@@ -13,7 +13,7 @@ import { t } from '@/i18n';
 export interface UploaderProps {
   value?: string;
   onChange?: (value: string | undefined) => void;
-  /** 实体路径前缀（如 '/Admin/User'），UploadFile 需要 */
+  /** 实体路径前缀（如 '/Admin/User'），附件上传需要 */
   type?: string;
   /** 主记录主键（0=新增） */
   recordId?: number | string;

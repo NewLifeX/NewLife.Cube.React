@@ -5,7 +5,7 @@
  * 与实体控制器不同，后端只暴露：
  * - GET  `{type}`             → 返回配置对象（单对象，非列表）
  * - PUT  `{type}`             → 保存配置对象
- * - GET  `{type}/GetFields`   → 返回配置字段元数据（按 [Category] 分组）
+ * - GET  `{type}/meta`        → 返回页面元数据，字段在 `editForm`（按 [Category] 分组）
  *
  * 本组件通用渲染任意配置控制器页面：按分类 Tabs 分组渲染字段表单，保存时 PUT 提交。
  *
@@ -51,14 +51,14 @@ export default function ConfigPage({ type }: ConfigPageProps) {
     setLoading(true);
     setError('');
     Promise.all([
-      // ConfigController.GetFields 返回全部成员（kind 参数被忽略）
-      api.page.getFields(type, 4).catch(() => null),
+      // ObjectController.Meta 只返回 setting 与 editForm（配置页只有编辑表单）
+      api.page.getPage(type).catch(() => null),
       // GET {type} 返回配置对象（非列表）
       api.client.get(type).catch(() => null),
     ])
-      .then(([fieldsRes, objRes]) => {
+      .then(([metaRes, objRes]) => {
         if (cancelled) return;
-        const fieldList = (fieldsRes?.data ?? []) as DataField[];
+        const fieldList = (metaRes?.data?.editForm ?? []) as DataField[];
         if (!fieldList.length) {
           setError(t('无法获取配置字段，请确认 {{type}} 为配置控制器（ConfigController）', { type }));
           return;

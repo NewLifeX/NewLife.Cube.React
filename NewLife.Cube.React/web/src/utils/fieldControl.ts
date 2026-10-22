@@ -457,7 +457,7 @@ function toMultiArray(val: unknown): string[] {
  * 编辑回填：将后端 camelCase 数据（列表行/详情）映射为表单字段值（PascalCase 字段名）
  *
  * 后端实体 JSON 序列化为 camelCase（如 { id, name, displayName, enable }），
- * 而 GetPage 下发的 DataField.name 为 PascalCase 实体属性名（如 ID/Name/DisplayName）。
+ * 而 meta 下发的 DataField.name 为 PascalCase 实体属性名（如 ID/Name/DisplayName）。
  * 若直接用 form.setFieldsValue(data) 精确匹配，camelCase 键与 PascalCase 字段名对不上，
  * 编辑表单将全部为空（旧版问题：三方登录用户数据多时编辑完全看不到数据）。
  *

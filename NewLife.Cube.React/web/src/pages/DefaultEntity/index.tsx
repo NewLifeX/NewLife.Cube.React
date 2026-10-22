@@ -13,6 +13,7 @@ import FormPage from '@/views/form/FormPage';
 import NotFoundPage from '@/pages/NotFound';
 import ConfigNav, { findConfigCenter } from '@/views/config/ConfigNav';
 import { routeToApiPrefix } from '@/utils/url';
+import { isEntityMeta } from '@/utils/pageMeta';
 import { api } from '@/api';
 
 /** 是否表单类路径（含 ?id= 或 /Edit /Add /New /Detail 后缀） */
@@ -39,11 +40,11 @@ export default function DefaultEntityPage() {
   const config = useMemo(() => findConfigCenter(location.pathname), [location.pathname]);
 
   // 隐藏菜单实体页（如 /Admin/UserOnline、/Admin/UserStat，控制器 [Menu(0,false)] 不在菜单树）：
-  // 菜单未命中时探测后端 GetPage，返回 JSON 即按实体页渲染，否则 404
+  // 菜单未命中时探测后端 meta，含列表字段即按实体页渲染，否则 404
   const [probe, setProbe] = useState<'idle' | 'ok' | 'none'>('idle');
   useEffect(() => {
     if (matched || config) return;
-    // 已知特殊页（如服务器信息 /Admin/Index/Main）：不探测 GetPage，直接放行给 DefaultListPage 按路径分发
+    // 已知特殊页（如服务器信息 /Admin/Index/Main）：不探测 meta，直接放行给 DefaultListPage 按路径分发
     if (isSpecialApiPath(location.pathname)) {
       setProbe('ok');
       return;
@@ -54,8 +55,8 @@ export default function DefaultEntityPage() {
       .getPage(routeToApiPrefix(location.pathname))
       .then((res) => {
         if (cancelled) return;
-        // GetPage 返回 HTML（SPA 兜底）说明不是实体 CRUD 页
-        setProbe(typeof res === 'string' || typeof res?.data === 'string' ? 'none' : 'ok');
+        // 配置页/ObjectController 的 meta 也只有 JSON，必须以是否含列表字段区分
+        setProbe(isEntityMeta(res) ? 'ok' : 'none');
       })
       .catch(() => {
         if (!cancelled) setProbe('none');
@@ -76,7 +77,7 @@ export default function DefaultEntityPage() {
     }
     // 后端无此实体 → 404
     if (probe === 'none') return <NotFoundPage />;
-    // 隐藏菜单实体页命中（GetPage 返回 JSON）或特殊页放行 → 按列表页渲染（DefaultListPage 内部再探测分发）
+    // 隐藏菜单实体页命中（meta 返回 JSON）或特殊页放行 → 按列表页渲染（DefaultListPage 内部再探测分发）
   }
 
   const title = config?.label || matched?.title || matched?.name || '';

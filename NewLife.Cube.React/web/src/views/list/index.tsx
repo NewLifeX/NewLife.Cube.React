@@ -1,7 +1,7 @@
 /**
  * 通用列表页（包装组件）
  *
- * 先探测当前控制器是否为实体 CRUD 页（GetPage 返回 JSON），再分发渲染：
+ * 先探测当前控制器是否为实体 CRUD 页（meta 返回 JSON），再分发渲染：
  * - 实体页   → EntityListPage（原通用列表页，store 驱动）
  * - 配置页   → ConfigPage（ConfigController 对象表单，如魔方设置 /Admin/Cube）
  * - 数据库页 → DbPage（DbController 特殊管理页 /Admin/Db）
@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { Card, Spin } from 'antd';
 import { useLocation } from 'react-router-dom';
 import { routeToApiPrefix } from '@/utils/url';
+import { isEntityMeta } from '@/utils/pageMeta';
 import { api } from '@/api';
 import EntityListPage from './EntityListPage';
 import ConfigPage from '@/views/config/ConfigPage';
@@ -30,11 +31,11 @@ export default function DefaultListPage() {
   const type = routeToApiPrefix(location.pathname);
   const [kind, setKind] = useState<PageKind>('probe');
 
-  // 探测：GetPage 返回 HTML（SPA 兜底）说明该控制器不是实体 CRUD 页
+  // 探测：meta 含列表字段说明是实体 CRUD 页；配置页/ObjectController 的 meta 只有 setting+editForm
   useEffect(() => {
     let cancelled = false;
     setKind('probe');
-    // 已知特殊页（如服务器信息 /Admin/Index/Main）不探测 GetPage，直接按特殊页分发
+    // 已知特殊页（如服务器信息 /Admin/Index/Main）不探测 meta，直接按特殊页分发
     if (type.toLowerCase().endsWith('/index/main')) {
       setKind('special');
       return;
@@ -43,10 +44,13 @@ export default function DefaultListPage() {
       .getPage(type)
       .then((res) => {
         if (cancelled) return;
-        setKind(typeof res === 'string' || typeof res?.data === 'string' ? 'special' : 'entity');
+        setKind(isEntityMeta(res) ? 'entity' : 'special');
       })
-      .catch(() => {
-        if (!cancelled) setKind('entity');
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        // 后端对未匹配的 /api 请求统一返回 404；其余错误（401/403/5xx/网络）仍按实体页处理，避免瞬时故障误分流
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        setKind(status === 404 ? 'special' : 'entity');
       });
     return () => {
       cancelled = true;

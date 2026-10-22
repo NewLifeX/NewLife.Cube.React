@@ -34,9 +34,9 @@ public class ReactController : ConfigController<ReactSetting>
     /// <summary>Get fields. Add dropdown options for multi-choice settings (form style, description display), rendered as a select by the front end</summary>
     /// <param name="kind">View kind</param>
     /// <returns>Field metadata list</returns>
-    public override IList<DataField> GetFields(ViewKinds kind)
+    protected override IList<DataField> OnGetFields(ViewKinds kind)
     {
-        var list = base.GetFields(kind);
+        var list = base.OnGetFields(kind);
 
         // 表单风格：inline/vertical 两个选项
         var fs = list.FirstOrDefault(e => e.Name == "FormStyle");

@@ -1,5 +1,5 @@
 /**
- * 用户统计页图表视图 E2E（UserStat + OnGetChartData）
+ * 用户统计页图表视图 E2E（UserStat + OnGetCharts / GET {type}/charts）
  *
  * 覆盖：
  * - 列表页加载无错误且展示数据

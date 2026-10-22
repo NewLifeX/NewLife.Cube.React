@@ -2,7 +2,7 @@
  * 实体列表页（内层组件，无探测/早退逻辑）
  *
  * 由 DefaultListPage 包装组件探测后调用：确认当前页面为实体 CRUD 页后渲染。
- * 本组件与原始 DefaultListPage 行为一致：从后端 GetPage 拉取 list/search/addForm/editForm
+ * 本组件与原始 DefaultListPage 行为一致：从后端 meta 拉取 list/search/addForm/editForm
  * 字段元数据，由 @newlifex/page-logic zustand store 驱动，分片渲染：
  *   - SearchBar      动态搜索控件（按钮与条件同行）
  *   - Toolbar        新增/删除选中/刷新 + 表格图表视图切换 + 高级菜单
@@ -70,7 +70,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   // 查看权限：只读控制器或无可编辑权限时提供「查看」（规范 §7.9）
   const canView = !!pageSetting?.isReadOnly || !canEdit;
 
-  // 渲染列：过滤后端 GetPage 标记隐藏（visible=false）的字段（列设置持久化到后端后由 GetPage 干预）
+  // 渲染列：过滤后端 meta 标记隐藏（visible=false）的字段（列设置持久化到后端后由 meta 干预）
   const displayFields = useMemo(() => filterVisibleFields(listFields), [listFields]);
   const visibleFieldNames = useMemo(() => displayFields.map((f) => f.field.name), [displayFields]);
 
@@ -154,7 +154,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .catch(() => {});
   }, [store, searchParams, sortState]);
 
-  // 列设置保存/恢复默认后：清除页面元数据缓存 + 重新拉取（GetPage 返回已应用配置的字段）+ 数据
+  // 列设置保存/恢复默认后：清除页面元数据缓存 + 重新拉取（meta 返回已应用配置的字段）+ 数据
   const reloadMeta = useCallback(() => {
     clearPageMetaCache();
     void store
@@ -248,7 +248,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
    *  携带当前搜索条件与排序，后端基于查询条件全量导出（ExportData 全页拉取），而非整表或仅当前页 */
   const handleExport = async (format: string) => {
     try {
-      const res = await api.client.get(`${type}/ExportFile`, {
+      const res = await api.client.get(`${type}/export`, {
         params: { format, ...searchParams, sort: sortState.field, desc: sortState.desc },
         responseType: 'blob',
       });

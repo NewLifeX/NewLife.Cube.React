@@ -9,7 +9,7 @@
 🌐 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Español](README.es.md) | [日本語](README.ja.md) | [Français](README.fr.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-Der **React-Skin** für das Web-API-Frontend der dritten Generation von Cube (NewLife.Cube), ausgeliefert als eigenständiges NuGet-Paket und Repository. Basierend auf **React 19 + Ant Design 6 + Zustand + Vite**, gesteuert durch Feldmetadaten des Backends (`GetPage`), rendert er generische Listen- und Formularseiten dynamisch und entspricht der [Cube-Skin-Designspezifikation](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
+Der **React-Skin** für das Web-API-Frontend der dritten Generation von Cube (NewLife.Cube), ausgeliefert als eigenständiges NuGet-Paket und Repository. Basierend auf **React 19 + Ant Design 6 + Zustand + Vite**, gesteuert durch Feldmetadaten des Backends (`meta`), rendert er generische Listen- und Formularseiten dynamisch und entspricht der [Cube-Skin-Designspezifikation](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
 
 Referenziere `NewLife.Cube` und `NewLife.Cube.React`, führe `dotnet run` aus und öffne den Browser – schon steht eine vollständige Administrationskonsole bereit: Anmeldung, dynamische Menüs, metadatengesteuerte Listen/Formulare, CRUD, Import/Export, KI-Assistent und mehr, mit **null Frontend-Entwicklung**.
 
@@ -22,7 +22,7 @@ Referenziere `NewLife.Cube` und `NewLife.Cube.React`, führe `dotnet run` aus un
 ## Highlights
 
 - **Sofort einsatzbereit**: eine Zeile `app.UseReact(env)`; das Build-Ergebnis wird in die DLL eingebettet und mit dem NuGet-Paket verteilt – ohne Abhängigkeit von physischen Dateien
-- **Feldmetadaten-getrieben**: Listen, Formulare, Suche und Detailansicht werden vollständig aus den `GetPage`-Metadaten des Backends gerendert; neue Entitäten erfordern keine Frontend-Arbeit
+- **Feldmetadaten-getrieben**: Listen, Formulare, Suche und Detailansicht werden vollständig aus den `meta`-Metadaten des Backends gerendert; neue Entitäten erfordern keine Frontend-Arbeit
 - **Entspricht der Cube-Skin-Designspezifikation**: vollständiger Authentifizierungsablauf, generische Liste, generisches Formular, LOV/Upload/Rich-Text/KI-Assistent und weitere gemeinsame Komponenten
 - **Nutzt die gemeinsamen Pakete**: basiert auf `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), frameworkunabhängiger Kern für mehrere Skins
 - **Ein Theme × hell/dunkel**: natives Erscheinungsbild über antd-Token, Umschalten zwischen hell und dunkel mit einem Klick

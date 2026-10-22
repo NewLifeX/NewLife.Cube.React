@@ -2,7 +2,7 @@
  * 表格列设置 E2E（齿轮按钮 → 列显隐/顺序 → 持久化到后端）
  *
  * 覆盖：齿轮按钮存在、打开面板展示字段、取消勾选保存后列消失、恢复默认后列恢复。
- * 后端 SetPageConfig（Page-React 分类）按用户持久化，GetPage 返回干预字段。
+ * 后端 SetPageConfig（Page-React 分类）按用户持久化，meta 返回干预字段。
  */
 import { expect, test } from '@playwright/test';
 

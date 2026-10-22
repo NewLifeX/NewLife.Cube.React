@@ -131,7 +131,7 @@ export default function ProfilePage() {
     }
   };
 
-  /** 头像上传：POST /Admin/User/UploadFile → filePath 回填 avatar，随保存提交 */
+  /** 头像上传：POST /Admin/User/attachments → filePath 回填 avatar，随保存提交 */
   const handleAvatarUpload = async (file: File) => {
     setUploading(true);
     try {

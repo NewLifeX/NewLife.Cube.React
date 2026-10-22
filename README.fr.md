@@ -9,7 +9,7 @@
 🌐 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [日本語](README.ja.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [العربية](README.ar.md)
 <!-- lang:end -->
 
-Le **skin React** du front-end Web API de troisième génération de Cube (NewLife.Cube), distribué sous forme de package NuGet et de dépôt indépendants. Basé sur **React 19 + Ant Design 6 + Zustand + Vite** et piloté par les métadonnées de champs du backend (`GetPage`), il affiche dynamiquement des pages génériques de liste et de formulaire, et respecte la [spécification de conception des skins Cube](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
+Le **skin React** du front-end Web API de troisième génération de Cube (NewLife.Cube), distribué sous forme de package NuGet et de dépôt indépendants. Basé sur **React 19 + Ant Design 6 + Zustand + Vite** et piloté par les métadonnées de champs du backend (`meta`), il affiche dynamiquement des pages génériques de liste et de formulaire, et respecte la [spécification de conception des skins Cube](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md).
 
 Référencez `NewLife.Cube` et `NewLife.Cube.React`, lancez `dotnet run`, puis ouvrez le navigateur pour obtenir une console d'administration complète : connexion, menus dynamiques, listes/formulaires pilotés par les métadonnées, CRUD, import/export, assistant IA, etc., avec **zéro développement front-end**.
 
@@ -22,7 +22,7 @@ Référencez `NewLife.Cube` et `NewLife.Cube.React`, lancez `dotnet run`, puis o
 ## Points forts
 
 - **Prêt à l'emploi** : une ligne `app.UseReact(env)` ; la sortie de build est intégrée à la DLL et livrée avec le package NuGet, sans dépendance à des fichiers physiques
-- **Piloté par les métadonnées de champs** : listes, formulaires, recherche et détail sont rendus dynamiquement à partir des métadonnées `GetPage` du backend ; l'ajout d'une entité ne nécessite aucun travail front-end
+- **Piloté par les métadonnées de champs** : listes, formulaires, recherche et détail sont rendus dynamiquement à partir des métadonnées `meta` du backend ; l'ajout d'une entité ne nécessite aucun travail front-end
 - **Conforme à la spécification de conception des skins Cube** : parcours d'authentification complet, liste générique, formulaire générique, LOV/téléversement/texte enrichi/assistant IA et autres composants partagés
 - **Consomme les packages partagés** : basé sur `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), avec un cœur indépendant du framework partagé par plusieurs skins
 - **Thème unique × clair/sombre** : apparence native pilotée par les tokens antd, bascule clair/sombre en un clic

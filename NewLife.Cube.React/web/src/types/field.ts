@@ -1,7 +1,7 @@
 /**
  * 字段映射共享类型定义（对齐 Vue 皮肤 core/types/field.ts）
  *
- * 后端 GetPage 下发的字段元数据（NewLife.Cube `DataField`）经归一为 `FieldMeta`，
+ * 后端 meta 下发的字段元数据（NewLife.Cube `DataField`）经归一为 `FieldMeta`，
  * 由 `utils/fieldControl.ts` 统一解析为控件类型，驱动列表渲染 / 动态搜索 / 表单编辑三处视图。
  */
 import type { DataField } from '@newlifex/api-core';
