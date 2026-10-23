@@ -109,6 +109,36 @@ export interface FieldMeta {
   text?: string;
   /** 取值字段。列表单元格优先取该字段值，为空时回退到本字段（如名称列优先显示昵称） */
   valueField?: string;
+  /** 是否可见。列表字段 false 表示默认隐藏，表格设置可勾选打开（浏览器偏好可覆盖） */
+  visible?: boolean;
+  /** 表头文字（优先于 displayName） */
+  header?: string;
+  /** 表头提示文字 */
+  headerTitle?: string;
+  /** 单元格提示文字（支持占位符） */
+  title?: string;
+  /** 数据动作。action 表示点击链接走 AJAX 请求后刷新列表 */
+  dataAction?: string;
+  /** 文本对齐（后端 TextAligns 枚举值或 left/center/right） */
+  textAlign?: string | number;
+  /** 最大宽度（超长文本截断的字符数） */
+  maxWidth?: number;
+  /** 单元格样式类 */
+  class?: string;
+  /** 非实体列（虚拟字段，不参与实体提交） */
+  virtual?: boolean;
+  /** 前端渲染器名（后端 view / ItemView / GroupView） */
+  view?: string;
+  /** 渲染器扩展属性（后端 DataField.Properties，核心不解释） */
+  props?: Record<string, unknown>;
+  /** 搜索项类型：keyword 由关键字框统一处理，range 为区间 */
+  kind?: 'keyword' | 'range';
+  /** 区间结束参数名（kind=range） */
+  end?: string;
+  /** 区间对应的实体字段名（kind=range） */
+  field?: string;
+  /** 级联父字段名（父变过滤子，如 OrderType → Section） */
+  parentField?: string;
 }
 
 /**
@@ -139,5 +169,20 @@ export function toFieldMeta(field: DataField): FieldMeta {
     target: field.target,
     text: field.text,
     valueField: field.valueField,
+    visible: field.visible,
+    header: field.header,
+    headerTitle: field.headerTitle,
+    title: field.title,
+    dataAction: field.dataAction,
+    textAlign: field.textAlign,
+    maxWidth: field.maxWidth,
+    class: field.class,
+    virtual: field.virtual,
+    view: field.view,
+    props: field.props,
+    kind: field.kind,
+    end: field.end,
+    field: field.field,
+    parentField: field.parentField,
   };
 }

@@ -28,10 +28,18 @@ const storeCache = new Map<string, PageStore>();
 export function usePageStore(type: string): PageStore {
   const key = type || '/';
   if (!storeCache.has(key)) {
-    // 菜单权限用 getter 动态读取（菜单异步加载后生效）
+    // 菜单权限用 getter 动态读取（菜单异步加载后生效）；
+    // 同时传入用户权限串与系统管理员标志，供 page-logic 按 menuId + requiredPermissions 判定动作权限
     storeCache.set(
       key,
-      createPageStore(api, type, 20, () => useUserStore.getState().getMenuPermission(type)),
+      createPageStore(
+        api,
+        type,
+        20,
+        () => useUserStore.getState().getMenuPermission(type),
+        () => useUserStore.getState().userInfo?.permission,
+        () => useUserStore.getState().userInfo?.isSystemAdmin === true,
+      ),
     );
   }
   return storeCache.get(key)!;

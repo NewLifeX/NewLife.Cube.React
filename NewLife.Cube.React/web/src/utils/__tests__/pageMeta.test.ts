@@ -17,7 +17,7 @@ function makeMeta(data: PageMeta): ApiResponse<PageMeta> {
 
 describe('isEntityMeta 页面元数据形态判定', () => {
   it('实体页 meta 含 list 数组 → 实体页', () => {
-    expect(isEntityMeta(makeMeta({ setting: {}, list: [], allList: [], addForm: [], search: [] }))).toBe(true);
+    expect(isEntityMeta(makeMeta({ setting: {}, list: [], addForm: [], search: [] }))).toBe(true);
   });
 
   it('配置页 meta 只有 setting 与 editForm → 非实体页', () => {

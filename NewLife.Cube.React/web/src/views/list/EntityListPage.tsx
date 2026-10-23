@@ -45,7 +45,6 @@ export default function EntityListPage({ type }: EntityListPageProps) {
 
   // 订阅 store 状态
   const listFields = store((s) => s.listFields);
-  const allListFields = store((s) => s.allListFields);
   const searchFields = store((s) => s.searchFields);
   const addFields = store((s) => s.addFields);
   const editFields = store((s) => s.editFields);
@@ -426,7 +425,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
         onViewChange={handleViewChange}
         onRefresh={() => void refresh()}
         columnSetting={
-          <ColumnSetting type={type} allFields={allListFields} visibleFields={visibleFieldNames} onChanged={reloadMeta} />
+          <ColumnSetting type={type} allFields={listFields} visibleFields={visibleFieldNames} onChanged={reloadMeta} />
         }
       />
       {view === 'chart' ? (
