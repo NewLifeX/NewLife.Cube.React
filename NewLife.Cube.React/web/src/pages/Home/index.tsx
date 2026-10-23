@@ -30,6 +30,7 @@ import * as echarts from 'echarts';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
+import { useSiteStore } from '@/stores/site';
 import { getConfig } from '@/configure';
 import { getCurrentLanguage, t } from '@/i18n';
 import {
@@ -165,6 +166,7 @@ export default function HomePage() {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const userInfo = useUserStore((s) => s.userInfo);
+  const siteName = useSiteStore((s) => s.config?.name);
   const { data: wb, reload: reloadWb } = useDashboard();
   const [now, setNow] = useState(new Date());
   const chartRef = useRef<HTMLDivElement>(null);
@@ -792,7 +794,7 @@ export default function HomePage() {
               {greet}，{displayName}
             </div>
             <div className="cube-home-banner-sub">
-              {t('欢迎回到 {{name}}', { name: getConfig().base.title })} · {today}
+              {t('欢迎回到 {{name}}', { name: siteName || getConfig().base.title })} · {today}
               {roles ? ` · ${roles}` : ''}
             </div>
           </div>

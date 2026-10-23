@@ -57,6 +57,8 @@ export const api: CubeApi = createCubeApi({
   tokenStorage,
   tokenHeaderPrefix: getConfig().request.tokenHeaderPrefix ?? 'Bearer ',
   timeout: getConfig().request.timeout,
+  // 元数据缓存按语言隔离；账号切换由 token 事件清空，租户切换会刷新页面
+  metaCacheScope: () => getCurrentLanguage(),
   // 接入附加请求头（如多租户 X-Tenant），实体/服务两条链均生效
   // Accept-Language 与 i18n 当前语言保持一致，后端按同一条链路返回本地化消息
   additionalRequestHeaders: () => {

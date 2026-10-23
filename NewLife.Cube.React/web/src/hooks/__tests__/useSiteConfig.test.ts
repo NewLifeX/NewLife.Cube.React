@@ -9,6 +9,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
+import { useSiteStore } from '@/stores/site';
 import type { ApiResponse, SiteConfig } from '@newlifex/api-core';
 
 const { mockGetSite } = vi.hoisted(() => ({
@@ -26,6 +27,7 @@ function ok(data: SiteConfig): ApiResponse<SiteConfig> {
 describe('useSiteConfig 站点配置加载', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSiteStore.setState({ config: null, loadedTenant: undefined, loading: false, error: '' });
   });
 
   it('加载站点品牌配置', async () => {

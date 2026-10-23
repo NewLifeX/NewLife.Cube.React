@@ -13,6 +13,7 @@ import TabsView from '@/components/TabsView';
 import { t } from '@/i18n';
 import AiAssistant from '@/components/ai/AiAssistant';
 import { getConfig } from '@/configure';
+import { useSiteStore } from '@/stores/site';
 
 const { Sider, Content, Footer } = Layout;
 
@@ -26,6 +27,9 @@ function isMobileViewport() {
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const cfg = getConfig().ui.layout;
+  const base = getConfig().base;
+  const siteConfig = useSiteStore((s) => s.config);
+  const loadSite = useSiteStore((s) => s.load);
   const [collapsed, setCollapsed] = useState(cfg.sider.defaultCollapsed);
   const [isMobile, setIsMobile] = useState(isMobileViewport);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -40,13 +44,22 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
+  // 加载站点品牌（服务端名称/Logo 优先，失败回退静态配置）
+  useEffect(() => {
+    void loadSite();
+  }, [loadSite]);
+
   // 导航切换：移动端打开 Drawer，桌面端折叠/展开 Sider
   const toggleNav = () => {
     if (isMobile) setDrawerOpen(true);
     else setCollapsed((c) => !c);
   };
 
-  const brand = getConfig().base;
+  const brand = {
+    ...base,
+    title: siteConfig?.name || base.title,
+    logo: siteConfig?.logo || base.logo,
+  };
 
   const siderPanel = (
     <div className="cube-shell-sider-panel">

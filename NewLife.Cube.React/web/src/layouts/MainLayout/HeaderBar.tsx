@@ -7,6 +7,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { useUserStore } from '@/stores/user';
 import { useMenuStore } from '@/stores/menu';
+import { useSiteStore } from '@/stores/site';
 import { findConfigCenter } from '@/views/config/ConfigNav';
 import { getConfig } from '@/configure';
 import { t } from '@/i18n';
@@ -28,6 +29,8 @@ export default function HeaderBar({ collapsed, onToggle }: HeaderBarProps) {
   const flatMenus = useMenuStore((s) => s.flatMenus);
   const userInfo = useUserStore((s) => s.userInfo);
   const { base } = getConfig();
+  const siteName = useSiteStore((s) => s.config?.name);
+  const baseTitle = siteName || base.title;
 
   // 面包屑：当前菜单及其祖先（选择器取稳定数组引用，计算放 useMemo）
   const crumbs = useMemo(() => {
@@ -37,7 +40,7 @@ export default function HeaderBar({ collapsed, onToggle }: HeaderBarProps) {
       // 配置中心页（左侧隐藏菜单，不在菜单树中）：显示 系统管理 / 配置名
       const config = findConfigCenter(location.pathname);
       if (config) return [{ title: t('系统管理') }, { title: config.label }];
-      return [{ title: base.title }];
+      return [{ title: baseTitle }];
     }
     const chain: { title: string }[] = [];
     let node: { id: string | number; parentId?: string | number | null; title?: string; name: string } | undefined = current;
@@ -48,7 +51,7 @@ export default function HeaderBar({ collapsed, onToggle }: HeaderBarProps) {
       node = parentId != null ? flatMenus.find((m) => String(m.id) === String(parentId)) : undefined;
     }
     return chain;
-  }, [flatMenus, location.pathname, base.title]);
+  }, [flatMenus, location.pathname, baseTitle]);
 
   return (
     <Layout.Header className="cube-shell-header">
