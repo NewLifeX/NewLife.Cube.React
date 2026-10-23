@@ -18,6 +18,8 @@ import {
   isFullWidthControl,
   resolveAreaMaxLevel,
   mapUrlParamsToSearchValues,
+  resolveFormLayout,
+  findPresetPatch,
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
@@ -385,5 +387,70 @@ describe('mapUrlParamsToSearchValues URL 查询 → 搜索控件值', () => {
     expect(mapUrlParamsToSearchValues({ dtStart: '2026-08-01', dtEnd: '2026-08-31' }, fields)).toEqual({
       dtStart: ['2026-08-01', '2026-08-31'],
     });
+  });
+});
+
+describe('resolveFormLayout 表单分流（FORM-9）', () => {
+  it('无分类或单分类 → 平铺', () => {
+    expect(resolveFormLayout([f({ name: 'A' })]).mode).toBe('flat');
+    expect(resolveFormLayout([f({ name: 'A', category: '基本' }), f({ name: 'B', category: '基本' })]).mode).toBe('flat');
+  });
+
+  it('分类 2~3 且字段 ≤24 → 分区区块', () => {
+    const fields = [
+      f({ name: 'A', category: '基本' }),
+      f({ name: 'B', category: '扩展' }),
+      f({ name: 'C' }),
+    ];
+    expect(resolveFormLayout(fields).mode).toBe('sections');
+  });
+
+  it('分类超过 3 → Tabs（字段多时区块过长）', () => {
+    const fields = ['一', '二', '三', '四'].map((c, i) => f({ name: `F${i}`, category: c }));
+    expect(resolveFormLayout(fields).mode).toBe('tabs');
+  });
+
+  it('字段超过 24 → Tabs', () => {
+    const fields = Array.from({ length: 25 }, (_, i) =>
+      f({ name: `F${i}`, category: i % 2 === 0 ? '单' : '双' }),
+    );
+    expect(resolveFormLayout(fields).mode).toBe('tabs');
+  });
+
+  it('preset 覆盖分组方式与列数', () => {
+    const fields = [f({ name: 'A', category: '基本' }), f({ name: 'B', category: '扩展' }) ];
+    expect(resolveFormLayout(fields, { groupBy: 'tabs', columns: 3 })).toEqual({ mode: 'tabs', columns: 3 });
+    // category 别名等价于 sections
+    expect(resolveFormLayout(fields, { groupBy: 'category' }).mode).toBe('sections');
+    expect(resolveFormLayout(fields, { groupBy: 'flat' }).mode).toBe('flat');
+    // 默认列数 2
+    expect(resolveFormLayout(fields).columns).toBe(2);
+  });
+});
+
+describe('findPresetPatch', () => {
+  const patch = { Remark: { label: '备注X' } };
+
+  it('按字段名大小写不敏感查找', () => {
+    expect(findPresetPatch(patch, 'remark')?.label).toBe('备注X');
+    expect(findPresetPatch(patch, 'Remark')?.label).toBe('备注X');
+  });
+
+  it('未命中或无补丁时返回 undefined', () => {
+    expect(findPresetPatch(patch, 'Name')).toBeUndefined();
+    expect(findPresetPatch(undefined, 'Remark')).toBeUndefined();
+  });
+});
+
+describe('serializeSubmitModel 虚拟字段（FORM-10）', () => {
+  it('virtual 字段不参与提交，其它字段与多选归一不变', () => {
+    const fields = [
+      f({ name: 'Name' }),
+      f({ name: 'OrgRange', virtual: true }),
+      f({ name: 'RoleIds', typeName: 'String', multiple: true }),
+    ];
+    const out = serializeSubmitModel({ Name: 'a', OrgRange: '1-9', RoleIds: ['1', '2'] }, fields);
+    expect(out).toEqual({ Name: 'a', RoleIds: '1,2' });
+    expect(out.OrgRange).toBeUndefined();
   });
 });

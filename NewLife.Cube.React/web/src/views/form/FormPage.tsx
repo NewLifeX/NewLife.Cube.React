@@ -11,7 +11,7 @@ import { App, Button, Card, Form, Row, Space, Spin, Tabs } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
+import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayout, serializeSubmitModel } from '@/utils/fieldControl';
 import { t } from '@/i18n';
 import { routeToApiPrefix, getValueByKey, setValueByKey } from '@/utils/url';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
@@ -40,6 +40,7 @@ export default function FormPage({ title }: FormPageProps) {
   const addFields = store((s) => s.addFields);
   const editFields = store((s) => s.editFields);
   const formLoading = store((s) => s.formLoading);
+  const pagePreset = store((s) => s.preset);
 
   const [detailLoading, setDetailLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -51,11 +52,18 @@ export default function FormPage({ title }: FormPageProps) {
     [fields],
   );
 
-  // 分组：字段带 Category 才按分类 Tabs 分组，否则平铺单页（字段少的页面一屏展示）
-  const groups = useMemo(() => {
-    if (!hasCategory(metas)) return null;
-    return groupByCategory(metas);
-  }, [metas]);
+  // 表单布局：preset 覆盖优先，否则按 auto 规则（≤1 分类平铺；2~3 分类且 ≤24 字段分区；否则 Tabs）
+  const layout = useMemo(() => resolveFormLayout(metas, pagePreset?.form), [metas, pagePreset]);
+  // 条件显隐/必填（preset.visibleWhen / requiredWhen）
+  const values = Form.useWatch([], form) as Record<string, unknown> | undefined;
+  const visibleMetas = useMemo(
+    () => metas.filter((m) => findPresetPatch(pagePreset?.form?.patch, m.name)?.visibleWhen?.(values ?? {}) !== false),
+    [metas, pagePreset, values],
+  );
+  const groups = useMemo(
+    () => (layout.mode === 'flat' ? null : groupByCategory(visibleMetas)),
+    [layout.mode, visibleMetas],
+  );
 
   // 加载字段 + 详情
   useEffect(() => {
@@ -128,7 +136,7 @@ export default function FormPage({ title }: FormPageProps) {
     >
       <Spin spinning={detailLoading || formLoading}>
         <Form form={form} layout="vertical" requiredMark={false} style={{ maxWidth: 900 }}>
-          {groups ? (
+          {layout.mode === 'tabs' && groups ? (
             <Tabs
               items={groups.map((g) => ({
                 key: g.category,
@@ -138,16 +146,47 @@ export default function FormPage({ title }: FormPageProps) {
                 children: (
                   <Row gutter={16}>
                     {g.fields.map((meta: FieldMeta) => (
-                      <FormFieldItem key={meta.name} field={meta} apiPrefix={type} />
+                      <FormFieldItem
+                        key={meta.name}
+                        field={meta}
+                        apiPrefix={type}
+                        columns={layout.columns}
+                        required={findPresetPatch(pagePreset?.form?.patch, meta.name)?.requiredWhen?.(values ?? {})}
+                      />
                     ))}
                   </Row>
                 ),
               }))}
             />
+          ) : layout.mode === 'sections' && groups ? (
+            groups.map((g) => (
+              <div key={g.category} className="cube-form-section">
+                <div className="cube-form-section-title" style={{ fontWeight: 600, margin: '8px 0' }}>
+                  {g.category}
+                </div>
+                <Row gutter={16}>
+                  {g.fields.map((meta: FieldMeta) => (
+                    <FormFieldItem
+                      key={meta.name}
+                      field={meta}
+                      apiPrefix={type}
+                      columns={layout.columns}
+                      required={findPresetPatch(pagePreset?.form?.patch, meta.name)?.requiredWhen?.(values ?? {})}
+                    />
+                  ))}
+                </Row>
+              </div>
+            ))
           ) : (
             <Row gutter={16}>
-              {metas.map((meta) => (
-                <FormFieldItem key={meta.name} field={meta} apiPrefix={type} />
+              {visibleMetas.map((meta) => (
+                <FormFieldItem
+                  key={meta.name}
+                  field={meta}
+                  apiPrefix={type}
+                  columns={layout.columns}
+                  required={findPresetPatch(pagePreset?.form?.patch, meta.name)?.requiredWhen?.(values ?? {})}
+                />
               ))}
             </Row>
           )}

@@ -32,6 +32,8 @@ export interface FieldControlProps {
   recordId?: number | string;
   /** 是否禁用 */
   disabled?: boolean;
+  /** 级联父字段当前值（子字典按 parent 过滤） */
+  parent?: unknown;
 }
 
 /** 布尔值归一（后端可能返回 'true'/'false' 字符串） */
@@ -39,7 +41,7 @@ function toBool(v: unknown): boolean {
   return v === true || v === 'true' || v === 1 || v === '1';
 }
 
-export default function FieldControl({ field, value, onChange, apiPrefix, recordId, disabled }: FieldControlProps) {
+export default function FieldControl({ field, value, onChange, apiPrefix, recordId, disabled, parent }: FieldControlProps) {
   const control = resolveControl(field);
   // 占位提示用显示名；字段 Description 已由 FormFieldItem 同排展示，不再重复作占位
   const placeholder = field.displayName;
@@ -145,6 +147,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             onChange={(v) => onChange?.(v)}
             lovCode={field.lovCode}
             dataSource={field.dataSource}
+            parent={parent}
             placeholder={placeholder}
           />
         );
@@ -169,6 +172,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             onChange={(v) => onChange?.(v)}
             lovCode={field.lovCode}
             dataSource={field.dataSource}
+            parent={parent}
             multiple
             placeholder={placeholder}
           />

@@ -7,11 +7,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, hasCategory, mapDataToFormValues, serializeSubmitModel } from '@/utils/fieldControl';
+import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayout, serializeSubmitModel } from '@/utils/fieldControl';
 import { t } from '@/i18n';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { getValueByKey, setValueByKey } from '@/utils/url';
 import type { FieldMapping } from '@newlifex/field-mapping';
+import type { PagePreset } from '@newlifex/page-logic';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
 
 export interface FormDialogProps {
@@ -25,6 +26,8 @@ export interface FormDialogProps {
   submitting?: boolean;
   onSubmit?: (data: Record<string, unknown>) => Promise<void>;
   onCancel?: () => void;
+  /** 页面呈现配置的表单段（列数/分组/字段补丁） */
+  formPreset?: PagePreset['form'] | null;
 }
 
 export default function FormDialog({
@@ -37,6 +40,7 @@ export default function FormDialog({
   submitting,
   onSubmit,
   onCancel,
+  formPreset,
 }: FormDialogProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm();
@@ -53,11 +57,18 @@ export default function FormDialog({
     [fields],
   );
 
-  // 分组：字段带 Category 才按分类 Tabs 分组，否则平铺单页（字段少的页面一屏展示）
-  const groups = useMemo(() => {
-    if (!hasCategory(metas)) return null;
-    return groupByCategory(metas);
-  }, [metas]);
+  // 表单布局：preset 覆盖优先，否则按 auto 规则（≤1 分类平铺；2~3 分类且 ≤24 字段分区；否则 Tabs）
+  const layout = useMemo(() => resolveFormLayout(metas, formPreset), [metas, formPreset]);
+  // 条件显隐/必填（preset.visibleWhen / requiredWhen）
+  const values = Form.useWatch([], form) as Record<string, unknown> | undefined;
+  const visibleMetas = useMemo(
+    () => metas.filter((m) => findPresetPatch(formPreset?.patch, m.name)?.visibleWhen?.(values ?? {}) !== false),
+    [metas, formPreset, values],
+  );
+  const groups = useMemo(
+    () => (layout.mode === 'flat' ? null : groupByCategory(visibleMetas)),
+    [layout.mode, visibleMetas],
+  );
 
   // 打开时初始化表单值
   useEffect(() => {
@@ -102,7 +113,14 @@ export default function FormDialog({
   const renderFields = (list: FieldMeta[]) => (
     <Row gutter={16}>
       {list.map((meta) => (
-        <FormFieldItem key={meta.name} field={meta} apiPrefix={apiPrefix} recordId={recordId} />
+        <FormFieldItem
+          key={meta.name}
+          field={meta}
+          apiPrefix={apiPrefix}
+          recordId={recordId}
+          columns={layout.columns}
+          required={findPresetPatch(formPreset?.patch, meta.name)?.requiredWhen?.(values ?? {})}
+        />
       ))}
     </Row>
   );
@@ -122,7 +140,7 @@ export default function FormDialog({
       styles={{ body: { maxHeight: 'calc(100vh - 240px)', overflowY: 'auto', overflowX: 'hidden' } }}
     >
       <Form form={form} layout="vertical" requiredMark={false} style={{ marginTop: 16 }}>
-        {groups ? (
+        {layout.mode === 'tabs' && groups ? (
           <Tabs
             items={groups.map((g) => ({
               key: g.category,
@@ -132,8 +150,17 @@ export default function FormDialog({
               children: renderFields(g.fields),
             }))}
           />
+        ) : layout.mode === 'sections' && groups ? (
+          groups.map((g) => (
+            <div key={g.category} className="cube-form-section">
+              <div className="cube-form-section-title" style={{ fontWeight: 600, margin: '8px 0' }}>
+                {g.category}
+              </div>
+              {renderFields(g.fields)}
+            </div>
+          ))
         ) : (
-          renderFields(metas)
+          renderFields(visibleMetas)
         )}
       </Form>
     </Modal>

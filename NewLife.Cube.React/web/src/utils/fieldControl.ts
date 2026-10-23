@@ -13,6 +13,7 @@
  * 禁止在组件中再写本地 TYPE_TO_*_TYPE 映射。
  */
 import type { WidgetType } from '@newlifex/field-mapping';
+import type { FieldPresetPatch, PagePreset } from '@newlifex/page-logic';
 import type { FieldMeta, ControlType, SearchControlType, ListControlType } from '@/types/field';
 import { t } from '@/i18n';
 import { getValueByKey } from '@/utils/url';
@@ -318,7 +319,7 @@ export function hasCategory(fields: FieldMeta[]): boolean {
  * 按分类分组字段（无分类字段归入「常规设置」组；保持原有顺序）
  *
  * 与后端 FieldCollection.GroupByCategory 语义一致，前端统一入口：
- * ConfigPage 配置页固定分组，实体表单视图仅当 hasCategory 为真时调用。
+ * ConfigPage 配置页固定分组，实体表单视图仅当分组模式需要时调用。
  *
  * @param fields 字段元数据
  * @returns 按分类分组结果
@@ -331,6 +332,64 @@ export function groupByCategory(fields: FieldMeta[]): FieldGroup[] {
     map.get(cat)!.push(f);
   }
   return [...map.entries()].map(([category, list]) => ({ category, fields: list }));
+}
+
+/** 表单分组方式 */
+export type FormGroupMode = 'flat' | 'sections' | 'tabs';
+
+/** 表单布局 */
+export interface FormLayout {
+  /** 分流方式 */
+  mode: FormGroupMode;
+  /** 列数（1/2/3） */
+  columns: 1 | 2 | 3;
+}
+
+/** 自动分组阈值：字段数与分类数超过时改用 Tabs（字段多时区块过长） */
+export const FORM_SECTION_MAX_FIELDS = 24;
+export const FORM_SECTION_MAX_CATEGORIES = 3;
+
+/**
+ * 解析表单布局（呈现架构 §4.4 + FORM-9）。
+ *
+ * 默认 `groupBy: auto`：分类 ≤1 平铺；分类 2~3 且字段 ≤24 用分区区块；
+ * 分类更多或字段更多自动切 Tabs。preset `form.groupBy` 可覆盖为 flat/sections/tabs。
+ *
+ * @param fields 表单字段
+ * @param form preset 的 form 段（可空）
+ * @returns 分流方式与列数
+ */
+export function resolveFormLayout(fields: FieldMeta[], form?: PagePreset['form'] | null): FormLayout {
+  const categories = new Set<string>();
+  for (const f of fields) {
+    const cat = f.category?.trim();
+    if (cat) categories.add(cat);
+  }
+
+  const setting = form?.groupBy ?? 'auto';
+  let mode: FormGroupMode;
+  if (setting !== 'auto') mode = setting === 'category' ? 'sections' : setting;
+  else if (categories.size <= 1) mode = 'flat';
+  else if (categories.size <= FORM_SECTION_MAX_CATEGORIES && fields.length <= FORM_SECTION_MAX_FIELDS) mode = 'sections';
+  else mode = 'tabs';
+
+  return { mode, columns: form?.columns ?? 2 };
+}
+
+/**
+ * 按字段名查 preset 补丁（大小写不敏感）
+ *
+ * @param patch preset.form.patch / preset.list.patch
+ * @param name 字段名
+ * @returns 字段补丁；未命中返回 undefined
+ */
+export function findPresetPatch(
+  patch: Record<string, FieldPresetPatch> | undefined,
+  name: string,
+): FieldPresetPatch | undefined {
+  if (!patch) return undefined;
+  const key = Object.keys(patch).find((k) => k.toLowerCase() === name.toLowerCase());
+  return key ? patch[key] : undefined;
 }
 
 /**
@@ -414,8 +473,11 @@ export function serializeSubmitModel(
       .filter((f) => f.multiple || (f.itemType ?? '').toLowerCase() === 'multipleselect')
       .map((f) => f.name.toLowerCase()),
   );
+  // 虚拟字段（virtual=true）仅用于界面交互，不参与实体提交
+  const virtualNames = new Set(fields.filter((f) => f.virtual).map((f) => f.name.toLowerCase()));
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(model)) {
+    if (virtualNames.has(k.toLowerCase())) continue;
     if (multiNames.has(k.toLowerCase()) && Array.isArray(v)) {
       out[k] = (v as unknown[]).map(String).join(',');
     } else {

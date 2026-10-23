@@ -22,13 +22,17 @@ export interface FormFieldItemProps {
   apiPrefix?: string;
   /** 主记录主键（上传需要，0=新增） */
   recordId?: number | string;
+  /** 表单列数（1/2/3，默认 2） */
+  columns?: 1 | 2 | 3;
+  /** 必填覆盖（preset.requiredWhen 的结果；未传时用字段自身 required） */
+  required?: boolean;
 }
 
 /** 构建字段校验规则（必填 + 邮箱/手机格式） */
-function buildRules(meta: FieldMeta): RuleObject[] {
+function buildRules(meta: FieldMeta, required?: boolean): RuleObject[] {
   const rules: RuleObject[] = [];
   const label = meta.displayName || meta.name;
-  if (meta.required) {
+  if (required ?? meta.required) {
     rules.push({ required: true, message: t('请输入{{name}}', { name: label }) });
   }
   if (meta.itemType === 'mail') {
@@ -40,13 +44,18 @@ function buildRules(meta: FieldMeta): RuleObject[] {
   return rules;
 }
 
-export default function FormFieldItem({ field, apiPrefix, recordId }: FormFieldItemProps) {
+export default function FormFieldItem({ field, apiPrefix, recordId, columns = 2, required }: FormFieldItemProps) {
   const control = resolveControl(field);
   const fullWidth = isFullWidthControl(control);
   const displayName = field.displayName || field.name;
   const desc = resolveDescription(field);
   // React 皮肤设置：表单风格（inline-三栏同排 / vertical-标签一行控件一行）与注释显示方式
   const { formStyle, descMode } = useReactSetting();
+  // 级联：父字段（parentField）当前值 → LovSelect 子字典过滤
+  const form = Form.useFormInstance();
+  const allValues = Form.useWatch([], form) as Record<string, unknown> | undefined;
+  const parentValue = field.parentField && allValues ? allValues[field.parentField] : undefined;
+  const span = fullWidth ? 24 : Math.floor(24 / columns);
 
   // antd6 风格：标签一行 + 控件一行，注释小字跟在标签后（descMode=1）或问号图标悬浮（descMode=2）
   if (formStyle === 'vertical') {
@@ -60,15 +69,15 @@ export default function FormFieldItem({ field, apiPrefix, recordId }: FormFieldI
         displayName
       );
     return (
-      <Col span={fullWidth ? 24 : 12}>
+      <Col span={span}>
         <Form.Item
           name={field.name}
           label={labelNode}
           tooltip={descMode === 2 && desc ? desc : undefined}
-          rules={buildRules(field)}
+          rules={buildRules(field, required)}
           className="cube-form-vertical-item"
         >
-          <FieldControl field={field} apiPrefix={apiPrefix} recordId={recordId} />
+          <FieldControl field={field} apiPrefix={apiPrefix} recordId={recordId} parent={parentValue} />
         </Form.Item>
       </Col>
     );
@@ -84,13 +93,13 @@ export default function FormFieldItem({ field, apiPrefix, recordId }: FormFieldI
     .join(' ');
 
   return (
-    <Col span={fullWidth ? 24 : 12}>
+    <Col span={span}>
       <div className={cls}>
         <label className="cube-form-inline-label" title={displayName}>
           {displayName}
         </label>
-        <Form.Item name={field.name} rules={buildRules(field)} className="cube-form-inline-control">
-          <FieldControl field={field} apiPrefix={apiPrefix} recordId={recordId} />
+        <Form.Item name={field.name} rules={buildRules(field, required)} className="cube-form-inline-control">
+          <FieldControl field={field} apiPrefix={apiPrefix} recordId={recordId} parent={parentValue} />
         </Form.Item>
         {desc && (
           <div className="cube-form-inline-desc" title={desc}>

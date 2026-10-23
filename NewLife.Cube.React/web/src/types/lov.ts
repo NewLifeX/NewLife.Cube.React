@@ -13,6 +13,8 @@ export interface LovEnumOption {
   value: string;
   /** 显示文本 */
   label: string;
+  /** 父级值（枚举成员带 [Parent] 时的归属，用于级联过滤） */
+  parent?: string | null;
   /** 额外数据（可选） */
   extra?: string | null;
 }

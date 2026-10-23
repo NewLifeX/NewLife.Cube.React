@@ -14,6 +14,8 @@ import { getValueByKey } from '@/utils/url';
 export interface LovOption {
   value: string;
   label: string;
+  /** 父级值（枚举子字典级联过滤用） */
+  parent?: string | null;
 }
 
 /**
@@ -47,7 +49,7 @@ export function useLovOptions(lovCode?: string, dataSource?: Record<string, stri
           const metas = await fetchLovMeta(lovCode);
           const item = metas.find((m) => m.type === 'ENUM');
           if (item && !cancelled) {
-            setOptions(item.options.map((o) => ({ value: o.value, label: o.label })));
+            setOptions(item.options.map((o) => ({ value: o.value, label: o.label, parent: o.parent ?? null })));
           }
         } else {
           // LIST 型：先取 meta 拿 valueField/labelField，再取前 100 条

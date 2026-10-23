@@ -65,6 +65,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const canDevelop = store((s) => s.canDevelop);
   // 后端声明的自定义工具栏按钮（meta.toolbar，服务端已按权限过滤）
   const toolbar = store((s) => s.toolbar);
+  // 页面呈现配置（列宽/分组/条件显隐等）
+  const pagePreset = store((s) => s.preset);
   // 图表数据。必须在组件顶部无条件订阅（zustand selector 是 hook），
   // 不能在 JSX 条件分支内调用，否则切到图表视图时 hooks 数量变化触发 React #310
   const chartList = store((s) => s.chartList);
@@ -584,6 +586,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
         fields={formFields}
         row={dialog.row}
         apiPrefix={type}
+        formPreset={pagePreset?.form}
         submitting={formLoading}
         onSubmit={handleFormSubmit}
         onCancel={() => setDialog({ open: false, mode: 'add', row: null })}

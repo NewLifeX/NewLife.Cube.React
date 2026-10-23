@@ -19,7 +19,7 @@ function mapping(name: string, partial: Partial<DataField> = {}): FieldMapping {
 }
 
 describe('FormDialog 表单弹窗', () => {
-  it('字段带 Category → 渲染分类 Tabs 标签页', () => {
+  it('字段带 Category → auto 模式渲染分区区块（不强制 Tabs）', () => {
     render(
       <FormDialog
         open
@@ -31,11 +31,30 @@ describe('FormDialog 表单弹窗', () => {
         ]}
       />,
     );
-    // 分类标签 + 默认组标签都在
+    // 2~3 个分类 → 分区区块；分类标题直接可见，无 tab 角色
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByText('基本信息')).toBeInTheDocument();
+    expect(screen.getByText('扩展')).toBeInTheDocument();
+    expect(screen.getByText('常规设置')).toBeInTheDocument();
+    expect(screen.getByText('Name')).toBeInTheDocument();
+  });
+
+  it('preset.form.groupBy=tabs 时按分类渲染 Tabs 标签页', () => {
+    render(
+      <FormDialog
+        open
+        mode="add"
+        fields={[
+          mapping('Name', { category: '基本信息' }),
+          mapping('Secret', { category: '扩展' }),
+          mapping('Remark'),
+        ]}
+        formPreset={{ groupBy: 'tabs' }}
+      />,
+    );
     expect(screen.getByRole('tab', { name: '基本信息' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: '扩展' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: '常规设置' })).toBeInTheDocument();
-    // 字段标签仍在（forceRender 全量渲染，激活 Tab 展示 Name）
     expect(screen.getByText('Name')).toBeInTheDocument();
   });
 
