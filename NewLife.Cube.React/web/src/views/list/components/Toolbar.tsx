@@ -6,10 +6,13 @@
  * 高级菜单按类型分组（导出/导入 → 删除 → 开发功能），组间用 divider 分隔，对齐 MVC _List_Toolbar_Adv；
  * 开发功能（备份/还原/备份导出/清空数据表）仅 canDevelop（开发模式+系统管理员）可见。
  */
+import { useRef } from 'react';
 import { Button, Dropdown, Popconfirm, Segmented, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { DeleteOutlined, DownOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import type { ToolbarItem } from '@newlifex/api-core';
 import { EXPORT_FORMATS } from '@newlifex/page-utils';
+import { getToolbarRenderer } from './toolbarRenderers';
 import { t } from '@/i18n';
 
 /** 列表视图模式：表格 / 图表 */
@@ -49,6 +52,57 @@ export interface ToolbarProps {
   onRefresh?: () => void;
   /** 右侧额外按钮（如列设置齿轮），渲染在高级菜单前 */
   columnSetting?: React.ReactNode;
+  /** 后端声明的自定义工具栏按钮（meta.toolbar，服务端已按权限过滤） */
+  metaToolbar?: ToolbarItem[];
+  /** 当前页面查询参数（link 的 appendQuery、include 非 keys 项） */
+  pageQuery?: Record<string, unknown>;
+  /** 选中行主键（include: keys 时提交） */
+  selectedKeys?: React.Key[];
+  /** 自定义按钮动作执行：页面负责发请求并处理 message/refresh/url/time */
+  onMetaAction?: (item: ToolbarItem, payload: Record<string, unknown>, file?: File) => void | Promise<void>;
+}
+
+/**
+ * 构造自定义按钮提交载荷（对齐 MVC data-fields）
+ *
+ * `include` 未声明时仅选中类按钮携带 `keys`；声明后逐项取自选中主键或当前查询参数。
+ *
+ * @param item 按钮声明
+ * @param options 选中主键与当前查询参数
+ * @returns 请求载荷
+ */
+export function buildMetaToolbarPayload(
+  item: ToolbarItem,
+  options: { selectedKeys?: React.Key[]; pageQuery?: Record<string, unknown> },
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  const keys = (options.selectedKeys ?? []).map(String).join(',');
+  // 呈现架构 §5：include 默认 ["keys"]；含 keys 时要求先选中数据
+  const include = item.include?.length ? item.include : ['keys'];
+  for (const field of include) {
+    if (field.toLowerCase() === 'keys') payload.keys = keys;
+    else if (options.pageQuery && field in options.pageQuery) payload[field] = options.pageQuery[field];
+  }
+  return payload;
+}
+
+/**
+ * 构造 link 按钮地址（appendQuery 时附加当前查询参数）
+ *
+ * @param item 按钮声明
+ * @param pageQuery 当前查询参数
+ * @returns 完整地址
+ */
+export function buildMetaLinkUrl(item: ToolbarItem, pageQuery?: Record<string, unknown>): string {
+  const url = item.url ?? '';
+  if (!item.appendQuery || !pageQuery) return url;
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(pageQuery)) {
+    if (v !== null && v !== undefined && v !== '') qs.append(k, String(v));
+  }
+  const text = qs.toString();
+  if (!text) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}${text}`;
 }
 
 export default function Toolbar({
@@ -73,7 +127,70 @@ export default function Toolbar({
   onViewChange,
   onRefresh,
   columnSetting,
+  metaToolbar,
+  pageQuery,
+  selectedKeys,
+  onMetaAction,
 }: ToolbarProps) {
+  // 上传类按钮各自一个隐藏文件框（按钮同名互不干扰）
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  /** 渲染后端声明的自定义按钮 */
+  const renderMetaButton = (item: ToolbarItem) => {
+    const label = item.displayName || item.name;
+    const needKeys = item.requiresSelection || (item.include ?? []).some((k) => k.toLowerCase() === 'keys');
+    const disabled = needKeys && (selectedKeys?.length ?? 0) === 0;
+    const payload = () => buildMetaToolbarPayload(item, { selectedKeys, pageQuery });
+
+    if (item.kind === 'custom') {
+      const renderer = getToolbarRenderer(item.renderer);
+      if (!renderer) return null;
+      const Comp = renderer.component;
+      return <Comp key={item.name} item={item} />;
+    }
+
+    if (item.kind === 'link') {
+      return (
+        <Button
+          key={item.name}
+          href={buildMetaLinkUrl(item, pageQuery)}
+          target={item.target || '_self'}
+          disabled={disabled}
+        >
+          {label}
+        </Button>
+      );
+    }
+
+    if (item.kind === 'upload') {
+      return (
+        <span key={item.name}>
+          <Button disabled={disabled} onClick={() => fileInputs.current[item.name]?.click()}>
+            {label}
+          </Button>
+          <input
+            ref={(el) => {
+              fileInputs.current[item.name] = el;
+            }}
+            type="file"
+            accept={item.accept}
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void onMetaAction?.(item, payload(), file);
+            }}
+          />
+        </span>
+      );
+    }
+
+    return (
+      <Button key={item.name} disabled={disabled} onClick={() => void onMetaAction?.(item, payload())}>
+        {label}
+      </Button>
+    );
+  };
   // 高级菜单：导出/导入组 → 删除组 → 开发组（备份/还原/备份导出/清空数据表），组间 divider 分隔
   const advItems: MenuProps['items'] = [];
   if (canExport) {
@@ -126,6 +243,7 @@ export default function Toolbar({
         <Tooltip title={t('刷新')}>
           <Button aria-label={t('刷新')} icon={<ReloadOutlined />} onClick={onRefresh} />
         </Tooltip>
+        {(metaToolbar ?? []).map(renderMetaButton)}
       </div>
       <div className="cube-toolbar-side">
         {columnSetting}

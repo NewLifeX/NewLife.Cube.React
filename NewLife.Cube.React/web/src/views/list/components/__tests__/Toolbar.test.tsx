@@ -7,7 +7,9 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Toolbar from '../Toolbar';
+import type { ToolbarItem } from '@newlifex/api-core';
+import Toolbar, { buildMetaLinkUrl, buildMetaToolbarPayload } from '../Toolbar';
+import { clearToolbarRenderers, registerToolbarRenderer } from '../toolbarRenderers';
 import i18n from '@/i18n';
 
 describe('Toolbar 工具栏', () => {
@@ -217,5 +219,98 @@ describe('Toolbar 工具栏', () => {
     render(<Toolbar onNew={onNew} />);
     fireEvent.click(screen.getByRole('button', { name: /新\s*增/ }));
     expect(onNew).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Toolbar meta.toolbar 自定义按钮（LIST-14）', () => {
+  afterEach(() => clearToolbarRenderers());
+
+  const linkItem: ToolbarItem = {
+    name: 'Map',
+    displayName: '地图',
+    kind: 'link',
+    url: '/Base/Org/Map',
+    appendQuery: true,
+    target: '_blank',
+  };
+  const requestItem: ToolbarItem = {
+    name: 'Refresh',
+    displayName: '批量刷新',
+    kind: 'request',
+    action: 'Refresh',
+    method: 'POST',
+    include: ['keys', 'q'],
+  };
+  const uploadItem: ToolbarItem = {
+    name: 'Import',
+    displayName: '导入',
+    kind: 'upload',
+    action: 'ImportExcel',
+    accept: '.xlsx',
+  };
+
+  it('buildMetaToolbarPayload 按 include 取选中主键与查询参数', () => {
+    expect(buildMetaToolbarPayload(requestItem, { selectedKeys: [1, 2], pageQuery: { q: 'x' } })).toEqual({
+      keys: '1,2',
+      q: 'x',
+    });
+    // include 默认 ["keys"]（呈现架构 §5）
+    expect(buildMetaToolbarPayload({ ...requestItem, include: undefined }, { selectedKeys: [3] })).toEqual({
+      keys: '3',
+    });
+    expect(buildMetaToolbarPayload({ ...requestItem, include: undefined }, { selectedKeys: [] })).toEqual({
+      keys: '',
+    });
+  });
+
+  it('buildMetaLinkUrl appendQuery 附加当前查询参数', () => {
+    expect(buildMetaLinkUrl(linkItem, { q: 'a', success: false })).toBe('/Base/Org/Map?q=a&success=false');
+    expect(buildMetaLinkUrl({ ...linkItem, appendQuery: false }, { q: 'a' })).toBe('/Base/Org/Map');
+  });
+
+  it('link 按钮渲染 href 与 target', () => {
+    render(<Toolbar metaToolbar={[linkItem]} pageQuery={{ q: 'a' }} />);
+    // antd 两字按钮自动加空格（地图 → 地 图）
+    const link = screen.getByRole('link', { name: /地\s*图/ });
+    expect(link).toHaveAttribute('href', '/Base/Org/Map?q=a');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('request 按钮未选中时禁用，选中后提交 include 载荷', async () => {
+    const onMetaAction = vi.fn();
+    const { rerender } = render(<Toolbar metaToolbar={[requestItem]} selectedKeys={[]} onMetaAction={onMetaAction} />);
+    expect(screen.getByRole('button', { name: '批量刷新' })).toBeDisabled();
+
+    rerender(<Toolbar metaToolbar={[requestItem]} selectedKeys={[7]} pageQuery={{ q: 'x' }} onMetaAction={onMetaAction} />);
+    const button = screen.getByRole('button', { name: '批量刷新' });
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(onMetaAction).toHaveBeenCalledWith(requestItem, { keys: '7', q: 'x' }),
+    );
+  });
+
+  it('upload 按钮渲染隐藏文件框并带 accept', () => {
+    const { container } = render(<Toolbar metaToolbar={[uploadItem]} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(input.accept).toBe('.xlsx');
+  });
+
+  it('custom 按钮未注册渲染器时跳过（不报错）', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { container } = render(
+      <Toolbar metaToolbar={[{ name: 'Adv', displayName: '高级导入', kind: 'custom', renderer: 'missing' }]} />,
+    );
+    expect(container.textContent).not.toContain('高级导入');
+    warn.mockRestore();
+  });
+
+  it('custom 按钮已注册时渲染自定义组件', () => {
+    registerToolbarRenderer('adv', {
+      component: ({ item }) => <button type="button">{item.displayName}</button>,
+    });
+    render(<Toolbar metaToolbar={[{ name: 'Adv', displayName: '高级导入', kind: 'custom', renderer: 'adv' }]} />);
+    expect(screen.getByRole('button', { name: '高级导入' })).toBeInTheDocument();
   });
 });

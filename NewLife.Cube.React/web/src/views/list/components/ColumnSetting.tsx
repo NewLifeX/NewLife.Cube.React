@@ -1,16 +1,17 @@
 /**
  * 表格列设置（齿轮按钮 + 弹层）
  *
- * 勾选显示/隐藏列、上下调整顺序、{t('恢复默认')}，持久化到后端（Parameter 表 Page-React 分类，用户级）。
- * 渲染由后端 meta 干预：保存后重新加载页面元数据，meta 返回已按配置排序/过滤的字段。
+ * 勾选显示/隐藏列、上下调整顺序、恢复默认，持久化到浏览器 `localStorage`（按页面路径分桶）。
+ * 呈现架构 §4.1 规则3：`/meta` 只给全量列与默认显隐，用户偏好存在浏览器并覆盖默认值；
+ * 保存后由页面重新应用本地偏好，无需重取元数据。
  */
 import { useEffect, useState } from 'react';
 import { App, Button, Checkbox, Popover, Tooltip } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined, SettingOutlined } from '@ant-design/icons';
-import { api } from '@/api';
 import { t } from '@/i18n';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMapping } from '@newlifex/field-mapping';
+import { clearColumnPrefs, saveColumnPrefs, type ColumnPrefs } from '../utils/columnPrefs';
 
 export interface ColumnSettingProps {
   /** 页面路径，如 /Cube/Area */
@@ -23,10 +24,7 @@ export interface ColumnSettingProps {
   onChanged: () => void;
 }
 
-/** 列配置持久化 kind（对应后端 PageService 的 Page-React 分类） */
-export const COLUMN_CONFIG_KIND = 'React';
-
-/** 过滤可见字段：visible !== false 的字段参与渲染（后端 meta 按用户配置标记隐藏） */
+/** 过滤可见字段：visible !== false 的字段参与渲染（已应用用户列偏好） */
 export function filterVisibleFields(fields: FieldMapping[]): FieldMapping[] {
   return fields.filter((f) => f.field.visible !== false);
 }
@@ -69,19 +67,20 @@ export default function ColumnSetting({ type, allFields, visibleFields, onChange
     });
   };
 
-  const persist = async (payload: Record<string, unknown>) => {
-    try {
-      await api.config.savePageSetting(COLUMN_CONFIG_KIND, type, payload);
-      message.success(t('列设置已保存'));
-      setOpen(false);
-      onChanged();
-    } catch {
-      message.error(t('保存列设置失败'));
-    }
+  const persist = (prefs: ColumnPrefs) => {
+    saveColumnPrefs(type, prefs);
+    message.success(t('列设置已保存'));
+    setOpen(false);
+    onChanged();
   };
 
-  const handleSave = () => void persist({ listOrder: order, listHidden: hidden });
-  const handleReset = () => void persist({ listOrder: [], listHidden: [] });
+  const handleSave = () => persist({ order, hidden });
+  const handleReset = () => {
+    clearColumnPrefs(type);
+    message.success(t('操作成功'));
+    setOpen(false);
+    onChanged();
+  };
 
   const content = (
     <div style={{ width: 300 }}>

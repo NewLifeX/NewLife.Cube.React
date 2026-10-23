@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { App, Card } from 'antd';
 import { useLocation } from 'react-router-dom';
-import { clearPageMetaCache } from '@newlifex/api-core';
+import type { ToolbarItem } from '@newlifex/api-core';
 import { getValueByKey, parseUrlQuery } from '@/utils/url';
 import { mapUrlParamsToSearchValues } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
@@ -24,6 +24,7 @@ import SearchBar from './components/SearchBar';
 import Toolbar, { type ListViewMode } from './components/Toolbar';
 import TableContent from './components/TableContent';
 import ColumnSetting, { filterVisibleFields } from './components/ColumnSetting';
+import { applyColumnPrefs, loadColumnPrefs, type ColumnPrefs } from './utils/columnPrefs';
 import ListPagination from './components/ListPagination';
 import ChartView from './components/ChartView';
 import FormDialog from '@/views/form/FormDialog';
@@ -62,6 +63,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const canExport = store((s) => s.canExport);
   const canImport = store((s) => s.canImport);
   const canDevelop = store((s) => s.canDevelop);
+  // 后端声明的自定义工具栏按钮（meta.toolbar，服务端已按权限过滤）
+  const toolbar = store((s) => s.toolbar);
   // 图表数据。必须在组件顶部无条件订阅（zustand selector 是 hook），
   // 不能在 JSX 条件分支内调用，否则切到图表视图时 hooks 数量变化触发 React #310
   const chartList = store((s) => s.chartList);
@@ -75,8 +78,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const confirmDelete = pageSetting?.doubleDelete !== false;
   const doubleClickEdit = pageSetting?.enableTableDoubleClick !== false;
 
-  // 渲染列：过滤后端 meta 标记隐藏（visible=false）的字段（列设置持久化到后端后由 meta 干预）
-  const displayFields = useMemo(() => filterVisibleFields(listFields), [listFields]);
+  // 列偏好（浏览器 localStorage）：用户列序/显隐覆盖 /meta 的 visible=false
+  const [columnPrefs, setColumnPrefs] = useState<ColumnPrefs | null>(() => loadColumnPrefs(type));
+
+  // 渲染列：先应用用户列序与显隐，再过滤默认隐藏列（新字段沿用 meta.visible）
+  const orderedFields = useMemo(() => applyColumnPrefs(listFields, columnPrefs), [listFields, columnPrefs]);
+  const displayFields = useMemo(() => filterVisibleFields(orderedFields), [orderedFields]);
   const visibleFieldNames = useMemo(() => displayFields.map((f) => f.field.name), [displayFields]);
 
   // 软删除字段：列表字段含 Deleted/IsDelete/IsDeleted 布尔字段时启用「恢复」（规范 §7.9）
@@ -163,14 +170,13 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .catch(() => {});
   }, [store, searchParams, sortState]);
 
-  // 列设置保存/恢复默认后：清除页面元数据缓存 + 重新拉取（meta 返回已应用配置的字段）+ 数据
-  const reloadMeta = useCallback(() => {
-    clearPageMetaCache();
-    void store
-      .getState()
-      .loadFields()
-      .then(() => store.getState().loadData({ ...searchParams, sort: sortState.field, desc: sortState.desc }));
-  }, [store, searchParams, sortState]);
+  // 切换实体时重新读取该页面的列偏好
+  useEffect(() => {
+    setColumnPrefs(loadColumnPrefs(type));
+  }, [type]);
+
+  // 列设置保存/恢复默认后：重新读取本地偏好（不重取元数据）
+  const reloadColumnPrefs = useCallback(() => setColumnPrefs(loadColumnPrefs(type)), [type]);
 
   // ── 事件处理 ─────────────────────────────────────────
   const handleSearch = (params: Record<string, unknown>) => {
@@ -284,6 +290,74 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       }
     },
     [message, refresh],
+  );
+
+  /**
+   * 执行 meta.toolbar 自定义按钮（link/request/upload）
+   *
+   * 响应沿用 MVC onActionComplete 约定：`message` 提示、`data.refresh` 刷新、
+   * `data.url` 跳转（`[refresh]` 等价刷新）、`data.time` 延迟秒数。
+   */
+  const handleMetaAction = useCallback(
+    async (item: ToolbarItem, payload: Record<string, unknown>, file?: File) => {
+      const url = item.url || (item.action ? `${type}/${item.action}` : '');
+      if (!url) return;
+
+      if (item.confirm) {
+        const ok = await new Promise<boolean>((resolve) => {
+          modal.confirm({
+            title: item.confirm,
+            okText: t('确定'),
+            cancelText: t('取消'),
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+          });
+        });
+        if (!ok) return;
+      }
+
+      try {
+        const method = (item.method || (file ? 'POST' : 'GET')).toUpperCase();
+        let res: { data?: { message?: string; data?: Record<string, unknown> } } | undefined;
+        if (file) {
+          const form = new FormData();
+          form.append('file', file);
+          for (const [k, v] of Object.entries(payload)) {
+            if (v !== null && v !== undefined) form.append(k, String(v));
+          }
+          res = await api.client.post(url, form);
+        } else if (method === 'GET') {
+          res = await api.client.get(url, { params: payload });
+        } else {
+          // 与 MVC data-action 的表单提交一致：简单参数走 form-urlencoded，后端无需 [FromBody]
+          const form = new URLSearchParams();
+          for (const [k, v] of Object.entries(payload)) {
+            if (v !== null && v !== undefined) form.append(k, String(v));
+          }
+          res = await api.client.post(url, form);
+        }
+
+        const envelope = res?.data ?? {};
+        if (envelope.message) message.success(envelope.message);
+        const body = envelope.data ?? {};
+        const delay = Number(body.time ?? 0) > 0 ? Number(body.time) * 1000 : 0;
+        const target = body.url as string | undefined;
+
+        if (target === '[refresh]' || body.refresh === true) {
+          if (delay > 0) window.setTimeout(() => void refresh(), delay);
+          else void refresh();
+          return;
+        }
+        if (target) {
+          window.setTimeout(() => {
+            window.location.href = target;
+          }, delay);
+        }
+      } catch (err) {
+        message.error((err as Error)?.message || t('操作失败'));
+      }
+    },
+    [message, modal, refresh, type],
   );
 
   const onImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -449,8 +523,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
           onClear={handleClear}
           onViewChange={handleViewChange}
           onRefresh={() => void refresh()}
+          metaToolbar={toolbar}
+          pageQuery={searchParams}
+          selectedKeys={selectedKeys}
+          onMetaAction={handleMetaAction}
           columnSetting={
-            <ColumnSetting type={type} allFields={listFields} visibleFields={visibleFieldNames} onChanged={reloadMeta} />
+            <ColumnSetting type={type} allFields={orderedFields} visibleFields={visibleFieldNames} onChanged={reloadColumnPrefs} />
           }
         />
       )}
