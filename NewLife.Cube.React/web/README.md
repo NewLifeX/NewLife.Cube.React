@@ -34,7 +34,7 @@ web/
 │  ├─ pages/            # Login / Register / Activate / ForgotPassword / ProfileSecurity / Home / DefaultEntity / NotFound
 │  ├─ views/            # list（通用列表页）+ form（表单弹窗 / 表单页）
 │  ├─ components/       # field 控件族、ai 助手、公共组件
-│  ├─ hooks/            # usePageStore / useLoginConfig / useLookup / useLovOptions
+│  ├─ hooks/            # usePageStore / useLoginConfig / useSiteConfig / useLookup / useLovOptions
 │  ├─ utils/            # fieldControl / url / passwordRules / icon / menuItems
 │  └─ types/            # FieldMeta / ControlType 等共享类型
 ├─ e2e/                 # Playwright E2E（auth.setup 会话复用 + login/list 场景）
