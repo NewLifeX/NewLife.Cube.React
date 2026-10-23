@@ -81,6 +81,20 @@ describe('i18n 文案键完整性', () => {
     }
   });
 
+  it('app 目录只保留 11 种全量语言词典', () => {
+    const dir = path.resolve(process.cwd(), 'src/i18n/app');
+    const files = fs
+      .readdirSync(dir)
+      .filter((name) => name.endsWith('.ts'))
+      .sort();
+
+    expect(files).toEqual(
+      ['ar', 'de', 'en-US', 'es', 'fr', 'ja', 'ko', 'pt', 'ru', 'zh-CN', 'zh-TW']
+        .map((name) => `${name}.ts`)
+        .sort(),
+    );
+  });
+
   it('源码中所有 t() 文案键在 11 种语言中均有译文', () => {
     const used = [...collectUsedKeys()].filter((key) => !key.startsWith('common.') && !key.startsWith('login.'));
     expect(used.length).toBeGreaterThan(400);

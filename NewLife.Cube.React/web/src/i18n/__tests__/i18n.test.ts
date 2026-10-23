@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import antdEnUS from 'antd/locale/en_US';
 import i18n, {
   CULTURE_COOKIE_NAME,
+  getAntdLocale,
   getCurrentLanguage,
   hasExplicitLanguage,
   isRtl,
@@ -114,14 +116,14 @@ describe('i18n', () => {
     await i18n.changeLanguage('en-US');
   });
 
-  it('新增语言缺失词条回退英文', async () => {
-    await i18n.changeLanguage('bn-BD');
+  it('非全量语言统一回退英文', async () => {
+    await i18n.changeLanguage('it-IT');
 
-    // translation 命名空间未提供该语言，回退 en-US
+    // 21 种非全量语言不打包词典，translation 与 app 命名空间均回退 en-US
     expect(i18n.t('common.save')).toBe('Save');
-    // 业务词典为部分译文，已翻译词条生效，未翻译词条回退英文
     expect(t('跟随系统')).toBe('Follow system');
-    expect(t('保存')).toBe('সংরক্ষণ');
+    expect(t('保存')).toBe('Save');
+    expect(getAntdLocale()).toBe(antdEnUS);
 
     await i18n.changeLanguage('en-US');
   });

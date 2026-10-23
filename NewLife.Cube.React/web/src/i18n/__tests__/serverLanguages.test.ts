@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { resolveSelectableLanguages, type ServerLanguageOption } from '../serverLanguages';
+import {
+  getLanguageListAcceptLanguage,
+  resolveSelectableLanguages,
+  type ServerLanguageOption,
+} from '../serverLanguages';
 
 const option = (value: string, label = value): ServerLanguageOption => ({ value, label });
+
+describe('getLanguageListAcceptLanguage', () => {
+  it('全量语言按当前语言请求，非全量语言回退英文', () => {
+    expect(getLanguageListAcceptLanguage('de-DE')).toBe('de-DE');
+    expect(getLanguageListAcceptLanguage('it-IT')).toBe('en-US');
+    expect(getLanguageListAcceptLanguage('bn-BD')).toBe('en-US');
+  });
+});
 
 describe('resolveSelectableLanguages', () => {
   it('后端清单与前端全量语言取交集，保留后端顺序与显示名', () => {

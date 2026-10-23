@@ -27,7 +27,7 @@ Adicione referências a `NewLife.Cube` e `NewLife.Cube.React`, execute `dotnet r
 - **Consome os pacotes compartilhados**: baseado em `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), com núcleo independente de framework compartilhado entre skins
 - **Tema único × claro/escuro**: aparência nativa orientada por tokens do antd, alternância claro/escuro com um clique
 - **Assistente de IA**: chat em streaming SSE + comandos rápidos + preenchimento inteligente de formulários + diagnóstico do sistema, com renderização mermaid integrada
-- **Localização multilíngue**: 11 idiomas de interface totalmente traduzidos (lista do backend ∩ idiomas completos do front-end; 32 locales de recursos; mesma cadeia do NewLife.Core/Cube, requer NewLife.Cube ≥ 6.15.2026.1022), com idioma do sistema ou forçado; menus, metadados de campos e mensagens de execução do servidor são recarregados ao trocar de idioma
+- **Localização multilíngue**: 11 idiomas de interface totalmente traduzidos (lista do backend ∩ idiomas completos do front-end; o backend expõe 32 idiomas e os outros 21 voltam ao inglês; mesma cadeia do NewLife.Core/Cube, requer NewLife.Cube ≥ 6.15.2026.1022), com idioma do sistema ou forçado; menus, metadados de campos e mensagens de execução do servidor são recarregados ao trocar de idioma
 - **Bem testado**: 136 testes unitários + 48 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
 
 ## Mapa do ecossistema

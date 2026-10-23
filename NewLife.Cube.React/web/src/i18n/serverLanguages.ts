@@ -53,14 +53,23 @@ export function resolveSelectableLanguages(
     .map((item) => ({ value: item.value, label: item.label, nativeName: item.label }));
 }
 
+/** 语言清单请求头：非全量语言回退英文，避免英文界面配意大利语语言名 */
+export function getLanguageListAcceptLanguage(language = getCurrentLanguage()): string {
+  return (fullyTranslatedLanguages as readonly string[]).includes(language) ? language : 'en-US';
+}
+
 /** 获取后端语言清单；失败时返回 null，由调用方回退内置清单 */
 export async function fetchServerLanguages(): Promise<ServerLanguageInfo | null> {
   try {
     // 与 API 客户端使用同一基地址；默认同源
     const baseUrl = (getConfig().request.baseUrl ?? '').replace(/\/$/, '');
-    const res = await fetch(`${baseUrl}${LANGUAGE_ENDPOINT}`, {
+    const acceptLanguage = getLanguageListAcceptLanguage();
+    // 服务端优先级为 ?lang= → Cookie → Accept-Language；显式带上 lang 才能覆盖旧 Cookie，
+    // 保证语言下拉的显示名与当前界面语言一致（尤其是一次性 ?lang= 非全量语言时）
+    const res = await fetch(`${baseUrl}${LANGUAGE_ENDPOINT}?lang=${encodeURIComponent(acceptLanguage)}`, {
       credentials: 'same-origin',
-      headers: { 'Accept-Language': getCurrentLanguage() },
+      cache: 'no-store',
+      headers: { 'Accept-Language': acceptLanguage },
     });
     if (!res.ok) return null;
 
