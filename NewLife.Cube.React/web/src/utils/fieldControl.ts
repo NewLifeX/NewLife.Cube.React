@@ -81,7 +81,21 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   area2: 'areaCascader',
   area3: 'areaCascader',
   area4: 'areaCascader',
+  // 数值类：percent/money/decimal 都用数值输入，仅列表展示时格式化
+  percent: 'inputNumber',
+  percentage: 'inputNumber',
+  money: 'inputNumber',
+  decimal: 'inputNumber',
+  // 压缩包附件（下载链接同 file）
+  'file-zip': 'upload',
 };
+
+/** 解析 ItemType 的基名（`decimal(18,2)` → `decimal`） */
+function itemTypeBase(field: FieldMeta): string {
+  const itemType = normalizeItemType(field);
+  if (/^decimal\(/.test(itemType)) return 'decimal';
+  return itemType;
+}
 
 /** 解析小写 ItemType */
 function normalizeItemType(field: FieldMeta): string {
@@ -95,8 +109,8 @@ function normalizeItemType(field: FieldMeta): string {
  * @returns 控件类型（ControlType）
  */
 export function resolveControl(field: FieldMeta): ControlType {
-  // 1. ItemType 优先
-  const itemType = normalizeItemType(field);
+  // 1. ItemType 优先（decimal(p,s) 按基名识别）
+  const itemType = itemTypeBase(field);
   if (itemType && ITEM_TYPE_TO_CONTROL[itemType]) {
     return ITEM_TYPE_TO_CONTROL[itemType];
   }
@@ -200,10 +214,10 @@ export function resolveAreaMaxLevel(field: FieldMeta): number {
  * @returns 搜索控件类型（SearchControlType）
  */
 export function resolveSearchControl(field: FieldMeta): SearchControlType {
-  const itemType = normalizeItemType(field);
+  const itemType = itemTypeBase(field);
 
   // ItemType 优先
-  if (itemType === 'file' || itemType === 'image') return 'fileExists';
+  if (itemType === 'file' || itemType === 'image' || itemType === 'file-zip') return 'fileExists';
   if (itemType === 'singleselect') return 'lov';
   if (itemType === 'multipleselect') return 'lovMulti';
   if (itemType === 'lovtable') return 'lov';
@@ -250,14 +264,22 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
  * @returns 列表渲染类型（ListControlType）
  */
 export function resolveListControl(field: FieldMeta): ListControlType {
-  const itemType = normalizeItemType(field);
+  const itemType = itemTypeBase(field);
 
   // ItemType 优先
   switch (itemType) {
     case 'image':
       return 'image';
     case 'file':
+    case 'file-zip':
       return 'file';
+    case 'percent':
+    case 'percentage':
+      return 'percent';
+    case 'money':
+      return 'money';
+    case 'decimal':
+      return 'decimal';
     case 'color':
       return 'color';
     case 'icon':

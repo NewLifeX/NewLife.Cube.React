@@ -25,6 +25,7 @@ import Toolbar, { type ListViewMode } from './components/Toolbar';
 import TableContent from './components/TableContent';
 import ColumnSetting, { filterVisibleFields } from './components/ColumnSetting';
 import { applyColumnPrefs, loadColumnPrefs, type ColumnPrefs } from './utils/columnPrefs';
+import { detectTreeField } from './utils/treeData';
 import ListPagination from './components/ListPagination';
 import ChartView from './components/ChartView';
 import FormDialog from '@/views/form/FormDialog';
@@ -96,6 +97,14 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       )?.field.name,
     [listFields],
   );
+
+  // 树形列表父字段（LIST-17）：preset.treeBy 显式指定（false 关闭），否则按 ParentID 等命名自动识别
+  const treeField = useMemo(() => {
+    const presetTreeBy = pagePreset?.treeBy;
+    if (presetTreeBy === false) return undefined;
+    if (typeof presetTreeBy === 'string' && presetTreeBy) return presetTreeBy;
+    return detectTreeField(listFields, pkField);
+  }, [pagePreset, listFields, pkField]);
 
   const [searchParams, setSearchParams] = useState<Record<string, unknown>>(() => ({ ...urlQuery }));
   // 当前是否有搜索条件：有搜索时隐藏高级菜单「清空数据表」，防误删筛选后的数据（对齐 MVC page.Params.Count==0）
@@ -543,6 +552,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             data={tableData}
             loading={loading}
             pkField={pkField}
+            treeField={treeField}
             canView={canView}
             canEdit={canEdit}
             canDelete={canDelete}

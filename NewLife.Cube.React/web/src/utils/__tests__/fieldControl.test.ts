@@ -29,6 +29,32 @@ function f(partial: Partial<DataField>): FieldMeta {
   return toFieldMeta({ name: 'F', typeName: 'String', ...partial });
 }
 
+describe('ItemType 数值/压缩包映射（META-7）', () => {
+  it('percent / money / decimal 表单控件为数值输入', () => {
+    expect(resolveControl(f({ itemType: 'percent', typeName: 'Double' }))).toBe('inputNumber');
+    expect(resolveControl(f({ itemType: 'Percentage', typeName: 'Int32' }))).toBe('inputNumber');
+    expect(resolveControl(f({ itemType: 'money', typeName: 'Decimal' }))).toBe('inputNumber');
+    expect(resolveControl(f({ itemType: 'decimal(18,2)', typeName: 'Decimal' }))).toBe('inputNumber');
+  });
+
+  it('file-zip 表单控件为上传', () => {
+    expect(resolveControl(f({ itemType: 'file-zip' }))).toBe('upload');
+  });
+
+  it('列表控件区分 percent / money / decimal，file-zip 走文件链接', () => {
+    expect(resolveListControl(f({ itemType: 'percent', typeName: 'Double' }))).toBe('percent');
+    expect(resolveListControl(f({ itemType: 'money', typeName: 'Decimal' }))).toBe('money');
+    expect(resolveListControl(f({ itemType: 'decimal(10,3)', typeName: 'Decimal' }))).toBe('decimal');
+    expect(resolveListControl(f({ itemType: 'file-zip' }))).toBe('file');
+  });
+
+  it('搜索控件：数值类走范围、压缩包走存在性', () => {
+    expect(resolveSearchControl(f({ itemType: 'percent', typeName: 'Double' }))).toBe('numberRange');
+    expect(resolveSearchControl(f({ itemType: 'money', typeName: 'Decimal' }))).toBe('numberRange');
+    expect(resolveSearchControl(f({ itemType: 'file-zip' }))).toBe('fileExists');
+  });
+});
+
 describe('resolveControl 表单控件映射', () => {
   it('ItemType 优先于 TypeName', () => {
     expect(resolveControl(f({ itemType: 'json', typeName: 'String' }))).toBe('json');

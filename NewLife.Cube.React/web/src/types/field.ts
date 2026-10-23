@@ -57,6 +57,9 @@ export type ListControlType =
   | 'html' // 富文本摘要
   | 'lov' // 值集翻译（标签）
   | 'file' // 文件链接
+  | 'percent' // 百分比（值 / 缩放 × 100，后缀 %）
+  | 'money' // 金额（千分位 + 2 位小数）
+  | 'decimal' // 定点小数（decimal(p,s) 的 s 位）
   | 'readonly'; // 只读文本（Guid）
 
 /** 选项 */

@@ -11,6 +11,8 @@ import { resolveListControl, isDateOnlyField } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import { getValueByKey, resolveUrl } from '@/utils/url';
+import { formatDecimal, formatMoney, formatPercent, parseDecimalScale } from '@/utils/numberFormat';
+import { buildTreeRows } from '../utils/treeData';
 import { resolveIcon } from '@/utils/icon';
 import LovCell from '@/components/field/LovCell';
 import type { ListControlType } from '@/types/field';
@@ -54,6 +56,8 @@ export interface TableContentProps {
   confirmDelete?: boolean;
   /** 是否允许双击行进入编辑/查看（pageSetting.enableTableDoubleClick !== false） */
   doubleClickEdit?: boolean;
+  /** 树形列表父字段名（LIST-17）；传入后按该字段重建树并按父级缩进 */
+  treeField?: string;
   onChange?: (pagination: TablePaginationConfig) => void;
 }
 
@@ -136,6 +140,16 @@ function CellRenderer({
       return <span>{formatDate(raw)}</span>;
     case 'number':
       return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{String(raw ?? '')}</span>;
+    case 'percent':
+      return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatPercent(raw, meta)}</span>;
+    case 'money':
+      return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatMoney(raw)}</span>;
+    case 'decimal':
+      return (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {formatDecimal(raw, parseDecimalScale(meta.itemType, meta.scale))}
+        </span>
+      );
     case 'color':
       return raw ? (
         <Tooltip title={String(raw)}>
@@ -220,6 +234,7 @@ export default function TableContent({
   onDataAction,
   confirmDelete = true,
   doubleClickEdit = true,
+  treeField,
   onChange,
 }: TableContentProps) {
   const columns: ColumnsType<Record<string, unknown>> = fields.map((field) => {
@@ -236,6 +251,7 @@ export default function TableContent({
     else if (control === 'color' || control === 'icon') width = 90;
     else if (control === 'boolean') width = 90;
     else if (control === 'number') width = 100;
+    else if (control === 'percent' || control === 'money' || control === 'decimal') width = 110;
     else if (control === 'lov') width = 100;
     else if (control === 'date') width = (meta.itemType || '').toLowerCase() === 'date' ? 100 : 140;
     else if (control === 'time') width = 140;
@@ -245,7 +261,7 @@ export default function TableContent({
       resolveTextAlign(meta.textAlign) ??
       (meta.primaryKey
         ? 'center'
-        : control === 'number'
+        : control === 'number' || control === 'percent' || control === 'money' || control === 'decimal'
           ? 'right'
           : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
             ? 'center'
@@ -353,10 +369,12 @@ export default function TableContent({
     <Table<Record<string, unknown>>
       rowKey={(row) => String(getValueByKey(row, pkField) ?? JSON.stringify(row))}
       columns={columns}
-      dataSource={data}
+      dataSource={treeField ? buildTreeRows(data, pkField, treeField) : data}
       loading={loading}
       size="medium"
       scroll={{ x: 'max-content' }}
+      // 树形列表默认全展开（对齐全展开的树视图习惯），仍可手动收起
+      expandable={treeField ? { defaultExpandAllRows: true } : undefined}
       // 双击行进入编辑（对齐 MVC：编辑链接 title「双击本行任意地方也可以进入编辑表单页」）；
       // 无编辑权限时可查看，两者都无则无操作。title 悬浮提示双击能力
       onRow={(row) => ({
