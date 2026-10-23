@@ -7,14 +7,13 @@ import { t } from '@/i18n';
 import type { CaptchaResult, LoginConfig, OAuthProvider } from '@newlifex/api-core';
 
 /**
- * 归一化登录配置字段名（对齐 Vue 皮肤 core/utils/loginApi.ts 的 normalizeLoginConfig）
+ * 归一化登录配置字段名（兼容尚未升级的后端）
  *
- * 后端 /Auth/LoginConfig 返回的 OAuth 字段名存在变体：
- * - `oAuth`（.NET System.Text.Json camelCase 序列化 `OAuth` → `oAuth`）→ 标准字段 `oauth`
+ * 后端 /Auth/LoginConfig 的 OAuth 字段名存在变体：
+ * - `oAuth`（.NET camelCase 序列化 `OAuth` → `oAuth`）→ 标准字段 `oauth`
  * - `providers`（v1 旧版字段名）→ 标准字段 `oauth`
  *
- * 归一化后确保 LoginConfig.oauth 始终有值（如果后端返回了的话），
- * 否则登录页 `config?.oauth` 恒为空，第三方登录区块永不渲染。
+ * 新版后端已显式序列化为 `oauth`；这里保留归一化，保证皮肤可对接旧版 NewLife.Cube。
  *
  * @param data 后端原始返回的 LoginConfig
  * @returns 归一化后的 LoginConfig
@@ -29,10 +28,11 @@ function normalizeLoginConfig(data: LoginConfig): LoginConfig {
   // 标准 oauth 为空时，尝试从 oAuth（后端 camelCase 变体）/ providers（v1 旧字段）补充
   if (!result.oauth || result.oauth.length === 0) {
     const oAuth = raw.oAuth as OAuthProvider[] | undefined;
+    const providers = raw.providers as OAuthProvider[] | undefined;
     if (Array.isArray(oAuth) && oAuth.length > 0) {
       result.oauth = oAuth;
-    } else if (Array.isArray(result.providers) && result.providers.length > 0) {
-      result.oauth = result.providers;
+    } else if (Array.isArray(providers) && providers.length > 0) {
+      result.oauth = providers;
     }
   }
 
@@ -42,9 +42,10 @@ function normalizeLoginConfig(data: LoginConfig): LoginConfig {
 /**
  * 加载登录页配置
  *
+ * @param tenant 租户标识（编号/编码/名称），登录链接可用 ?tenant= 指定
  * @returns 登录配置 / 加载状态 / 加载失败信息 / 刷新函数
  */
-export function useLoginConfig() {
+export function useLoginConfig(tenant?: string) {
   const [config, setConfig] = useState<LoginConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,7 +53,7 @@ export function useLoginConfig() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.user.getLoginConfig();
+      const res = await api.user.getLoginConfig(tenant);
       // 归一化字段名（oAuth / providers → oauth），否则登录页读取 config.oauth 恒为空
       setConfig(res.data ? normalizeLoginConfig(res.data) : null);
       setError('');
@@ -61,7 +62,7 @@ export function useLoginConfig() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tenant]);
 
   useEffect(() => {
     void load();

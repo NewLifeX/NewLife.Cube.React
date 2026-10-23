@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { t } from '@/i18n';
 import { Card, Space, Tag } from 'antd';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export interface AuthHighlight {
   icon?: ReactNode;
@@ -83,6 +84,10 @@ export default function AuthLayout({
         </aside>
 
         <section className="cube-auth-panel">
+          {/* 登录前也允许切换语言；偏好写入 localStorage 与语言 Cookie，刷新页面后服务端文案同步 */}
+          <div className="cube-auth-lang">
+            <LanguageSwitch />
+          </div>
           <Card variant="borderless" className="cube-auth-card">
             <Space orientation="vertical" size={20} style={{ width: '100%' }}>
               <div className="cube-auth-card-head">

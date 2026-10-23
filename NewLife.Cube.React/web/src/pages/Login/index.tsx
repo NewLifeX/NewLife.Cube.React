@@ -2,7 +2,7 @@
  * 登录页（对齐 Vue 皮肤 pages/LoginPage.vue + LoginForm.vue）
  *
  * 功能：
- * 1. 加载 /Auth/LoginConfig，按能力开关渲染密码/短信/邮箱登录、注册入口、OAuth、版权
+ * 1. 并行加载 /Cube/Site（品牌/语言/功能开关）与 /Auth/LoginConfig（登录能力），支持 ?tenant= 租户标识
  * 2. 密码登录自动 RSA-OAEP Challenge 加密（@newlifex/auth-logic 内置）
  * 3. 图片验证码（login.captcha=true 时显示）
  * 4. MFA 二步验证（登录返回 mfa_required 时进入）
@@ -20,6 +20,7 @@ import { useMenuStore } from '@/stores/menu';
 import { getConfig } from '@/configure';
 import { t } from '@/i18n';
 import { useLoginConfig, useCaptcha } from '@/hooks/useLoginConfig';
+import { useSiteConfig } from '@/hooks/useSiteConfig';
 import { parsePasswordRules } from '@/utils/passwordRules';
 import RegisterPanel from './RegisterPanel';
 import type { AuthCategory, LoginResult } from '@newlifex/api-core';
@@ -39,7 +40,11 @@ export default function LoginPage() {
   const passwordRef = useRef<InputRef>(null);
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { config, loading, error: configError } = useLoginConfig();
+  // 登录链接可用 ?tenant={id|code|name} 指定租户，透传给站点配置与登录能力接口
+  const tenant = params.get('tenant') || undefined;
+  const { config, loading, error: configError } = useLoginConfig(tenant);
+  // 站点品牌（名称/Logo/背景/版权/登录提示）由匿名接口 /Cube/Site 提供，失败时回退内置品牌
+  const { config: siteConfig } = useSiteConfig(tenant);
   // 配置异步加载：enabled 由 false→true 时 useCaptcha 自动触发首次拉取
   const { captcha, refresh } = useCaptcha(!!config?.login?.captcha);
   const { redirectKey } = getConfig().auth;
@@ -63,8 +68,8 @@ export default function LoginPage() {
   const showCaptcha = !!loginCfg?.captcha;
   const showRegister = !!registerCfg?.enabled;
   const oauthProviders = config?.oauth ?? [];
-  const systemName = config?.name || getConfig().base.title;
-  const logoSrc = config?.loginLogo || config?.logo || '';
+  const systemName = siteConfig?.name || getConfig().base.title;
+  const logoSrc = siteConfig?.logo || '';
 
   // 密码规则（security.passwordStrength 驱动）
   const passwordRules = useMemo(() => {
@@ -175,13 +180,15 @@ export default function LoginPage() {
       title={t('登录')}
       description={t('登录后即可访问管理后台')}
       brandTitle={systemName}
-      brandSubtitle={config?.loginTip || t('魔方快速开发平台')}
+      brandSubtitle={siteConfig?.loginTip || t('魔方快速开发平台')}
+      logo={logoSrc ? <img src={logoSrc} alt={systemName} className="cube-auth-brand-logo" /> : undefined}
+      background={siteConfig?.loginBackground ? `url(${siteConfig.loginBackground})` : undefined}
       highlights={[
         { icon: <SafetyOutlined />, title: t('统一认证入口'), description: t('密码 / 短信 / 邮箱 / 第三方，安全策略内置') },
         { icon: <AppstoreOutlined />, title: t('权限菜单驱动'), description: t('登录后按角色自动生成管理导航') },
         { icon: <ThunderboltOutlined />, title: t('字段元数据驱动'), description: t('列表与表单由后端字段配置动态渲染') },
       ]}
-      footer={config?.copyright ? <span dangerouslySetInnerHTML={{ __html: config.copyright }} /> : undefined}
+      footer={siteConfig?.copyright ? <span dangerouslySetInnerHTML={{ __html: siteConfig.copyright }} /> : undefined}
     >
       {configError && <Alert type="error" message={configError} />}
 

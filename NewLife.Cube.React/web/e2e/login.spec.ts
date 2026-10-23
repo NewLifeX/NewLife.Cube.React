@@ -153,15 +153,15 @@ test.describe('第三方登录（OAuth 入口）', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   /**
-   * 拦截 LoginConfig 响应，注入 oAuth 提供商列表，与后端配置解耦
+   * 拦截 LoginConfig 响应，注入 oauth 提供商列表，与后端配置解耦
    * @param page Playwright 页面
    * @param providers OAuth 提供商列表（空数组 = 未配置）
    */
   async function mockOAuthProviders(page: import('@playwright/test').Page, providers: unknown[]) {
     await page.route('**/Auth/LoginConfig', async (route) => {
       const res = await route.fetch();
-      const json = (await res.json()) as { data: { oAuth?: unknown[] } };
-      if (json.data) json.data.oAuth = providers;
+      const json = (await res.json()) as { data: { oauth?: unknown[] } };
+      if (json.data) json.data.oauth = providers;
       await route.fulfill({ response: res, json });
     });
   }

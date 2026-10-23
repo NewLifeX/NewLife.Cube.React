@@ -26,9 +26,24 @@
 }
 
 .cube-auth-panel {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 登录前语言切换：固定在卡片右上角 */
+.cube-auth-lang {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  z-index: 2;
+}
+
+.cube-auth-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .cube-auth-card {

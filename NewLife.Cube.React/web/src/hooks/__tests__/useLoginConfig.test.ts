@@ -85,4 +85,14 @@ describe('useLoginConfig 登录配置加载', () => {
     expect(result.current.error).toBe('登录配置加载失败');
     expect(result.current.config).toBeNull();
   });
+
+  it('把租户标识透传给登录配置接口', async () => {
+    mockGetLoginConfig.mockResolvedValue(ok({ enableTenant: true, code: 'acme' }));
+
+    const { result } = renderHook(() => useLoginConfig('acme'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockGetLoginConfig).toHaveBeenCalledWith('acme');
+    expect(result.current.config?.code).toBe('acme');
+  });
 });
