@@ -119,3 +119,19 @@ describe('parseUrlQuery 解析 URL 查询串', () => {
     expect(parseUrlQuery('?')).toEqual({});
   });
 });
+
+describe('resolveUrl 占位符（LIST-16）', () => {
+  it('替换 {字段名} 为当前行值', () => {
+    expect(resolveUrl('/Admin/Log?linkId={Id}', { Id: 5 })).toBe('/Admin/Log?linkId=5');
+  });
+
+  it('替换 {page:参数名} 为页面查询参数（下钻保上下文）', () => {
+    expect(resolveUrl('/Admin/Log?q={page:q}', {}, { q: 'abc' })).toBe('/Admin/Log?q=abc');
+  });
+
+  it('两类占位符共存，未命中替换为空串', () => {
+    expect(
+      resolveUrl('/x?f={Id}&q={page:q}&miss={Nothing}', { Id: 7 }, { q: 'k' }),
+    ).toBe('/x?f=7&q=k&miss=');
+  });
+});

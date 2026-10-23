@@ -379,4 +379,11 @@ describe('mapUrlParamsToSearchValues URL 查询 → 搜索控件值', () => {
     expect(mapUrlParamsToSearchValues({ foo: 'bar' }, fields)).toEqual({});
     expect(mapUrlParamsToSearchValues({}, fields)).toEqual({});
   });
+
+  it('区间查询项（kind=range）：dtStart/dtEnd 回显为 name 的 [start,end]', () => {
+    const fields = [f({ name: 'dtStart', typeName: 'DateTime', kind: 'range', end: 'dtEnd', field: 'CreateTime' })];
+    expect(mapUrlParamsToSearchValues({ dtStart: '2026-08-01', dtEnd: '2026-08-31' }, fields)).toEqual({
+      dtStart: ['2026-08-01', '2026-08-31'],
+    });
+  });
 });

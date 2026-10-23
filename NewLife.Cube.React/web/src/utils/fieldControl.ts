@@ -514,6 +514,15 @@ export function mapUrlParamsToSearchValues(
     const name = f.name;
     const lk = lower(name);
 
+    // 区间查询项（kind=range）：/meta 已把主时间字段收敛为 name/end 两参，直接组成 [start, end]
+    if (f.kind === 'range') {
+      const start = params[name] ?? lowerMap.get(lk);
+      const endKey = f.end ?? `${name}End`;
+      const end = params[endKey] ?? lowerMap.get(lower(endKey));
+      if (start != null || end != null) rs[name] = [start ?? undefined, end ?? undefined];
+      continue;
+    }
+
     if (control === 'dateRange' || control === 'datetimeRange') {
       // 时间范围：优先 dtStart/dtEnd（后端老参数），其次 {字段}Start/{字段}End
       const start = lowerMap.get('dtstart') ?? lowerMap.get(`${lk}start`);

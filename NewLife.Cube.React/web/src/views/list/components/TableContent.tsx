@@ -45,7 +45,33 @@ export interface TableContentProps {
   sortField?: string;
   /** 当前是否降序 */
   sortDesc?: boolean;
+  /** 当前页面查询参数，供单元格链接占位符 {page:参数名} 使用 */
+  pageQuery?: Record<string, unknown>;
+  /** dataAction=action 的链接点击回调（由页面发请求后刷新列表） */
+  onDataAction?: (url: string) => void;
+  /** 删除是否二次确认（pageSetting.doubleDelete !== false） */
+  confirmDelete?: boolean;
+  /** 是否允许双击行进入编辑/查看（pageSetting.enableTableDoubleClick !== false） */
+  doubleClickEdit?: boolean;
   onChange?: (pagination: TablePaginationConfig) => void;
+}
+
+/**
+ * 后端 TextAligns（0 默认/1 左/2 中/3 右，或字符串 left/center/right）→ antd 列对齐
+ *
+ * @param value 后端 textAlign 属性（数字枚举或字符串）
+ * @returns antd 列对齐；默认/未识别返回 undefined（按控件类型推导）
+ */
+export function resolveTextAlign(value?: string | number | null): 'left' | 'center' | 'right' | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  if (typeof value === 'number') {
+    return value === 1 ? 'left' : value === 2 ? 'center' : value === 3 ? 'right' : undefined;
+  }
+  const text = String(value).trim().toLowerCase();
+  if (text === 'left' || text === 'center' || text === 'right') return text;
+  const num = Number(text);
+  if (Number.isFinite(num)) return resolveTextAlign(num);
+  return undefined;
 }
 
 /** 日期格式化。dateOnly 输出 yyyy-MM-dd，否则 yyyy-MM-dd HH:mm:ss（规范 §7.4：日期时间到时分秒） */
@@ -74,7 +100,17 @@ function getCellValue(row: Record<string, unknown>, names: string[]): unknown {
 }
 
 /** 渲染单元格 */
-function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string, unknown> }) {
+function CellRenderer({
+  field,
+  row,
+  pageQuery,
+  onDataAction,
+}: {
+  field: FieldMapping;
+  row: Record<string, unknown>;
+  pageQuery?: Record<string, unknown>;
+  onDataAction?: (url: string) => void;
+}) {
   const meta = toFieldMeta(field.field);
   const control = resolveListControl(meta);
   // 取值字段：优先取 valueField 指向的字段值（跳过空值），为空回退本字段（如名称列优先显示昵称）
@@ -121,17 +157,33 @@ function CellRenderer({ field, row }: { field: FieldMapping; row: Record<string,
     case 'readonly':
     case 'text':
     default: {
-      // 链接字段（支持 {Id} 变量替换）。值为空时显示 '-'，不渲染链接
+      // 链接字段（支持 {字段} 与 {page:参数} 占位符）。值为空时显示 '-'，不渲染链接
       if (meta.url && raw != null && raw !== '') {
-        const href = resolveUrl(meta.url, { [meta.name]: raw, ...Object.fromEntries(Object.entries((raw as object) ?? {})) });
+        const href = resolveUrl(meta.url, row, pageQuery);
+        const title = meta.title ? resolveUrl(meta.title, row, pageQuery) : undefined;
+        // dataAction=action：点击走 AJAX 请求后刷新列表（对齐 MVC data-action），不跳页
+        if (meta.dataAction === 'action') {
+          return (
+            <a
+              href={href}
+              title={title}
+              onClick={(e) => {
+                e.preventDefault();
+                onDataAction?.(href);
+              }}
+            >
+              {meta.text || String(raw)}
+            </a>
+          );
+        }
         return (
-          <a href={href} target={meta.target || '_blank'} rel="noreferrer">
+          <a href={href} target={meta.target || '_blank'} title={title} rel="noreferrer">
             {meta.text || String(raw)}
           </a>
         );
       }
       if (meta.url && (raw == null || raw === '')) return <span>-</span>;
-      return <span>{String(raw ?? '')}</span>;
+      return <span title={meta.title ? resolveUrl(meta.title, row, pageQuery) : undefined}>{String(raw ?? '')}</span>;
     }
   }
 }
@@ -156,6 +208,10 @@ export default function TableContent({
   onSortChange,
   sortField,
   sortDesc,
+  pageQuery,
+  onDataAction,
+  confirmDelete = true,
+  doubleClickEdit = true,
   onChange,
 }: TableContentProps) {
   const columns: ColumnsType<Record<string, unknown>> = fields.map((field) => {
@@ -176,28 +232,38 @@ export default function TableContent({
     else if (control === 'date') width = (meta.itemType || '').toLowerCase() === 'date' ? 100 : 140;
     else if (control === 'time') width = 140;
 
-    // 对齐：主键列居中（规范 §7.4），数字右对齐，其余按类型
-    const align = meta.primaryKey
-      ? 'center'
-      : control === 'number'
-        ? 'right'
-        : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
-          ? 'center'
-          : 'left';
+    // 对齐：控制器 textAlign 优先；否则主键列居中（规范 §7.4）、数字右对齐，其余按类型
+    const alignResolved =
+      resolveTextAlign(meta.textAlign) ??
+      (meta.primaryKey
+        ? 'center'
+        : control === 'number'
+          ? 'right'
+          : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
+            ? 'center'
+            : 'left');
+
+    // 列头：header 优先于 displayName；headerTitle 以悬浮提示呈现
+    const label = meta.header || meta.displayName || meta.name;
 
     return {
-      title: meta.displayName || meta.name,
+      title: meta.headerTitle ? <Tooltip title={meta.headerTitle}>{label}</Tooltip> : label,
       dataIndex: meta.name,
       key: meta.name,
       width,
-      align: align as 'left' | 'center' | 'right',
+      align: alignResolved as 'left' | 'center' | 'right',
+      className: meta.class,
+      // 最大宽度：超长文本截断到指定字符宽度（对齐 MVC ListField.MaxWidth）
+      onCell: () => (meta.maxWidth ? { style: { maxWidth: meta.maxWidth } } : {}),
       // 主键列不参与排序 + 不省略：避免表头排序图标撑宽列、ellipsis 约束 auto 布局下按内容自适应；
       // 配合主键列 64px 初始宽，数据少时列窄、雪花 ID 位数多时列宽
       ellipsis: meta.primaryKey ? false : true,
       sorter: onSortChange && !meta.primaryKey ? true : false,
       // 排序箭头仅当前排序列显示（受控）：其余列 sortOrder 置 null 复位，配合 CSS 隐藏默认箭头
       sortOrder: meta.name === sortField ? (sortDesc ? 'descend' : 'ascend') : null,
-      render: (_: unknown, row: Record<string, unknown>) => <CellRenderer field={field} row={row} />,
+      render: (_: unknown, row: Record<string, unknown>) => (
+        <CellRenderer field={field} row={row} pageQuery={pageQuery} onDataAction={onDataAction} />
+      ),
     };
   });
 
@@ -248,7 +314,7 @@ export default function TableContent({
               <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-restore" onClick={() => onRestore?.(row)}>
                 {t('恢复')}
               </Button>
-            ) : (
+            ) : confirmDelete ? (
               <Popconfirm
                 title={t('确定删除该行数据吗？')}
                 okText={t('删除')}
@@ -259,6 +325,16 @@ export default function TableContent({
                   {t('删除')}
                 </Button>
               </Popconfirm>
+            ) : (
+              <Button
+                type="link"
+                size="small"
+                className="cube-op-btn cube-op-btn-op-delete"
+                danger
+                onClick={() => onDelete?.(row)}
+              >
+                {t('删除')}
+              </Button>
             ))}
         </span>
       ),
@@ -276,8 +352,9 @@ export default function TableContent({
       // 双击行进入编辑（对齐 MVC：编辑链接 title「双击本行任意地方也可以进入编辑表单页」）；
       // 无编辑权限时可查看，两者都无则无操作。title 悬浮提示双击能力
       onRow={(row) => ({
-        title: canEdit ? t('双击行进入编辑') : canView ? t('双击行查看详情') : undefined,
+        title: doubleClickEdit ? (canEdit ? t('双击行进入编辑') : canView ? t('双击行查看详情') : undefined) : undefined,
         onDoubleClick: () => {
+          if (!doubleClickEdit) return;
           if (canEdit) onEdit?.(row);
           else if (canView) onView?.(row);
         },

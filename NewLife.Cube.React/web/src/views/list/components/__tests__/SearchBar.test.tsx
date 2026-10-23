@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import SearchBar from '../SearchBar';
+import SearchBar, { splitSearchFields } from '../SearchBar';
 import type { FieldMapping } from '@newlifex/field-mapping';
 
 /** 构造搜索字段 */
@@ -82,5 +82,45 @@ describe('SearchBar 搜索栏', () => {
     // 可再收起
     fireEvent.click(screen.getByRole('button', { name: /收\s*起/ }));
     expect(screen.queryByText('丙')).not.toBeInTheDocument();
+  });
+});
+
+describe('SearchBar 查询项语义（LIST-11）', () => {
+  /** 关键字查询项（kind=keyword） */
+  function keywordField(): FieldMapping {
+    return { widget: 'text', field: { name: 'q', displayName: '关键字', typeName: 'String', kind: 'keyword' } };
+  }
+
+  /** 区间查询项（kind=range，结束参数 dtEnd） */
+  function rangeField(): FieldMapping {
+    return {
+      widget: 'number',
+      field: { name: 'dtStart', displayName: '数量', typeName: 'Int32', kind: 'range', end: 'dtEnd', field: 'CreateTime' },
+    };
+  }
+
+  it('splitSearchFields 按 kind 拆分关键字/区间/普通', () => {
+    const groups = splitSearchFields([keywordField(), textField('Name', '名称'), rangeField()]);
+    expect(groups.keyword?.field.name).toBe('q');
+    expect(groups.normals.map((x) => x.field.name)).toEqual(['Name']);
+    expect(groups.ranges.map((x) => x.field.name)).toEqual(['dtStart']);
+  });
+
+  it('关键字占首格并按字段名提交', () => {
+    const onSearch = vi.fn();
+    render(<SearchBar fields={[textField('Name', '名称'), keywordField()]} onSearch={onSearch} onReset={() => {}} />);
+    expect(screen.getByText('关键字')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/请输入关键字/), { target: { value: 'abc' } });
+    fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+    expect(onSearch).toHaveBeenCalledWith({ q: 'abc' });
+  });
+
+  it('区间项提交 name 与 end 两参（dtStart/dtEnd）', () => {
+    const onSearch = vi.fn();
+    render(<SearchBar fields={[rangeField()]} onSearch={onSearch} onReset={() => {}} />);
+    fireEvent.change(screen.getByPlaceholderText('最小值'), { target: { value: '1' } });
+    fireEvent.change(screen.getByPlaceholderText('最大值'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+    expect(onSearch).toHaveBeenCalledWith({ dtStart: 1, dtEnd: 9 });
   });
 });

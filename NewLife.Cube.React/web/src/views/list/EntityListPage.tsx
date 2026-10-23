@@ -69,6 +69,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   // 查看权限：只读控制器或无可编辑权限时提供「查看」（规范 §7.9）
   const canView = !!pageSetting?.isReadOnly || !canEdit;
 
+  // 页面能力开关（呈现架构 §4.1 规则7）：与动作权限分离，只控制 UI 能力不代行权限
+  const enableToolbar = pageSetting?.enableToolbar !== false;
+  const enableSelect = pageSetting?.enableSelect !== false;
+  const confirmDelete = pageSetting?.doubleDelete !== false;
+  const doubleClickEdit = pageSetting?.enableTableDoubleClick !== false;
+
   // 渲染列：过滤后端 meta 标记隐藏（visible=false）的字段（列设置持久化到后端后由 meta 干预）
   const displayFields = useMemo(() => filterVisibleFields(listFields), [listFields]);
   const visibleFieldNames = useMemo(() => displayFields.map((f) => f.field.name), [displayFields]);
@@ -114,7 +120,11 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .loadFields()
       .then(() => {
         if (cancelled) return;
-        return store.getState().loadData(urlQuery);
+        // orderByKey：页面要求按主键排序时首查带排序参数（对齐 MVC PageSetting.OrderByKey）
+        const state = store.getState();
+        const keySort = state.pageSetting?.orderByKey ? state.pkField : undefined;
+        if (keySort) setSortState({ field: keySort, desc: false });
+        return state.loadData({ ...urlQuery, ...(keySort ? { sort: keySort } : {}) });
       })
       .catch(() => {});
     return () => {
@@ -262,6 +272,20 @@ export default function EntityListPage({ type }: EntityListPageProps) {
 
   const handleImport = () => importInputRef.current?.click();
 
+  /** dataAction=action 的链接点击：发请求后刷新列表（对齐 MVC data-action），业务错误由 api-core 统一提示 */
+  const handleDataAction = useCallback(
+    async (url: string) => {
+      try {
+        await api.client.get(url);
+        message.success(t('操作成功'));
+        void refresh();
+      } catch (err) {
+        message.error((err as Error)?.message || t('操作失败'));
+      }
+    },
+    [message, refresh],
+  );
+
   const onImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -403,31 +427,33 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     // 页面名由顶栏面包屑/多标签承担，Card 不再重复标题（避免搜索区上方冗余占位）
     <Card className="cube-entity-card" size="small" styles={{ body: { paddingTop: 8 } }}>
       <SearchBar fields={searchFields} onSearch={handleSearch} onReset={handleReset} initialValues={searchInitialValues} />
-      <Toolbar
-        canAdd={canAdd}
-        canDelete={canDelete}
-        canExport={canExport}
-        canImport={canImport}
-        canDevelop={canDevelop}
-        hasSearch={hasSearch}
-        canChart={canChart}
-        view={view}
-        selectedCount={selectedKeys.length}
-        onNew={handleNew}
-        onDelete={handleDeleteSelected}
-        onDeleteAll={handleDeleteAll}
-        onExport={handleExport}
-        onImport={handleImport}
-        onBackup={handleBackup}
-        onRestore={handleRestore}
-        onBackupExport={handleBackupExport}
-        onClear={handleClear}
-        onViewChange={handleViewChange}
-        onRefresh={() => void refresh()}
-        columnSetting={
-          <ColumnSetting type={type} allFields={listFields} visibleFields={visibleFieldNames} onChanged={reloadMeta} />
-        }
-      />
+      {enableToolbar && (
+        <Toolbar
+          canAdd={canAdd}
+          canDelete={canDelete}
+          canExport={canExport}
+          canImport={canImport}
+          canDevelop={canDevelop}
+          hasSearch={hasSearch}
+          canChart={canChart}
+          view={view}
+          selectedCount={selectedKeys.length}
+          onNew={handleNew}
+          onDelete={handleDeleteSelected}
+          onDeleteAll={handleDeleteAll}
+          onExport={handleExport}
+          onImport={handleImport}
+          onBackup={handleBackup}
+          onRestore={handleRestore}
+          onBackupExport={handleBackupExport}
+          onClear={handleClear}
+          onViewChange={handleViewChange}
+          onRefresh={() => void refresh()}
+          columnSetting={
+            <ColumnSetting type={type} allFields={listFields} visibleFields={visibleFieldNames} onChanged={reloadMeta} />
+          }
+        />
+      )}
       {view === 'chart' ? (
         <ChartView charts={chartList} />
       ) : (
@@ -441,6 +467,11 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             canEdit={canEdit}
             canDelete={canDelete}
             softDeleteField={softDeleteField}
+            selectable={enableSelect}
+            pageQuery={searchParams}
+            onDataAction={handleDataAction}
+            confirmDelete={confirmDelete}
+            doubleClickEdit={doubleClickEdit}
             selectedKeys={selectedKeys}
             onSelectChange={setSelectedKeys}
             onView={handleViewRow}

@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import TableContent from '../TableContent';
+import TableContent, { resolveTextAlign } from '../TableContent';
 import type { FieldMapping } from '@newlifex/field-mapping';
 
 /** 构造列表字段（widget 固定 text，按字段元数据驱动渲染） */
@@ -127,5 +127,89 @@ describe('TableContent 列表表格', () => {
     expect(onView).toHaveBeenCalledTimes(1);
     expect(onView).toHaveBeenCalledWith(DATA[1]);
     expect(onEdit).toHaveBeenCalledTimes(1); // 编辑仍只被调用一次
+  });
+});
+
+describe('TableContent 列呈现与数据动作（LIST-12/15/16）', () => {
+  it('resolveTextAlign 映射后端 TextAligns 与字符串', () => {
+    expect(resolveTextAlign(1)).toBe('left');
+    expect(resolveTextAlign(2)).toBe('center');
+    expect(resolveTextAlign(3)).toBe('right');
+    expect(resolveTextAlign(0)).toBeUndefined();
+    expect(resolveTextAlign('right')).toBe('right');
+    expect(resolveTextAlign('2')).toBe('center');
+    expect(resolveTextAlign(undefined)).toBeUndefined();
+  });
+
+  it('表头优先 header（控制器自定义列头）', () => {
+    const fields: FieldMapping[] = [
+      { widget: 'text', field: { name: 'Code', typeName: 'String', displayName: '代码', header: '编号', headerTitle: '业务编号' } },
+    ];
+    const { container } = render(<TableContent fields={fields} data={[{ Code: 'A1' }]} selectable={false} />);
+    const th = container.querySelector('.ant-table-thead th')!;
+    expect(th.textContent).toContain('编号');
+    expect(th.textContent).not.toContain('代码');
+  });
+
+  it('{page:参数} 占位符与 dataAction 点击走回调（不跳页）', () => {
+    const onDataAction = vi.fn();
+    const fields: FieldMapping[] = [
+      {
+        widget: 'text',
+        field: {
+          name: 'Execute',
+          typeName: 'String',
+          displayName: '执行',
+          url: '/Cube/CronJob/ExecuteNow?id={Id}&q={page:q}',
+          text: 'Run now',
+          dataAction: 'action',
+        },
+      },
+    ];
+    render(
+      <TableContent
+        fields={fields}
+        data={[{ Id: 3, Execute: 'go' }]}
+        selectable={false}
+        pageQuery={{ q: 'x' }}
+        onDataAction={onDataAction}
+      />,
+    );
+    const link = screen.getByText('Run now') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/Cube/CronJob/ExecuteNow?id=3&q=x');
+    fireEvent.click(link);
+    expect(onDataAction).toHaveBeenCalledWith('/Cube/CronJob/ExecuteNow?id=3&q=x');
+  });
+
+  it('confirmDelete=false 时删除不再二次确认', () => {
+    const onDelete = vi.fn();
+    render(
+      <TableContent
+        fields={FIELDS}
+        data={DATA}
+        canEdit={false}
+        canDelete
+        confirmDelete={false}
+        selectable={false}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: /删\s*除/ })[0]);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('doubleClickEdit=false 时双击行不触发编辑', () => {
+    const onEdit = vi.fn();
+    const { container } = render(
+      <TableContent fields={FIELDS} data={DATA} canEdit doubleClickEdit={false} selectable={false} onEdit={onEdit} />,
+    );
+    const firstRow = container.querySelectorAll('.ant-table-tbody tr.ant-table-row')[0]!;
+    fireEvent.doubleClick(firstRow);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it('selectable=false 时不渲染勾选列（enableSelect 能力）', () => {
+    const { container } = render(<TableContent fields={FIELDS} data={DATA} selectable={false} />);
+    expect(container.querySelector('.ant-table-selection-column')).toBeNull();
   });
 });

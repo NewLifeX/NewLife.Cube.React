@@ -80,14 +80,35 @@ export function setValueByKey(data: Record<string, unknown>, key: string, value:
 /**
  * URL 变量替换：将 `/path/{Id}` 替换为 `/path/123`
  *
+ * 支持两类占位符（对齐魔方 ListField 模板）：
+ * - `{字段名}`：当前行值；
+ * - `{page:参数名}`：当前页面查询参数（下钻保上下文）。
+ * 未命中时替换为空串，避免暴露模板原文。
+ *
  * @param url 含变量占位符的 URL 模板
  * @param row 数据行对象
+ * @param pageQuery 当前页面查询参数（可选，用于 `{page:参数名}`）
+ * @returns 替换后的 URL
+ * @example
+ * resolveUrl('/Admin/Log?category=CronJob&linkId={Id}', { Id: 5 }, { q: 'x' })
+ * // => '/Admin/Log?category=CronJob&linkId=5'
+ * resolveUrl('/Admin/Log?q={page:q}', {}, { q: 'abc' })
+ * // => '/Admin/Log?q=abc'
  */
-export function resolveUrl(url: string, row: Record<string, unknown>): string {
-  return url.replace(/\{(\w+)\}/g, (_, key: string) => {
+export function resolveUrl(
+  url: string,
+  row: Record<string, unknown>,
+  pageQuery?: Record<string, unknown>,
+): string {
+  let text = url.replace(/\{page:(\w+)\}/g, (_, key: string) => {
+    const val = pageQuery ? getValueByKey(pageQuery, key) : undefined;
+    return val === undefined || val === null ? '' : encodeURIComponent(String(val));
+  });
+  text = text.replace(/\{(\w+)\}/g, (_, key: string) => {
     const val = getValueByKey(row, key);
     return val !== undefined && val !== null ? encodeURIComponent(String(val)) : '';
   });
+  return text;
 }
 
 /**
