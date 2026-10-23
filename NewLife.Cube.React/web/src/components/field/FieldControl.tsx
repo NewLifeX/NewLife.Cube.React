@@ -15,6 +15,7 @@ import RichEditor from './RichEditor';
 import FocusClearInput from './FocusClearInput';
 import AreaCascader from './AreaCascader';
 import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel } from '@/utils/fieldControl';
+import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
 
@@ -45,6 +46,13 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
   const commonProps = { disabled };
   // React 皮肤设置：文本框清除图标开关（默认关闭，对齐 MVC 与主流表单输入框）
   const { inputClear } = useReactSetting();
+
+  // 字段级渲染器优先（后端下发 view，前端注册组件）；未注册时降级内置控件
+  const external = getFieldRenderer(field.view);
+  if (external) {
+    const Comp = external.component;
+    return <Comp field={field} value={value} disabled={disabled} onChange={onChange} />;
+  }
 
   const renderByControl = () => {
     switch (control) {

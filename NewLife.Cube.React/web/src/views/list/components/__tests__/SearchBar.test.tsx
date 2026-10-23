@@ -7,6 +7,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SearchBar, { splitSearchFields } from '../SearchBar';
+import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMapping } from '@newlifex/field-mapping';
 
 /** 构造搜索字段 */
@@ -122,5 +123,21 @@ describe('SearchBar 查询项语义（LIST-11）', () => {
     fireEvent.change(screen.getByPlaceholderText('最大值'), { target: { value: '9' } });
     fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
     expect(onSearch).toHaveBeenCalledWith({ dtStart: 1, dtEnd: 9 });
+  });
+
+  it('字段声明 view 时使用已注册渲染器（META-4）', () => {
+    registerFieldRenderer('selectRange', {
+      component: ({ value, onChange }) => (
+        <input aria-label="custom-range" value={String(value ?? '')} onChange={(e) => onChange?.(e.target.value)} />
+      ),
+    });
+    const fm: FieldMapping = {
+      widget: 'text',
+      field: { name: 'Range', typeName: 'String', displayName: '范围', view: 'selectRange' },
+    };
+    render(<SearchBar fields={[fm]} onSearch={() => {}} onReset={() => {}} />);
+    fireEvent.change(screen.getByLabelText('custom-range'), { target: { value: 'x' } });
+    expect(screen.getByLabelText('custom-range')).toHaveValue('x');
+    clearFieldRenderers();
   });
 });

@@ -19,6 +19,7 @@ import FocusClearInput from '@/components/field/FocusClearInput';
 import AreaCascader from '@/components/field/AreaCascader';
 import { resolveSearchControl, resolveAreaMaxLevel } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
+import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import type { FieldMeta, SearchControlType } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
@@ -63,6 +64,13 @@ function SearchControl({
   const label = meta.displayName || meta.name;
   // React 皮肤设置：搜索文本框清除图标开关
   const { inputClear } = useReactSetting();
+
+  // 字段级渲染器优先（后端下发 view，前端注册组件）
+  const external = getFieldRenderer(meta.view);
+  if (external) {
+    const Comp = external.component;
+    return <Comp field={meta} value={value} onChange={onChange} />;
+  }
 
   switch (control) {
     case 'text':

@@ -7,6 +7,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TableContent, { resolveTextAlign } from '../TableContent';
+import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMapping } from '@newlifex/field-mapping';
 
 /** 构造列表字段（widget 固定 text，按字段元数据驱动渲染） */
@@ -211,5 +212,17 @@ describe('TableContent 列呈现与数据动作（LIST-12/15/16）', () => {
   it('selectable=false 时不渲染勾选列（enableSelect 能力）', () => {
     const { container } = render(<TableContent fields={FIELDS} data={DATA} selectable={false} />);
     expect(container.querySelector('.ant-table-selection-column')).toBeNull();
+  });
+
+  it('字段声明 view 时使用已注册渲染器（META-4）', () => {
+    registerFieldRenderer('orgPicker', {
+      component: ({ value }) => <span data-testid="org-cell">{String(value ?? '')}</span>,
+    });
+    const fields: FieldMapping[] = [
+      { widget: 'text', field: { name: 'Org', typeName: 'String', displayName: '组织', view: 'orgPicker' } },
+    ];
+    render(<TableContent fields={fields} data={[{ Org: 'A部门' }]} selectable={false} />);
+    expect(screen.getByTestId('org-cell')).toHaveTextContent('A部门');
+    clearFieldRenderers();
   });
 });

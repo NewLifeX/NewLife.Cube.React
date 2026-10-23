@@ -9,6 +9,7 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { FieldMapping } from '@newlifex/field-mapping';
 import { resolveListControl, isDateOnlyField } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
+import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import { getValueByKey, resolveUrl } from '@/utils/url';
 import { resolveIcon } from '@/utils/icon';
 import LovCell from '@/components/field/LovCell';
@@ -115,6 +116,13 @@ function CellRenderer({
   const control = resolveListControl(meta);
   // 取值字段：优先取 valueField 指向的字段值（跳过空值），为空回退本字段（如名称列优先显示昵称）
   const raw = meta.valueField ? getCellValue(row, [meta.valueField, meta.name]) : getCellValue(row, [meta.name]);
+
+  // 字段级渲染器优先（后端下发 view，前端注册组件）；未注册时降级内置控件
+  const external = getFieldRenderer(meta.view);
+  if (external) {
+    const Comp = external.component;
+    return <Comp field={meta} value={raw} row={row} />;
+  }
 
   switch (control) {
     case 'boolean':

@@ -4,10 +4,11 @@
  * 覆盖：input / inputNumber / switch / readonly / email 等控件渲染、
  * 值变更回调、禁用态透传。
  */
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import FieldControl from '../FieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
+import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
 import type { DataField } from '@newlifex/api-core';
 
 /** 构造字段元数据 */
@@ -53,5 +54,29 @@ describe('FieldControl 字段控件渲染器', () => {
   it('disabled 透传到输入控件', () => {
     render(<FieldControl field={f({ name: 'Name' })} disabled />);
     expect(screen.getByRole('textbox')).toBeDisabled();
+  });
+});
+
+describe('FieldControl 字段级渲染器（META-4）', () => {
+  afterEach(() => clearFieldRenderers());
+
+  it('字段声明 view 且已注册时使用自定义渲染器', () => {
+    registerFieldRenderer('orgPicker', {
+      component: ({ field, value }) => (
+        <div data-testid="fc-org" data-name={field.name}>
+          {String(value ?? '')}
+        </div>
+      ),
+    });
+    render(<FieldControl field={f({ name: 'Org', view: 'orgPicker' })} value="A部门" />);
+    expect(screen.getByTestId('fc-org')).toHaveTextContent('A部门');
+    expect(screen.getByTestId('fc-org')).toHaveAttribute('data-name', 'Org');
+  });
+
+  it('字段声明 view 但未注册时降级内置控件', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(<FieldControl field={f({ name: 'Name', view: 'missing' })} value="张三" />);
+    expect(screen.getByRole('textbox')).toHaveValue('张三');
+    warn.mockRestore();
   });
 });
