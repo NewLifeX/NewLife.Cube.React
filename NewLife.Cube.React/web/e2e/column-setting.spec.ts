@@ -1,8 +1,8 @@
 /**
- * 表格列设置 E2E（齿轮按钮 → 列显隐/顺序 → 持久化到后端）
+ * 表格列设置 E2E（齿轮按钮 → 列显隐/顺序 → 本地持久化）
  *
- * 覆盖：齿轮按钮存在、打开面板展示字段、取消勾选保存后列消失、恢复默认后列恢复。
- * 后端 SetPageConfig（Page-React 分类）按用户持久化，meta 返回干预字段。
+ * 覆盖：齿轮按钮存在、打开面板展示字段、取消勾选保存后列消失且**刷新后仍隐藏**
+ * （LIST-13：列序/显隐存 `localStorage['cube-columns:{type}']`，不写后端）、恢复默认后列重现。
  */
 import { expect, test } from '@playwright/test';
 
@@ -25,7 +25,7 @@ test.describe('表格列设置（齿轮 → 显隐 → 持久化）', () => {
     await expect(page.getByRole('button', { name: /恢\s*复\s*默\s*认/ }).last()).toBeVisible();
   });
 
-  test('取消勾选保存后列隐藏，恢复默认后列重现', async ({ page }) => {
+  test('取消勾选保存后列隐藏，刷新后仍隐藏，恢复默认后列重现', async ({ page }) => {
     await page.goto('/Cube/App');
     await expect(page.locator('th', { hasText: '名称' })).toBeVisible({ timeout: 15000 });
 
@@ -38,7 +38,16 @@ test.describe('表格列设置（齿轮 → 显隐 → 持久化）', () => {
     await nameBox.locator('input').uncheck({ force: true });
     await page.getByRole('button', { name: /保\s*存/ }).last().click();
 
-    // 保存后重新加载：名称列消失
+    // 保存后：名称列消失，且偏好已写入 localStorage（LIST-13）
+    await expect(page.locator('th', { hasText: '名称' })).toHaveCount(0, { timeout: 15000 });
+    const stored = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((k) => k.startsWith('cube-columns:'));
+      return key ? localStorage.getItem(key) : null;
+    });
+    expect(stored).toBeTruthy();
+
+    // 刷新后仍保持隐藏（浏览器偏好优先于 /meta 默认）
+    await page.reload();
     await expect(page.locator('th', { hasText: '名称' })).toHaveCount(0, { timeout: 15000 });
 
     // 恢复默认：重新打开面板 → 恢复默认 → 名称列重现

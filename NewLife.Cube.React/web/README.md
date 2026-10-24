@@ -71,12 +71,15 @@ pnpm build
 ## 测试
 
 ```bash
-# 单元测试（Vitest，136 个）
+# 单元测试（Vitest）
 pnpm test:unit
 
-# E2E 测试（Playwright，48 个；默认 5050，可用 $env:E2E_BASE_URL="http://localhost:7081" 覆盖指向一体站点）
+# E2E 测试（Playwright；默认 5050，可用 $env:E2E_BASE_URL="http://localhost:7081" 覆盖指向一体站点）
 pnpm test:e2e
 ```
+
+**E2E 运行前提**：先启动被测站点（`Bin/CubeDemo/ReactCubeDemo.exe --urls http://localhost:5050`），并提供一个**管理员账号**——通过 `$env:ADMIN_USER` / `$env:ADMIN_PASS` 传入，缺省为 `admin/admin`。演示库若是他人环境，请勿沿用内置账号，另建专用账号；账号名不要以 `e2e-` 开头（`list.spec` 的批量删除用例会按该前缀搜索并清理数据）。
+浏览器语言固定为 `zh-CN`（`playwright.config.ts` 的 `use.locale`），因为断言文案为中文，而测试上下文默认 `en-US`。
 
 ---
 
