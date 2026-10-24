@@ -24,8 +24,9 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    // 支持 https 自签证书站点（如 launchSettings 默认的 https://localhost:7116）
+    screenshot: 'only-on-failure',    // 固定浏览器语言：断言文案为中文，而 Playwright 测试上下文默认 en-US；
+    // 语言链路（?lang= → 本地存储 → 浏览器 → 站点默认）会按浏览器语言选中文案。
+    locale: 'zh-CN',    // 支持 https 自签证书站点（如 launchSettings 默认的 https://localhost:7116）
     ignoreHTTPSErrors: true,
   },
   projects: [
