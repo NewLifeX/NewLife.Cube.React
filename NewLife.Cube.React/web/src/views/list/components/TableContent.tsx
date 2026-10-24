@@ -11,7 +11,16 @@ import { resolveListControl, isDateOnlyField } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import { getValueByKey, resolveUrl } from '@/utils/url';
-import { formatDecimal, formatMoney, formatPercent, parseDecimalScale } from '@/utils/numberFormat';
+import {
+  formatDateTimeWithPattern,
+  formatDecimal,
+  formatGmk,
+  formatMoney,
+  formatPercent,
+  formatTimeSpan,
+  formatTimeStamp,
+  parseDecimalScale,
+} from '@/utils/numberFormat';
 import { buildTreeRows } from '../utils/treeData';
 import { resolveIcon } from '@/utils/icon';
 import LovCell from '@/components/field/LovCell';
@@ -144,10 +153,26 @@ function CellRenderer({
     case 'date': {
       // 纯日期字段（ItemType=date 或字段名以 Date/day 结尾）只显示日期，其余显示完整时间
       const dateOnly = isDateOnlyField(meta);
+      // ItemType=`time-<格式>`：按声明的 .NET 格式输出（对齐 MVC _List_Data_Item，ITYPE-5）
+      const custom = /^time-(.+)$/i.exec((meta.itemType ?? '').trim());
+      if (custom) return <span>{formatDateTimeWithPattern(raw, custom[1])}</span>;
       return <span>{formatDate(raw, dateOnly)}</span>;
     }
     case 'time':
       return <span>{formatDate(raw)}</span>;
+    // 时长（TimeSpan / TimeSpan:<格式>，按描述单位换算，ITYPE-3）
+    case 'timespan':
+      return (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTimeSpan(raw, meta)}</span>
+      );
+    // Unix 秒时间戳（数值列 Time / Time:<格式>，ITYPE-4）
+    case 'timestamp':
+      return <span>{formatTimeStamp(raw, meta)}</span>;
+    // 容量（GMK，1024 进制，ITYPE-6）
+    case 'gmk':
+      return (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatGmk(raw)}</span>
+      );
     case 'number':
       return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{String(raw ?? '')}</span>;
     case 'percent':
@@ -263,16 +288,22 @@ export default function TableContent({
     else if (control === 'boolean') width = 90;
     else if (control === 'number') width = 100;
     else if (control === 'percent' || control === 'money' || control === 'decimal') width = 110;
+    else if (control === 'gmk' || control === 'timespan') width = 110;
     else if (control === 'lov') width = 100;
     else if (control === 'date') width = (meta.itemType || '').toLowerCase() === 'date' ? 100 : 140;
-    else if (control === 'time') width = 140;
+    else if (control === 'time' || control === 'timestamp') width = 140;
 
     // 对齐：控制器 textAlign 优先；否则主键列居中（规范 §7.4）、数字右对齐，其余按类型
     const alignResolved =
       resolveTextAlign(meta.textAlign) ??
       (meta.primaryKey
         ? 'center'
-        : control === 'number' || control === 'percent' || control === 'money' || control === 'decimal'
+        : control === 'number' ||
+            control === 'percent' ||
+            control === 'money' ||
+            control === 'decimal' ||
+            control === 'timespan' ||
+            control === 'gmk'
           ? 'right'
           : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
             ? 'center'

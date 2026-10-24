@@ -19,11 +19,13 @@ export interface UploaderProps {
   recordId?: number | string;
   /** 图片模式 */
   image?: boolean;
+  /** 可选文件类型（由字段 ItemType 推导，如 `image-png` → image/png）；未传时图片模式默认 image/* */
+  accept?: string;
   placeholder?: string;
   disabled?: boolean;
 }
 
-export default function Uploader({ value, onChange, type, recordId, image, placeholder, disabled }: UploaderProps) {
+export default function Uploader({ value, onChange, type, recordId, image, accept, placeholder, disabled }: UploaderProps) {
   const { message } = App.useApp();
   const [uploading, setUploading] = useState(false);
 
@@ -74,7 +76,7 @@ export default function Uploader({ value, onChange, type, recordId, image, place
           </div>
         ) : (
           <Upload
-            accept="image/*"
+            accept={accept || 'image/*'}
             showUploadList={false}
             beforeUpload={handleUpload}
             disabled={disabled || uploading}
@@ -91,7 +93,7 @@ export default function Uploader({ value, onChange, type, recordId, image, place
   // 文件模式：URL 展示 + 上传按钮
   return (
     <Space orientation="vertical" size={8} style={{ width: '100%' }}>
-      <Upload showUploadList={false} beforeUpload={handleUpload} disabled={disabled || uploading}>
+      <Upload accept={accept} showUploadList={false} beforeUpload={handleUpload} disabled={disabled || uploading}>
         <Button icon={<UploadOutlined />} loading={uploading}>
           {t('上传文件')}
         </Button>

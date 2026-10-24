@@ -62,39 +62,109 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   image: 'image',
   json: 'json',
   html: 'richHtml',
+  // 富文本别名（Vue 皮肤 richtext，与 html 同控件）
+  richtext: 'richHtml',
   markdown: 'richMarkdown',
   color: 'color',
   icon: 'icon',
   mail: 'email',
+  // 邮箱别名（CubeNC _Form_String 判定 email/mail，Vue 两值都映射）
+  email: 'email',
   mobile: 'tel',
+  // 电话族别名（CubeNC _Form_String 把 Phone/Fax/Mobile 都渲染为 tel 输入）
+  phone: 'tel',
+  fax: 'tel',
+  tel: 'tel',
   url: 'url',
   textarea: 'textarea',
+  // 显式文本（XCode 测试实体用 text 表示普通输入）
+  text: 'input',
+  password: 'input',
+  // 敏感字段：编辑仍为文本（脱敏展示属列表侧职责，不在此改控件）
+  secret: 'input',
   singleselect: 'lov',
   multipleselect: 'lovMulti',
   lovtable: 'lov',
   lovtablemulti: 'lovMulti',
-  password: 'input',
   time: 'timePicker',
   date: 'date',
   // 省市区级联选择：area1=省、area2=省/市、area3=省/市/区、area4=省/市/区/乡镇街道（对齐 MVC _Area1~_Area4）
+  // 无后缀 area 等价 area3（CubeNC `_Form_Item` / `_Common_List_Search` 的 area3,area 口径）
+  area: 'areaCascader',
   area1: 'areaCascader',
   area2: 'areaCascader',
   area3: 'areaCascader',
   area4: 'areaCascader',
-  // 数值类：percent/money/decimal 都用数值输入，仅列表展示时格式化
+  // 数值类：percent/money/decimal/number 都用数值输入，仅列表展示时格式化
+  number: 'inputNumber',
   percent: 'inputNumber',
   percentage: 'inputNumber',
   money: 'inputNumber',
   decimal: 'inputNumber',
+  // 时长（存秒/毫秒等数值），编辑为数值输入，展示由列表侧按描述单位换算
+  timespan: 'inputNumber',
   // 压缩包附件（下载链接同 file）
   'file-zip': 'upload',
+  // 附件/图片别名（Vue 皮肤 avatar / attachment）
+  avatar: 'image',
+  attachment: 'upload',
 };
 
-/** 解析 ItemType 的基名（`decimal(18,2)` → `decimal`） */
+/** ItemType 拆词 → 上传 accept（词表对齐 MVC `_Form_File`） */
+const ITEM_TYPE_ACCEPT: Record<string, string> = {
+  image: 'image/*',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  zip: 'application/zip,application/x-zip,application/x-zip-compressed',
+  doc: 'application/msword',
+  docx: 'application/msword',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.ms-excel',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.ms-powerpoint',
+  pdf: 'application/pdf',
+  xml: 'text/xml, application/xml',
+  json: 'application/json',
+};
+
+/**
+ * 是否附件类 ItemType（`file`/`image` 及其 `-` 后缀，对齐 CubeNC `DataField.IsAttachment`）
+ *
+ * @param itemType 后端 ItemType 原始声明（如 file-zip、image-png）
+ * @returns 是否附件
+ */
+export function isAttachmentItemType(itemType?: string): boolean {
+  const text = (itemType ?? '').trim().toLowerCase();
+  return text === 'file' || text === 'image' || text.startsWith('file-') || text.startsWith('image-');
+}
+
+/**
+ * 推导附件字段的上传 accept（ITYPE-2）
+ *
+ * `image` → `image/*`；`image-png`、`file-zip-doc` 等按 `-` 拆词查表拼接；无法识别时返回 undefined（不限制类型）。
+ *
+ * @param field 字段元数据
+ * @returns accept 串；非附件或无匹配词时返回 undefined
+ */
+export function resolveUploadAccept(field: FieldMeta): string | undefined {
+  const itemType = normalizeItemType(field);
+  if (!itemType) return undefined;
+
+  const accepts: string[] = [];
+  for (const token of itemType.split('-')) {
+    const accept = ITEM_TYPE_ACCEPT[token];
+    if (accept && !accepts.includes(accept)) accepts.push(accept);
+  }
+  return accepts.length > 0 ? accepts.join(',') : undefined;
+}
+
+/** 解析 ItemType 的基名（`decimal(18,2)` → `decimal`，`Time:yyyy` / `time-yyyy` / `image-png` → 前缀词） */
 function itemTypeBase(field: FieldMeta): string {
   const itemType = normalizeItemType(field);
   if (/^decimal\(/.test(itemType)) return 'decimal';
-  return itemType;
+  const index = itemType.search(/[:\-]/);
+  return index > 0 ? itemType.slice(0, index) : itemType;
 }
 
 /** 解析小写 ItemType */
@@ -204,6 +274,7 @@ export function widgetToControl(widget: WidgetType): ControlType {
  */
 export function resolveAreaMaxLevel(field: FieldMeta): number {
   const m = /^area([1-4])$/i.exec((field.itemType ?? '').trim());
+  // 无后缀 area 等价三级（省/市/区），与 CubeNC `area3,area` 口径一致
   return m ? Number(m[1]) : 3;
 }
 
@@ -216,15 +287,18 @@ export function resolveAreaMaxLevel(field: FieldMeta): number {
 export function resolveSearchControl(field: FieldMeta): SearchControlType {
   const itemType = itemTypeBase(field);
 
-  // ItemType 优先
-  if (itemType === 'file' || itemType === 'image' || itemType === 'file-zip') return 'fileExists';
+  // ItemType 优先（附件含 `-` 后缀，按原始声明判定）
+  if (isAttachmentItemType(field.itemType)) return 'fileExists';
   if (itemType === 'singleselect') return 'lov';
   if (itemType === 'multipleselect') return 'lovMulti';
   if (itemType === 'lovtable') return 'lov';
   if (itemType === 'lovtablemulti') return 'lovMulti';
 
-  // 省市区级联选择（itemType=area1~4，层级由后缀指定）
-  if (/^area[1-4]$/.test(itemType)) return 'areaCascader';
+  // 省市区级联选择（itemType=area/area1~4，层级由后缀指定）
+  if (itemType === 'area' || /^area[1-4]$/.test(itemType)) return 'areaCascader';
+
+  // 日期区间（SearchField 的 dateRange 声明，见 Cube SearchFieldTests）
+  if (itemType === 'daterange') return 'dateRange';
 
   const typeName = field.typeName;
 
@@ -266,12 +340,15 @@ export function resolveSearchControl(field: FieldMeta): SearchControlType {
 export function resolveListControl(field: FieldMeta): ListControlType {
   const itemType = itemTypeBase(field);
 
-  // ItemType 优先
+  // ItemType 优先（含 `-` 后缀：image-png / file-zip 已在基名归一）
   switch (itemType) {
     case 'image':
+    // 头像与图片别名（Vue 皮肤 avatar / attachment）
+    case 'avatar':
       return 'image';
     case 'file':
     case 'file-zip':
+    case 'attachment':
       return 'file';
     case 'percent':
     case 'percentage':
@@ -288,14 +365,28 @@ export function resolveListControl(field: FieldMeta): ListControlType {
       return 'json';
     case 'html':
     case 'markdown':
+    case 'richtext':
       return 'html';
     case 'mail':
+    case 'email':
     case 'mobile':
+    case 'phone':
+    case 'fax':
+    case 'tel':
     case 'url':
+    case 'text':
+    case 'password':
+    case 'secret':
       return 'text';
     case 'singleselect':
     case 'multipleselect':
       return 'lov';
+    // 时长：TimeSpan / TimeSpan:<格式>（ITYPE-3）
+    case 'timespan':
+      return 'timespan';
+    // 容量：GMK（ITYPE-6）
+    case 'gmk':
+      return 'gmk';
   }
 
   const typeName = field.typeName;
@@ -303,7 +394,10 @@ export function resolveListControl(field: FieldMeta): ListControlType {
   if (typeName === 'Guid') return 'readonly';
   if (typeName === 'Boolean') return 'boolean';
   if (typeName === 'DateTime') return 'date';
-  if (typeName === 'TimeSpan') return 'time';
+  // TimeSpan 列存的是时长（秒/毫秒），不是时钟时间；显式 itemType=time 时才按时钟展示
+  if (typeName === 'TimeSpan') return itemType === 'time' ? 'time' : 'timespan';
+  // 数值列上的 Time 是 Unix 秒（后端 ViewHelper.FormatValue 口径，ITYPE-4）
+  if (itemType === 'time' && NUMERIC_TYPES.has(typeName)) return 'timestamp';
   if (NUMERIC_TYPES.has(typeName)) return 'number';
 
   // 枚举 / LOV（真实枚举类型名如 SexKinds 也按 LOV 渲染）

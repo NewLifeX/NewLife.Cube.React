@@ -14,7 +14,7 @@ import IconSelector from './IconSelector';
 import RichEditor from './RichEditor';
 import FocusClearInput from './FocusClearInput';
 import AreaCascader from './AreaCascader';
-import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel } from '@/utils/fieldControl';
+import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel, resolveUploadAccept } from '@/utils/fieldControl';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
@@ -196,6 +196,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             type={apiPrefix}
             recordId={recordId}
             image
+            accept={resolveUploadAccept(field)}
             placeholder={placeholder}
           />
         );
@@ -207,6 +208,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             onChange={(v) => onChange?.(v)}
             type={apiPrefix}
             recordId={recordId}
+            accept={resolveUploadAccept(field)}
             placeholder={placeholder}
           />
         );

@@ -20,6 +20,8 @@ import {
   mapUrlParamsToSearchValues,
   resolveFormLayout,
   findPresetPatch,
+  resolveUploadAccept,
+  isAttachmentItemType,
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
@@ -55,6 +57,73 @@ describe('ItemType 数值/压缩包映射（META-7）', () => {
   });
 });
 
+describe('ItemType 附件 accept 推导（ITYPE-2）', () => {
+  it('单后缀与多后缀按 MVC _Form_File 词表拼接', () => {
+    expect(resolveUploadAccept(f({ itemType: 'image' }))).toBe('image/*');
+    // 多词按出现顺序拼接（MVC `_Form_File` 口径：image-png → image/* + image/png）
+    expect(resolveUploadAccept(f({ itemType: 'image-png' }))).toBe('image/*,image/png');
+    expect(resolveUploadAccept(f({ itemType: 'image-jpg' }))).toBe('image/*,image/jpeg');
+    expect(resolveUploadAccept(f({ itemType: 'file-zip' }))).toBe(
+      'application/zip,application/x-zip,application/x-zip-compressed',
+    );
+    expect(resolveUploadAccept(f({ itemType: 'file-pdf-xml' }))).toBe('application/pdf,text/xml, application/xml');
+  });
+
+  it('未声明或词表外后缀 → undefined（不限制类型）', () => {
+    expect(resolveUploadAccept(f({ typeName: 'String' }))).toBeUndefined();
+    expect(resolveUploadAccept(f({ itemType: 'file-unknown' }))).toBeUndefined();
+  });
+
+  it('isAttachmentItemType 识别前缀（对齐 CubeNC DataField.IsAttachment）', () => {
+    expect(isAttachmentItemType('file')).toBe(true);
+    expect(isAttachmentItemType('Image')).toBe(true);
+    expect(isAttachmentItemType('file-zip')).toBe(true);
+    expect(isAttachmentItemType('image-png')).toBe(true);
+    expect(isAttachmentItemType('json')).toBe(false);
+    expect(isAttachmentItemType(undefined)).toBe(false);
+  });
+});
+
+describe('搜索控件 ItemType 扩容（ITYPE-8）', () => {
+  it('附件前缀与 area/dateRange', () => {
+    expect(resolveSearchControl(f({ itemType: 'image-png' }))).toBe('fileExists');
+    expect(resolveSearchControl(f({ itemType: 'file-doc' }))).toBe('fileExists');
+    expect(resolveSearchControl(f({ itemType: 'avatar' }))).toBe('text');
+    expect(resolveSearchControl(f({ typeName: 'Int32', itemType: 'area' }))).toBe('areaCascader');
+    expect(resolveSearchControl(f({ typeName: 'DateTime', itemType: 'dateRange' }))).toBe('dateRange');
+  });
+});
+
+describe('列表控件 ItemType 扩容（ITYPE-3/4/6/7）', () => {
+  it('附件前缀与别名族', () => {
+    expect(resolveListControl(f({ itemType: 'image-png' }))).toBe('image');
+    expect(resolveListControl(f({ itemType: 'avatar' }))).toBe('image');
+    expect(resolveListControl(f({ itemType: 'file-doc' }))).toBe('file');
+    expect(resolveListControl(f({ itemType: 'attachment' }))).toBe('file');
+    expect(resolveListControl(f({ itemType: 'richtext' }))).toBe('html');
+    expect(resolveListControl(f({ itemType: 'email' }))).toBe('text');
+    expect(resolveListControl(f({ itemType: 'phone' }))).toBe('text');
+    expect(resolveListControl(f({ itemType: 'secret' }))).toBe('text');
+  });
+
+  it('时长：TimeSpan 声明与 CLR TimeSpan 都按时长展示', () => {
+    expect(resolveListControl(f({ itemType: 'TimeSpan', typeName: 'Int32' }))).toBe('timespan');
+    expect(resolveListControl(f({ itemType: "TimeSpan:d'.'hh':'mm':'ss", typeName: 'Int32' }))).toBe('timespan');
+    expect(resolveListControl(f({ typeName: 'TimeSpan' }))).toBe('timespan');
+    // 时长列显式声明 time 表示时钟时间
+    expect(resolveListControl(f({ typeName: 'TimeSpan', itemType: 'time' }))).toBe('time');
+  });
+
+  it('Unix 时间戳：数值列 ItemType=Time', () => {
+    expect(resolveListControl(f({ itemType: 'Time', typeName: 'Int64' }))).toBe('timestamp');
+    expect(resolveListControl(f({ itemType: 'Time:yyyy/MM/dd', typeName: 'Int32' }))).toBe('timestamp');
+  });
+
+  it('容量：GMK', () => {
+    expect(resolveListControl(f({ itemType: 'GMK', typeName: 'Int64' }))).toBe('gmk');
+  });
+});
+
 describe('resolveControl 表单控件映射', () => {
   it('ItemType 优先于 TypeName', () => {
     expect(resolveControl(f({ itemType: 'json', typeName: 'String' }))).toBe('json');
@@ -65,6 +134,31 @@ describe('resolveControl 表单控件映射', () => {
     expect(resolveControl(f({ itemType: 'html' }))).toBe('richHtml');
     expect(resolveControl(f({ itemType: 'markdown' }))).toBe('richMarkdown');
     expect(resolveControl(f({ itemType: 'textarea', typeName: 'String' }))).toBe('textarea');
+  });
+
+  it('ItemType 别名族（ITYPE-1）→ 对应控件', () => {
+    expect(resolveControl(f({ itemType: 'email', typeName: 'String' }))).toBe('email');
+    expect(resolveControl(f({ itemType: 'phone', typeName: 'String' }))).toBe('tel');
+    expect(resolveControl(f({ itemType: 'fax', typeName: 'String' }))).toBe('tel');
+    expect(resolveControl(f({ itemType: 'tel', typeName: 'String' }))).toBe('tel');
+    expect(resolveControl(f({ itemType: 'secret', typeName: 'String' }))).toBe('input');
+    expect(resolveControl(f({ itemType: 'text', typeName: 'String' }))).toBe('input');
+    expect(resolveControl(f({ itemType: 'number', typeName: 'Int32' }))).toBe('inputNumber');
+    expect(resolveControl(f({ itemType: 'richtext', typeName: 'String' }))).toBe('richHtml');
+    expect(resolveControl(f({ itemType: 'avatar', typeName: 'String' }))).toBe('image');
+    expect(resolveControl(f({ itemType: 'attachment', typeName: 'String' }))).toBe('upload');
+    // 时长存数值（秒/毫秒），编辑为数字；格式化在列表侧
+    expect(resolveControl(f({ itemType: 'timespan', typeName: 'Int32' }))).toBe('inputNumber');
+  });
+
+  it('附件后缀 ItemType（image-png / file-doc）→ 对应上传控件', () => {
+    expect(resolveControl(f({ itemType: 'image-png' }))).toBe('image');
+    expect(resolveControl(f({ itemType: 'file-doc' }))).toBe('upload');
+  });
+
+  it('无后缀 area 等价三级（CubeNC `area3,area` 口径）', () => {
+    expect(resolveControl(f({ typeName: 'Int32', itemType: 'area' }))).toBe('areaCascader');
+    expect(resolveAreaMaxLevel(f({ typeName: 'Int32', itemType: 'area' }))).toBe(3);
   });
 
   it('Guid → readonly', () => {

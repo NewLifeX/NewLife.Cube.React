@@ -60,6 +60,9 @@ export type ListControlType =
   | 'percent' // 百分比（值 / 缩放 × 100，后缀 %）
   | 'money' // 金额（千分位 + 2 位小数）
   | 'decimal' // 定点小数（decimal(p,s) 的 s 位）
+  | 'timespan' // 时长（TimeSpan / TimeSpan:<格式>，按描述单位换算）
+  | 'timestamp' // Unix 秒时间戳（数值列 Time / Time:<格式>）
+  | 'gmk' // 容量（GMK，1024 进制 K/M/G…）
   | 'readonly'; // 只读文本（Guid）
 
 /** 选项 */
@@ -79,8 +82,7 @@ export interface FieldMeta {
   /** CLR 类型名：String / Int32 / Int64 / Decimal / Double / Single / Boolean / DateTime / TimeSpan / Enum / Guid / 枚举真实类型名 */
   typeName: string;
   /** 后端 ItemType：image / file / json / html / markdown / color / icon / mail / mobile / url / singleSelect / multipleSelect / date / time 等 */
-  itemType?: string;
-  /** 字段长度（String 大文本判定依据，Length >= 300 视为大文本） */
+  itemType?: string;  /** 字段长度（String 大文本判定依据，Length >= 300 视为大文本） */
   length?: number;
   /** 数值精度（总位数） */
   precision?: number;
