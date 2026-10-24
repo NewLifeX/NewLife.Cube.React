@@ -31,6 +31,8 @@ export interface SearchBarProps {
   onReset: () => void;
   /** 外部 URL 查询参数映射的初始搜索值（如工作台指标卡跳转日志页），变化时回填表单 */
   initialValues?: Record<string, unknown>;
+  /** 页面扩展插槽（META-6）：追加在搜索/重置按钮右侧 */
+  extra?: React.ReactNode;
 }
 
 /** 范围类控件（占 2 格，避免被压缩） */
@@ -252,7 +254,7 @@ interface SearchCell {
   range: boolean;
 }
 
-export default function SearchBar({ fields, onSearch, onReset, initialValues }: SearchBarProps) {
+export default function SearchBar({ fields, onSearch, onReset, initialValues, extra }: SearchBarProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
@@ -404,6 +406,8 @@ export default function SearchBar({ fields, onSearch, onReset, initialValues }: 
               )}
             </Button>
           )}
+          {/* 页面扩展插槽（META-6）：业务自定义搜索区域追加在按钮右侧 */}
+          {extra}
         </div>
       </div>
     </div>

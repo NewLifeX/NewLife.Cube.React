@@ -7,6 +7,7 @@
 import { create } from 'zustand';
 import type { SiteConfig } from '@newlifex/api-core';
 import { api } from '@/api';
+import { applySiteLanguage } from '@/i18n';
 
 interface SiteState {
   /** 当前站点配置；接口失败时保持 null，由调用方回退内置品牌 */
@@ -44,6 +45,8 @@ export const useSiteStore = create<SiteState>((set, get) => ({
       .then((res) => {
         const config = res.data ?? null;
         set({ config, loadedTenant: tenant, loading: false });
+        // 站点/租户默认语言与锁定标记：未显式选过语言时按浏览器 → 站点默认链路生效（FND-15）
+        applySiteLanguage(config?.language);
         return config;
       })
       .catch((err: unknown) => {

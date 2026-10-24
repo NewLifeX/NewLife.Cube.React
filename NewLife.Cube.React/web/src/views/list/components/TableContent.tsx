@@ -35,14 +35,22 @@ export interface TableContentProps {
   onEdit?: (row: Record<string, unknown>) => void;
   onDelete?: (row: Record<string, unknown>) => void;
   onRestore?: (row: Record<string, unknown>) => void;
-  /** 操作列扩展按钮（如角色「权限」），渲染在编辑按钮左侧 */
-  rowActions?: Array<{
-    key: string;
-    label: React.ReactNode;
-    className?: string;
-    danger?: boolean;
-    onClick: (row: Record<string, unknown>) => void;
-  }>;
+  /** 操作列扩展按钮（如角色「权限」），渲染在编辑按钮左侧；可为按行计算的函数 */
+  rowActions?:
+    | Array<{
+        key: string;
+        label: React.ReactNode;
+        className?: string;
+        danger?: boolean;
+        onClick: (row: Record<string, unknown>) => void;
+      }>
+    | ((row: Record<string, unknown>) => Array<{
+        key: string;
+        label: React.ReactNode;
+        className?: string;
+        danger?: boolean;
+        onClick: (row: Record<string, unknown>) => void;
+      }>);
   onSortChange?: (sort?: string, desc?: boolean) => void;
   /** 当前排序列名（配合 onSortChange 受控显示排序指示，仅排序列显示箭头） */
   sortField?: string;
@@ -58,6 +66,8 @@ export interface TableContentProps {
   doubleClickEdit?: boolean;
   /** 树形列表父字段名（LIST-17）；传入后按该字段重建树并按父级缩进 */
   treeField?: string;
+  /** 页面扩展追加的自定义列（META-6），渲染在元数据列之后、操作列之前 */
+  extraColumns?: ColumnsType<Record<string, unknown>>;
   onChange?: (pagination: TablePaginationConfig) => void;
 }
 
@@ -235,6 +245,7 @@ export default function TableContent({
   confirmDelete = true,
   doubleClickEdit = true,
   treeField,
+  extraColumns,
   onChange,
 }: TableContentProps) {
   const columns: ColumnsType<Record<string, unknown>> = fields.map((field) => {
@@ -292,17 +303,22 @@ export default function TableContent({
   });
 
   // 操作列：查看（只读/无编辑权限时）+ 编辑 + 删除（软删除行显示「恢复」）
+  if (extraColumns?.length) columns.push(...extraColumns);
   const isSoftDeleted = (row: Record<string, unknown>) => {
     if (!softDeleteField) return false;
     const v = getValueByKey(row, softDeleteField);
     return v === true || v === 'true' || v === 1;
   };
 
-  if (canView || canEdit || canDelete || (rowActions && rowActions.length > 0)) {
+  const hasRowActions = typeof rowActions === 'function' ? true : !!rowActions?.length;
+  if (canView || canEdit || canDelete || hasRowActions) {
     // 操作列宽度按可用操作数自适应：每胶囊按钮约 52px + 单元格 16px 内边距，
     // 仅「查看」时收窄避免大块留白，多操作时撑开容纳按钮
     const opsCount =
-      (canView ? 1 : 0) + (canEdit ? 1 : 0) + (canDelete ? 1 : 0) + (rowActions?.length ?? 0);
+      (canView ? 1 : 0) +
+      (canEdit ? 1 : 0) +
+      (canDelete ? 1 : 0) +
+      (typeof rowActions === 'function' ? 1 : (rowActions?.length ?? 0));
     columns.push({
       title: t('操作'),
       key: '__ops',
@@ -316,7 +332,7 @@ export default function TableContent({
             </Button>
           )}
           {/* 操作列扩展按钮（如角色「权限」），渲染在编辑按钮左侧 */}
-          {rowActions?.map((a) => (
+          {(typeof rowActions === 'function' ? rowActions(row) : rowActions)?.map((a) => (
             <Button
               key={a.key}
               type="link"

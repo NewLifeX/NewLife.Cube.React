@@ -225,4 +225,41 @@ describe('TableContent 列呈现与数据动作（LIST-12/15/16）', () => {
     expect(screen.getByTestId('org-cell')).toHaveTextContent('A部门');
     clearFieldRenderers();
   });
+
+  it('extraColumns 追加自定义列（META-6）', () => {
+    render(
+      <TableContent
+        fields={FIELDS}
+        data={DATA}
+        selectable={false}
+        extraColumns={[
+          {
+            title: '扩展列',
+            key: 'ext',
+            render: (_, row) => <span data-testid="ext-cell">{String(row.Name)}</span>,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getAllByText('扩展列').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('ext-cell')).toHaveLength(2);
+  });
+
+  it('rowActions 支持按行计算（META-6）', () => {
+    const onRowAction = vi.fn();
+    render(
+      <TableContent
+        fields={FIELDS}
+        data={DATA}
+        canEdit={false}
+        canDelete={false}
+        selectable={false}
+        rowActions={(row) => [
+          { key: 'trace', label: '追踪', onClick: () => onRowAction(row.Name) },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: /追\s*踪/ })[0]);
+    expect(onRowAction).toHaveBeenCalledWith('a');
+  });
 });

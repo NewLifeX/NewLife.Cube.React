@@ -26,6 +26,7 @@ import TableContent from './components/TableContent';
 import ColumnSetting, { filterVisibleFields } from './components/ColumnSetting';
 import { applyColumnPrefs, loadColumnPrefs, type ColumnPrefs } from './utils/columnPrefs';
 import { detectTreeField } from './utils/treeData';
+import { getPageExtension } from '@/rendering/pageExtensions';
 import ListPagination from './components/ListPagination';
 import ChartView from './components/ChartView';
 import FormDialog from '@/views/form/FormDialog';
@@ -105,6 +106,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     if (typeof presetTreeBy === 'string' && presetTreeBy) return presetTreeBy;
     return detectTreeField(listFields, pkField);
   }, [pagePreset, listFields, pkField]);
+
+  // 页面扩展点（META-6 M2 混合页）：未注册时全部为 undefined，走默认渲染
+  const extension = useMemo(() => getPageExtension(type), [type]);
 
   const [searchParams, setSearchParams] = useState<Record<string, unknown>>(() => ({ ...urlQuery }));
   // 当前是否有搜索条件：有搜索时隐藏高级菜单「清空数据表」，防误删筛选后的数据（对齐 MVC page.Params.Count==0）
@@ -229,16 +233,26 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   /** 角色页：打开权限配置弹窗（编辑按钮左侧「权限」） */
   const handlePermRow = (row: Record<string, unknown>) => setPermDialog({ open: true, row });
 
-  const rowActions = isRole
-    ? [
-        {
-          key: 'permission',
-          label: t('权限'),
-          className: 'cube-op-btn-op-perm',
-          onClick: handlePermRow,
-        },
-      ]
-    : undefined;
+  // 行操作：内置（角色页「权限」）+ 页面扩展追加（META-6）
+  const rowActions = useMemo(() => {
+    const base = isRole
+      ? [
+          {
+            key: 'permission',
+            label: t('权限'),
+            className: 'cube-op-btn-op-perm',
+            onClick: handlePermRow,
+          },
+        ]
+      : [];
+    const ext = extension?.rowActions;
+    if (!ext) return base.length ? base : undefined;
+    return (row: Record<string, unknown>) => [
+      ...base,
+      ...(ext({ type, query: searchParams, selectedKeys, reload: () => void refresh(), row }) ?? []),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRole, extension, type, searchParams, selectedKeys, refresh]);
 
   const handleRestoreRow = (row: Record<string, unknown>) => {
     const id = getValueByKey(row, pkField) ?? getValueByKey(row, 'id');
@@ -508,10 +522,32 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     [urlQuery, searchFields],
   );
 
+  // 扩展点上下文与插槽内容（META-6）。未注册扩展时全部为 undefined
+  const extensionCtx = useMemo(
+    () => ({ type, query: searchParams, selectedKeys, reload: () => void refresh() }),
+    [type, searchParams, selectedKeys, refresh],
+  );
+  const searchExtraNode = useMemo(
+    () =>
+      extension?.searchExtra
+        ? extension.searchExtra({ ...extensionCtx, fields: searchFields.map((f) => toFieldMeta(f.field)) })
+        : undefined,
+    [extension, extensionCtx, searchFields],
+  );
+  const toolbarExtraNode = useMemo(() => extension?.toolbarExtra?.(extensionCtx), [extension, extensionCtx]);
+  const extraColumns = useMemo(() => extension?.extraColumns?.(extensionCtx), [extension, extensionCtx]);
+  const closeDialog = () => setDialog({ open: false, mode: 'add', row: null });
+
   return (
     // 页面名由顶栏面包屑/多标签承担，Card 不再重复标题（避免搜索区上方冗余占位）
     <Card className="cube-entity-card" size="small" styles={{ body: { paddingTop: 8 } }}>
-      <SearchBar fields={searchFields} onSearch={handleSearch} onReset={handleReset} initialValues={searchInitialValues} />
+      <SearchBar
+        fields={searchFields}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        initialValues={searchInitialValues}
+        extra={searchExtraNode}
+      />
       {enableToolbar && (
         <Toolbar
           canAdd={canAdd}
@@ -541,6 +577,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
           columnSetting={
             <ColumnSetting type={type} allFields={orderedFields} visibleFields={visibleFieldNames} onChanged={reloadColumnPrefs} />
           }
+          extra={toolbarExtraNode}
         />
       )}
       {view === 'chart' ? (
@@ -553,6 +590,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             loading={loading}
             pkField={pkField}
             treeField={treeField}
+            extraColumns={extraColumns}
             canView={canView}
             canEdit={canEdit}
             canDelete={canDelete}
@@ -588,19 +626,29 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       {/* 导入：隐藏文件选择框 */}
       <input ref={importInputRef} type="file" accept=".xls,.xlsx,.csv,.json,.zip" style={{ display: 'none' }} onChange={onImportFileChange} />
 
-      {/* 新增/编辑弹窗 */}
-      <FormDialog
-        open={dialog.open}
-        title={dialog.mode === 'edit' ? t('编辑') : t('新增')}
-        mode={dialog.mode}
-        fields={formFields}
-        row={dialog.row}
-        apiPrefix={type}
-        formPreset={pagePreset?.form}
-        submitting={formLoading}
-        onSubmit={handleFormSubmit}
-        onCancel={() => setDialog({ open: false, mode: 'add', row: null })}
-      />
+      {/* 新增/编辑弹窗：页面扩展提供自定义表单体时替换默认内容（META-6 M2） */}
+      {dialog.open && extension?.renderForm ? (
+        extension.renderForm({
+          ...extensionCtx,
+          row: dialog.mode === 'edit' ? (dialog.row ?? null) : null,
+          fields: formFields,
+          onSubmit: handleFormSubmit,
+          onCancel: closeDialog,
+        })
+      ) : (
+        <FormDialog
+          open={dialog.open}
+          title={dialog.mode === 'edit' ? t('编辑') : t('新增')}
+          mode={dialog.mode}
+          fields={formFields}
+          row={dialog.row}
+          apiPrefix={type}
+          formPreset={pagePreset?.form}
+          submitting={formLoading}
+          onSubmit={handleFormSubmit}
+          onCancel={closeDialog}
+        />
+      )}
 
       {/* 详情弹窗（操作列「查看」） */}
       <DetailDialog

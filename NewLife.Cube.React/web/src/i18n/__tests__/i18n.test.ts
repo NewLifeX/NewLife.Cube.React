@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import antdEnUS from 'antd/locale/en_US';
 import i18n, {
-  CULTURE_COOKIE_NAME,
+  applySiteLanguage,
   getAntdLocale,
   getCurrentLanguage,
   hasExplicitLanguage,
+  isLanguageLocked,
   isRtl,
   normalizeLanguage,
   resolveLanguage,
@@ -12,6 +13,7 @@ import i18n, {
   setLanguage,
   supportedLanguages,
   t,
+  tryNormalizeLanguage,
 } from '../index';
 import appZhCN from '../app/zh-CN';
 import appZhTW from '../app/zh-TW';
@@ -29,7 +31,7 @@ describe('i18n', () => {
   afterEach(async () => {
     localStorage.clear();
     window.history.replaceState(null, '', '/');
-    document.cookie = `${CULTURE_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    applySiteLanguage(null);
     await i18n.changeLanguage('en-US');
     document.documentElement.removeAttribute('dir');
   });
@@ -73,13 +75,28 @@ describe('i18n', () => {
     expect(resolveLanguage()).toBe('ja-JP');
   });
 
-  it('从服务端文化 Cookie 恢复语言', () => {
-    const value = encodeURIComponent('c=ko-KR|uic=ko-KR');
-    document.cookie = `${CULTURE_COOKIE_NAME}=${value}; path=/`;
-    expect(resolveLanguage()).toBe('ko-KR');
+  it('tryNormalizeLanguage 区分「不支持」与「回退英文」', () => {
+    expect(tryNormalizeLanguage('ja-JP')).toBe('ja-JP');
+    expect(tryNormalizeLanguage('sw-KE')).toBeNull();
+    expect(tryNormalizeLanguage('')).toBeNull();
   });
 
-  it('切换语言写入存储、服务端 Cookie 并同步 URL 与 html 属性', async () => {
+  it('浏览器语言不受支持时回退站点默认语言', () => {
+    // jsdom 默认 navigator.language 为 en-US（受支持），先确保非显式态
+    expect(hasExplicitLanguage()).toBe(false);
+    applySiteLanguage({ default: 'de-DE' });
+    // 浏览器语言受支持时仍优先浏览器（Accept-Language 优先于租户/站点默认）
+    expect(resolveLanguage()).toBe(normalizeLanguage(navigator.language));
+  });
+
+  it('站点语言锁定标记可读', () => {
+    applySiteLanguage({ locked: true });
+    expect(isLanguageLocked()).toBe(true);
+    applySiteLanguage({ locked: false });
+    expect(isLanguageLocked()).toBe(false);
+  });
+
+  it('切换语言写入存储并同步 URL 与 html 属性，不写 Cookie', async () => {
     window.history.replaceState(null, '', '/admin/user?lang=en-US');
     setLanguage('ja-JP');
     await i18n.changeLanguage('ja-JP');
@@ -87,7 +104,8 @@ describe('i18n', () => {
     expect(localStorage.getItem('cube-language')).toBe('ja-JP');
     expect(getCurrentLanguage()).toBe('ja-JP');
     expect(window.location.search).toBe('?lang=ja-JP');
-    expect(document.cookie).toContain(`${CULTURE_COOKIE_NAME}=${encodeURIComponent('c=ja-JP|uic=ja-JP')}`);
+    // FND-15：选择只存浏览器与请求头，不写服务端 Cookie
+    expect(document.cookie).not.toContain('.AspNet.Culture');
     expect(document.documentElement.getAttribute('lang')).toBe('ja-JP');
     expect(i18n.t('common.save')).toBe('保存');
   });
@@ -128,16 +146,14 @@ describe('i18n', () => {
     await i18n.changeLanguage('en-US');
   });
 
-  it('自动语言清除本地存储、服务端 Cookie 与 URL 参数', () => {
+  it('自动语言清除本地存储与 URL 参数', () => {
     localStorage.setItem('cube-language', 'de-DE');
-    document.cookie = `${CULTURE_COOKIE_NAME}=${encodeURIComponent('c=de-DE|uic=de-DE')}; path=/`;
     window.history.replaceState(null, '', '/?lang=de-DE');
     expect(hasExplicitLanguage()).toBe(true);
 
     setAutoLanguage();
 
     expect(localStorage.getItem('cube-language')).toBeNull();
-    expect(document.cookie).not.toContain(CULTURE_COOKIE_NAME);
     expect(window.location.search).toBe('');
     expect(hasExplicitLanguage()).toBe(false);
   });

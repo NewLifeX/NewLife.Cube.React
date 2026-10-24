@@ -2,7 +2,7 @@
  * 语言切换器
  *
  * 语言清单来自后端（ReactController.Languages，等价于 MVC 魔方绑定 `CubeLocalization.GetLanguageOptions()`），
- * 接口不可用时回退内置清单；选择结果写入 `.AspNet.Culture` Cookie 与本地存储，并刷新页面重取服务端数据。
+ * 接口不可用时回退内置清单；选择结果只写本地存储与 URL 参数，不写服务端 Cookie（FND-15）。
  */
 import { useEffect, useMemo } from 'react';
 import { Button, Dropdown } from 'antd';
@@ -11,12 +11,14 @@ import { useTranslation } from 'react-i18next';
 import {
   getCurrentLanguage,
   hasExplicitLanguage,
+  isLanguageLocked,
   setAutoLanguage,
   setLanguage,
   type CubeLocale,
 } from '@/i18n';
 import { resolveSelectableLanguages } from '@/i18n/serverLanguages';
 import { useServerLanguageStore } from '@/stores/serverLanguage';
+import { useSiteStore } from '@/stores/site';
 
 /** 「跟随系统」菜单项键 */
 const AUTO_KEY = '__auto__';
@@ -24,6 +26,9 @@ const AUTO_KEY = '__auto__';
 export default function LanguageSwitch() {
   const { t } = useTranslation();
   const server = useServerLanguageStore((state) => state.info);
+  // 站点锁定语言（CubeSetting.LanguageLocked）：隐藏切换入口，避免用户改了又被服务端覆盖
+  const siteLocked = useSiteStore((state) => !!state.config?.language?.locked);
+  const locked = !!server?.forced || siteLocked || isLanguageLocked();
 
   useEffect(() => {
     void useServerLanguageStore.getState().load();
@@ -73,7 +78,7 @@ export default function LanguageSwitch() {
         type="text"
         className="cube-header-action"
         icon={<GlobalOutlined />}
-        disabled={!!server?.forced}
+        disabled={locked}
         aria-label={t('common.language')}
       />
     </Dropdown>

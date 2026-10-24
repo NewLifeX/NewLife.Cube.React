@@ -64,8 +64,8 @@ export async function fetchServerLanguages(): Promise<ServerLanguageInfo | null>
     // 与 API 客户端使用同一基地址；默认同源
     const baseUrl = (getConfig().request.baseUrl ?? '').replace(/\/$/, '');
     const acceptLanguage = getLanguageListAcceptLanguage();
-    // 服务端优先级为 ?lang= → Cookie → Accept-Language；显式带上 lang 才能覆盖旧 Cookie，
-    // 保证语言下拉的显示名与当前界面语言一致（尤其是一次性 ?lang= 非全量语言时）
+    // 服务端语言链路为 ?lang= → Accept-Language → 租户默认 → 站点默认 → 英文，
+    // 显式带上 lang 保证语言下拉的显示名与当前界面语言一致（尤其是一次性 ?lang= 非全量语言时）
     const res = await fetch(`${baseUrl}${LANGUAGE_ENDPOINT}?lang=${encodeURIComponent(acceptLanguage)}`, {
       credentials: 'same-origin',
       cache: 'no-store',

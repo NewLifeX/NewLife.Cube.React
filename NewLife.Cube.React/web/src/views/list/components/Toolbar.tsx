@@ -60,6 +60,8 @@ export interface ToolbarProps {
   selectedKeys?: React.Key[];
   /** 自定义按钮动作执行：页面负责发请求并处理 message/refresh/url/time */
   onMetaAction?: (item: ToolbarItem, payload: Record<string, unknown>, file?: File) => void | Promise<void>;
+  /** 页面扩展插槽（META-6）：追加在工具栏右侧 */
+  extra?: React.ReactNode;
 }
 
 /**
@@ -131,6 +133,7 @@ export default function Toolbar({
   pageQuery,
   selectedKeys,
   onMetaAction,
+  extra,
 }: ToolbarProps) {
   // 上传类按钮各自一个隐藏文件框（按钮同名互不干扰）
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -246,6 +249,7 @@ export default function Toolbar({
         {(metaToolbar ?? []).map(renderMetaButton)}
       </div>
       <div className="cube-toolbar-side">
+        {extra}
         {columnSetting}
         {canChart && (
           <Segmented

@@ -4,9 +4,9 @@
  * 对齐 NewLife.Core / NewLife.Cube 的请求语言语义：
  * - 语言清单 32 种（与 Core `Localization.SupportedCultures` 一致），英文为源文与兜底
  * - 内置 11 种全量词典；其余语言只参与识别/归一化，文案统一回退英文
- * - 启动顺序：?lang= → localStorage['cube-language'] → 服务端文化 Cookie → 浏览器语言 → 英文
+ * - 启动顺序：?lang= → localStorage['cube-language'] → 浏览器语言（Accept-Language）→ 站点/租户默认 → 英文
  * - 语言代码归一化与服务端 Localization.NormalizeCulture 一致（裸语言码、旧别名、区域映射、zh-Hans/zh-Hant）
- * - 切换语言时同步 localStorage、服务端 `.AspNet.Culture` Cookie、URL 的 lang 参数、<html lang> 与 <html dir>
+ * - 切换语言只写 localStorage 与 URL 的 lang 参数，**不写服务端 Cookie/用户参数**；请求侧由 `Accept-Language` 头传递
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -99,9 +99,13 @@ export const fullyTranslatedLanguages = [
 
 const supportedValues = supportedLanguages.map((item) => item.value) as readonly string[];
 
-/** 语言存储键与服务器文化 Cookie（与 NewLife.Cube 的 CookieRequestCultureProvider 一致） */
+/** 语言存储键 */
 export const LANGUAGE_STORAGE_KEY = 'cube-language';
-export const CULTURE_COOKIE_NAME = '.AspNet.Culture';
+
+/** 站点/租户下发的默认语言（/Cube/Site 的 language.default，晚于启动到达） */
+let siteDefaultLanguage: CubeLocale | null = null;
+/** 站点是否锁定语言（language.locked=true 时前端隐藏切换入口） */
+let languageLocked = false;
 
 /** 从右到左书写的语言 */
 const rtlLanguages: readonly string[] = ['ar-SA', 'he-IL', 'fa-IR'];
@@ -111,10 +115,21 @@ const legacyAliases: Record<string, string> = { in: 'id', iw: 'he', no: 'nb', mo
 
 /** 语言代码归一化：精确匹配优先，其次按主语言前缀匹配，未命中回退英文 */
 export function normalizeLanguage(language: string): CubeLocale {
-  if (!language) return 'en-US';
+  return tryNormalizeLanguage(language) ?? 'en-US';
+}
+
+/**
+ * 尝试归一化语言代码；无法识别时返回 null（用于区分「真的不支持」与「回退英文」）
+ *
+ * @param language 原始语言代码
+ * @returns 归一化后的受支持语言；识别不到时 null
+ */
+export function tryNormalizeLanguage(language: string): CubeLocale | null {
+  if (!language) return null;
   if (supportedValues.includes(language)) return language as CubeLocale;
 
   const lower = language.trim().toLowerCase().replace(/_/g, '-');
+  if (!lower) return null;
   if (lower.startsWith('zh')) {
     const isHant =
       lower.includes('hant') ||
@@ -127,31 +142,13 @@ export function normalizeLanguage(language: string): CubeLocale {
   const rawPrefix = lower.split('-')[0];
   const prefix = legacyAliases[rawPrefix] ?? rawPrefix;
   const matched = supportedLanguages.find((item) => item.value.split('-')[0].toLowerCase() === prefix);
-  return matched ? matched.value : 'en-US';
+  return matched ? matched.value : null;
 }
 
 /** 读取 URL 中的 lang 参数（服务端 RequestLocalization 的最高优先级来源） */
 function readQueryLanguage(): string | null {
   if (typeof window === 'undefined') return null;
   return new URLSearchParams(window.location.search).get('lang');
-}
-
-/** 读取服务端文化 Cookie（值为 c=zh-CN|uic=zh-CN 的 URL 编码形式） */
-function readCultureCookie(): string | null {
-  if (typeof document === 'undefined') return null;
-
-  const match = document.cookie.match(/(?:^|;\s*)\.AspNet\.Culture=([^;]*)/);
-  if (!match) return null;
-
-  let value: string;
-  try {
-    value = decodeURIComponent(match[1]);
-  } catch {
-    return null;
-  }
-
-  const ui = /(?:^|\|)uic=([^|]+)/.exec(value);
-  return ui ? ui[1] : null;
 }
 
 /** 读取本地存储中的语言 */
@@ -163,7 +160,24 @@ function readStoredLanguage(): string | null {
   }
 }
 
-/** 读取 URL、本地存储、服务端 Cookie 或浏览器语言 */
+/**
+ * 读取浏览器语言（等价于请求头 Accept-Language）
+ *
+ * 按用户偏好顺序取第一个**真实受支持**的语言；全部不支持时返回 null，交由站点默认语承接。
+ *
+ * @returns 受支持的浏览器语言；无匹配时 null
+ */
+function readBrowserLanguage(): CubeLocale | null {
+  if (typeof navigator === 'undefined') return null;
+  const list = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const item of list) {
+    const matched = tryNormalizeLanguage(item ?? '');
+    if (matched) return matched;
+  }
+  return null;
+}
+
+/** 读取 URL、本地存储、浏览器语言或站点默认语言 */
 export function resolveLanguage(): CubeLocale {
   const query = readQueryLanguage();
   if (query) return normalizeLanguage(query);
@@ -171,11 +185,29 @@ export function resolveLanguage(): CubeLocale {
   const stored = readStoredLanguage();
   if (stored) return normalizeLanguage(stored);
 
-  const cookie = readCultureCookie();
-  if (cookie) return normalizeLanguage(cookie);
+  return readBrowserLanguage() ?? siteDefaultLanguage ?? 'en-US';
+}
 
-  const browser = typeof navigator !== 'undefined' ? navigator.language : '';
-  return normalizeLanguage(browser || 'en-US');
+/**
+ * 应用站点/租户下发的语言设置（`/Cube/Site` 的 `language`）
+ *
+ * 只记录默认语言与锁定标记；未显式选过语言时按新链路重新解析并切换，
+ * 使「浏览器语言不受支持 → 站点默认」在首次加载后生效。
+ *
+ * @param info 站点语言设置（可空）
+ */
+export function applySiteLanguage(info?: { default?: string | null; locked?: boolean } | null): void {
+  siteDefaultLanguage = info?.default ? tryNormalizeLanguage(info.default) : null;
+  languageLocked = !!info?.locked;
+
+  if (hasExplicitLanguage()) return;
+  const resolved = resolveLanguage();
+  if (resolved !== getCurrentLanguage()) void i18n.changeLanguage(resolved);
+}
+
+/** 站点是否锁定语言（锁定后隐藏语言切换入口） */
+export function isLanguageLocked(): boolean {
+  return languageLocked;
 }
 
 /** 是否已显式选择语言（URL 参数或本地存储） */
@@ -198,14 +230,6 @@ function applyLanguageAttributes(language: string) {
   const locale = normalizeLanguage(language);
   document.documentElement.setAttribute('lang', locale);
   document.documentElement.setAttribute('dir', isRtl(locale) ? 'rtl' : 'ltr');
-}
-
-/** 写入服务端文化 Cookie，使后续服务端响应（文件下载、新窗口页面等）跟随当前语言 */
-function writeCultureCookie(language: CubeLocale) {
-  if (typeof document === 'undefined') return;
-
-  const value = encodeURIComponent(`c=${language}|uic=${language}`);
-  document.cookie = `${CULTURE_COOKIE_NAME}=${value}; path=/; SameSite=Lax`;
 }
 
 /** 同步 URL 中已有的 lang 参数，避免刷新后被旧语言覆盖 */
@@ -245,30 +269,25 @@ void i18n.use(initReactI18next).init({
 i18n.on('languageChanged', applyLanguageAttributes);
 applyLanguageAttributes(initialLanguage);
 
-/** 切换语言并持久化到本地存储、服务端 Cookie 与 URL */
+/** 切换语言并持久化到本地存储与 URL（不写服务端 Cookie，请求侧由 Accept-Language 传递） */
 export function setLanguage(language: CubeLocale) {
   const locale = normalizeLanguage(language);
   void i18n.changeLanguage(locale);
   try {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
   } catch {
-    // 隐私模式等禁用存储时忽略，Cookie 仍然生效
+    // 隐私模式等禁用存储时忽略，本次会话仍按运行时语言生效
   }
 
-  writeCultureCookie(locale);
   syncQueryLanguage(locale);
 }
 
-/** 恢复自动语言（跟随浏览器/系统），清除本地存储、服务端 Cookie 与 URL 参数 */
+/** 恢复自动语言（跟随浏览器/站点默认），清除本地存储与 URL 参数 */
 export function setAutoLanguage() {
   try {
     localStorage.removeItem(LANGUAGE_STORAGE_KEY);
   } catch {
     // 忽略存储不可用
-  }
-
-  if (typeof document !== 'undefined') {
-    document.cookie = `${CULTURE_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   }
 
   if (typeof window !== 'undefined') {
