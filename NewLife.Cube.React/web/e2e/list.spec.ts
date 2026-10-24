@@ -315,20 +315,21 @@ test.describe('通用列表页（/Admin/User）', () => {
       await page.getByRole('button', { name: /保\s*存/ }).click();
       await expect(page.locator('.ant-message')).toBeVisible({ timeout: 8000 });
     }
-    // 搜索定位目标（兼容分页）
-    const searchInput = page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first();
-    if (await searchInput.isVisible().catch(() => false)) {
-      await searchInput.fill(PREFIX);
-      await page.getByRole('button', { name: /搜\s*索/ }).click();
-      await page.waitForTimeout(1000);
-    }
-    // 勾选前两行
+    // 按名称定位本次创建的行再勾选：直接勾「前两行」会误删演示库里的管理员账号
+    // （默认按编号倒序，最新行是环境账号），导致后续依赖登录的用例全部失败
+    await gotoUserList(page, `${PREFIX}-bd`);
+    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     const rows = page.locator(ROW);
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
-    for (let i = 0; i < Math.min(2, count); i++) {
-      await rows.nth(i).locator('input[type="checkbox"]').check({ timeout: 5000 });
+    let checked = 0;
+    for (let i = 0; i < count && checked < 2; i++) {
+      const row = rows.nth(i);
+      if (!(await row.innerText()).includes(`${PREFIX}-bd`)) continue;
+      await row.locator('input[type="checkbox"]').check({ timeout: 5000 });
+      checked++;
     }
+    expect(checked, '未找到本次创建的两个测试用户').toBe(2);
     // 点击工具栏「删除选中」（选中行后出现）→ Popconfirm 确认
     await page.getByRole('button', { name: /删除选中/ }).click();
     const confirmBtn = page.locator('.ant-popover').getByRole('button', { name: /删\s*除/ }).first();

@@ -26,7 +26,7 @@ Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`
 - **Single theme × light/dark**: native look driven by antd tokens, with one-click light/dark switching
 - **AI assistant**: SSE streaming chat + quick commands + smart form filling + system diagnostics, with built-in mermaid rendering
 - **Multilingual localization**: 11 fully translated UI languages (backend list ∩ frontend complete languages; the backend exposes 32 languages, and the other 21 fall back to English; same pipeline as NewLife.Core/Cube, requires NewLife.Cube ≥ 6.15.2026.1022), supporting follow-system and forced languages; server menus, field metadata and runtime messages are re-fetched when the language changes
-- **Well tested**: 416 unit tests + 119 E2E tests all passing, with Playwright login session reuse
+- **Well tested**: 416 unit tests + 121 E2E tests all passing, with Playwright login session reuse
 
 ## Ecosystem Map
 
@@ -109,7 +109,7 @@ cd NewLife.Cube.React/web
 pnpm build        # outputs to ../wwwroot (for .NET embedding)
 pnpm type-check   # tsc type checking
 pnpm test:unit    # Vitest unit tests (416)
-pnpm test:e2e     # Playwright E2E (119; defaults to port 5050, override with $env:E2E_BASE_URL)
+pnpm test:e2e     # Playwright E2E (121; defaults to port 5050, override with $env:E2E_BASE_URL)
 
 # .NET build (embeds wwwroot into the DLL)
 dotnet build 魔方React.slnx -c Release
@@ -120,7 +120,7 @@ dotnet build 魔方React.slnx -c Release
 ## Testing
 
 - **Unit tests**: Vitest + React Testing Library + jsdom, 416 cases all passing
-- **E2E tests**: 119 Playwright cases (sign-in/sign-up/activation/forgot password/security center/list create-update-delete/import-export/layout/upload/AI), with login session reuse
+- **E2E tests**: 121 Playwright cases (sign-in/sign-up/activation/forgot password/security center/list create-update-delete/import-export/layout/upload/AI), with login session reuse
 - **.NET integration**: CubeDemo + `UseReact` end-to-end flow (sign-in → menus → CRUD → export → refresh without 404)
 
 ## Release
