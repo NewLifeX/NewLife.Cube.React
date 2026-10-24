@@ -44,6 +44,10 @@ export interface TableContentProps {
   onEdit?: (row: Record<string, unknown>) => void;
   onDelete?: (row: Record<string, unknown>) => void;
   onRestore?: (row: Record<string, unknown>) => void;
+  /** 树节点上移（LIST-18）；仅在 treeField 生效且后端提供 Up 动作时传入 */
+  onMoveUp?: (row: Record<string, unknown>) => void;
+  /** 树节点下移（LIST-18） */
+  onMoveDown?: (row: Record<string, unknown>) => void;
   /** 操作列扩展按钮（如角色「权限」），渲染在编辑按钮左侧；可为按行计算的函数 */
   rowActions?:
     | Array<{
@@ -261,6 +265,8 @@ export default function TableContent({
   onEdit,
   onDelete,
   onRestore,
+  onMoveUp,
+  onMoveDown,
   rowActions,
   onSortChange,
   sortField,
@@ -342,13 +348,16 @@ export default function TableContent({
   };
 
   const hasRowActions = typeof rowActions === 'function' ? true : !!rowActions?.length;
-  if (canView || canEdit || canDelete || hasRowActions) {
+  // 树节点排序（LIST-18）：树形表 + 有编辑权限时渲染上移/下移
+  const canMove = !!treeField && !!canEdit && (!!onMoveUp || !!onMoveDown);
+  if (canView || canEdit || canDelete || hasRowActions || canMove) {
     // 操作列宽度按可用操作数自适应：每胶囊按钮约 52px + 单元格 16px 内边距，
     // 仅「查看」时收窄避免大块留白，多操作时撑开容纳按钮
     const opsCount =
       (canView ? 1 : 0) +
       (canEdit ? 1 : 0) +
       (canDelete ? 1 : 0) +
+      (canMove ? 2 : 0) +
       (typeof rowActions === 'function' ? 1 : (rowActions?.length ?? 0));
     columns.push({
       title: t('操作'),
@@ -375,6 +384,27 @@ export default function TableContent({
               {a.label}
             </Button>
           ))}
+          {/* 树节点排序（LIST-18）：调用后端 EntityTreeApiController 的 Up/Down */}
+          {canMove && (
+            <>
+              <Button
+                type="link"
+                size="small"
+                className="cube-op-btn cube-op-btn-op-up"
+                onClick={() => onMoveUp?.(row)}
+              >
+                {t('上移')}
+              </Button>
+              <Button
+                type="link"
+                size="small"
+                className="cube-op-btn cube-op-btn-op-down"
+                onClick={() => onMoveDown?.(row)}
+              >
+                {t('下移')}
+              </Button>
+            </>
+          )}
           {canEdit && (
             <Button type="link" size="small" className="cube-op-btn cube-op-btn-op-edit" onClick={() => onEdit?.(row)}>
               {t('编辑')}

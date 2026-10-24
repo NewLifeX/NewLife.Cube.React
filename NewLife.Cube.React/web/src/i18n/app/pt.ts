@@ -555,4 +555,7 @@ export default {
   '依据《中华人民共和国个人信息保护法》与 GDPR 等法规，你享有账号删除权。注销为不可逆操作：账号将无法再次登录，下游业务系统中与该账号关联的数据将一并删除。': 'Nos termos da Lei de Proteção de Informações Pessoais da República Popular da China e de regulamentos como o RGPD, você tem o direito de excluir sua conta. O encerramento é irreversível: você não poderá mais entrar e os dados associados nos sistemas de negócios downstream também serão excluídos.',
   '恢复成功': 'Restaurado',
   '恢复失败': 'Falha ao restaurar',
+  '当前实体不支持排序': 'A entidade atual não suporta ordenação',
+  '暂无通知': 'Nenhuma notificação',
+  '全部已读': 'Marcar tudo como lido',
 };

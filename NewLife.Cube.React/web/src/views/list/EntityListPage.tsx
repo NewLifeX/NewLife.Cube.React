@@ -230,6 +230,31 @@ export default function EntityListPage({ type }: EntityListPageProps) {
 
   const handleViewRow = (row: Record<string, unknown>) => setDetailDialog({ open: true, row });
 
+  /**
+   * 树节点上移/下移（LIST-18）
+   *
+   * 调用后端 `EntityTreeApiController` 约定的 `POST {type}/Up|Down?id=` 动作；
+   * 后端未继承该基类时返回 404/405，提示不支持而不影响页面。
+   */
+  const handleMoveNode = (row: Record<string, unknown>, direction: 'Up' | 'Down') => {
+    const id = getValueByKey(row, pkField) ?? getValueByKey(row, 'id');
+    void api.client
+      .post(`${type}/${direction}`, null, { params: { id: Number(id) } })
+      .then((res) => {
+        const code = (res as { code?: number } | undefined)?.code;
+        if (typeof code === 'number' && code !== 0) {
+          message.warning(t('当前实体不支持排序'));
+          return;
+        }
+        message.success(t('操作成功'));
+        void refresh();
+      })
+      .catch(() => {
+        // 无该动作（404/405）时优雅降级：不影响列表其它操作
+        message.warning(t('当前实体不支持排序'));
+      });
+  };
+
   /** 角色页：打开权限配置弹窗（编辑按钮左侧「权限」） */
   const handlePermRow = (row: Record<string, unknown>) => setPermDialog({ open: true, row });
 
@@ -606,6 +631,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             onEdit={handleEditRow}
             onDelete={handleDeleteRow}
             onRestore={handleRestoreRow}
+            onMoveUp={(row) => handleMoveNode(row, 'Up')}
+            onMoveDown={(row) => handleMoveNode(row, 'Down')}
             rowActions={rowActions}
             onSortChange={handleSortChange}
             sortField={sortState.field}

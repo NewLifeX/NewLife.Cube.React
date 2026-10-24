@@ -28,7 +28,7 @@ Agrega referencias a `NewLife.Cube` y `NewLife.Cube.React`, ejecuta `dotnet run`
 - **Tema único × claro/oscuro**: apariencia nativa impulsada por tokens de antd, con cambio claro/oscuro en un clic
 - **Asistente de IA**: chat en streaming SSE + comandos rápidos + relleno inteligente de formularios + diagnóstico del sistema, con renderizado mermaid integrado
 - **Localización multilingüe**: 11 idiomas de interfaz totalmente traducidos (lista del backend ∩ idiomas completos del front-end; el backend expone 32 idiomas y los otros 21 vuelven al inglés; misma cadena que NewLife.Core/Cube, requiere NewLife.Cube ≥ 6.15.2026.1022), con idioma del sistema o forzado; los menús, metadatos de campos y mensajes de ejecución del servidor se vuelven a solicitar al cambiar de idioma
-- **Bien probado**: 416 pruebas unitarias + 121 pruebas E2E, todas superadas, con reutilización de sesión de inicio de sesión en Playwright
+- **Bien probado**: 420 pruebas unitarias + 122 pruebas E2E, todas superadas, con reutilización de sesión de inicio de sesión en Playwright
 
 ## Mapa del ecosistema
 
@@ -110,8 +110,8 @@ Abre <http://localhost:5188> en el navegador para ver la página de inicio de se
 cd NewLife.Cube.React/web
 pnpm build        # genera ../wwwroot (para la incrustación en .NET)
 pnpm type-check   # verificación de tipos con tsc
-pnpm test:unit    # pruebas unitarias Vitest (416)
-pnpm test:e2e     # Playwright E2E (121; por defecto 5050, se puede sobrescribir con $env:E2E_BASE_URL)
+pnpm test:unit    # pruebas unitarias Vitest (420)
+pnpm test:e2e     # Playwright E2E (122; por defecto 5050, se puede sobrescribir con $env:E2E_BASE_URL)
 
 # Compilación .NET (incrusta wwwroot en la DLL)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## Pruebas
 
-- **Pruebas unitarias**: Vitest + React Testing Library + jsdom, 416 casos superados
-- **Pruebas E2E**: 121 casos de Playwright (inicio de sesión/registro/activación/contraseña olvidada/centro de seguridad/crear-modificar-eliminar en listas/importación-exportación/diseño/carga de archivos/IA), con reutilización de sesión
+- **Pruebas unitarias**: Vitest + React Testing Library + jsdom, 420 casos superados
+- **Pruebas E2E**: 122 casos de Playwright (inicio de sesión/registro/activación/contraseña olvidada/centro de seguridad/crear-modificar-eliminar en listas/importación-exportación/diseño/carga de archivos/IA), con reutilización de sesión
 - **Integración .NET**: flujo de extremo a extremo con CubeDemo + `UseReact` (inicio de sesión → menús → CRUD → exportación → actualización sin 404)
 
 ## Publicación

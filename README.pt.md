@@ -28,7 +28,7 @@ Adicione referências a `NewLife.Cube` e `NewLife.Cube.React`, execute `dotnet r
 - **Tema único × claro/escuro**: aparência nativa orientada por tokens do antd, alternância claro/escuro com um clique
 - **Assistente de IA**: chat em streaming SSE + comandos rápidos + preenchimento inteligente de formulários + diagnóstico do sistema, com renderização mermaid integrada
 - **Localização multilíngue**: 11 idiomas de interface totalmente traduzidos (lista do backend ∩ idiomas completos do front-end; o backend expõe 32 idiomas e os outros 21 voltam ao inglês; mesma cadeia do NewLife.Core/Cube, requer NewLife.Cube ≥ 6.15.2026.1022), com idioma do sistema ou forçado; menus, metadados de campos e mensagens de execução do servidor são recarregados ao trocar de idioma
-- **Bem testado**: 416 testes unitários + 121 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
+- **Bem testado**: 420 testes unitários + 122 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
 
 ## Mapa do ecossistema
 
@@ -110,8 +110,8 @@ Abra <http://localhost:5188> no navegador para ver a página de login; após ent
 cd NewLife.Cube.React/web
 pnpm build        # gera ../wwwroot (para incorporação no .NET)
 pnpm type-check   # verificação de tipos com tsc
-pnpm test:unit    # testes unitários Vitest (416)
-pnpm test:e2e     # Playwright E2E (121; padrão 5050, substitua com $env:E2E_BASE_URL)
+pnpm test:unit    # testes unitários Vitest (420)
+pnpm test:e2e     # Playwright E2E (122; padrão 5050, substitua com $env:E2E_BASE_URL)
 
 # Build .NET (incorpora wwwroot na DLL)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## Testes
 
-- **Testes unitários**: Vitest + React Testing Library + jsdom, 416 casos aprovados
-- **Testes E2E**: 121 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
+- **Testes unitários**: Vitest + React Testing Library + jsdom, 420 casos aprovados
+- **Testes E2E**: 122 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
 - **Integração .NET**: fluxo ponta a ponta com CubeDemo + `UseReact` (login → menus → CRUD → exportação → atualização sem 404)
 
 ## Publicação

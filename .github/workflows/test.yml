@@ -8,23 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  dotnet:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup dotNET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.x
-          7.x
           8.x
           9.x
           10.x
+    # 编译健康检查：解决方案含皮肤库与 CubeDemo 示例。
+    # 前端产物（wwwroot）不在 CI 构建——web 的 @newlifex/* 依赖以 file: 指向同级的
+    # NewLife.Cube monorepo，CI 无法检出该目录；前端检查在本地执行
+    # （pnpm type-check / test:unit / build），公共包发布到 npm 后可改为版本引用并在此启用。
     - name: Build
-      run: |
-        dotnet build 魔方.sln -c Release
-    - name: Test
-      run: |
-        dotnet test 魔方.sln
+      run: dotnet build 魔方React.slnx -c Release

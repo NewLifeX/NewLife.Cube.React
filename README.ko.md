@@ -28,7 +28,7 @@ Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독
 - **단일 테마 × 라이트/다크**: antd 토큰 기반의 네이티브한 느낌, 라이트/다크 전환은 클릭 한 번
 - **AI 어시스턴트**: SSE 스트리밍 대화 + 빠른 명령 + 스마트 폼 채우기 + 시스템 진단, mermaid 렌더링 내장
 - **다국어 현지화**: 11개 언어 전체 번역 UI(백엔드 목록 ∩ 프런트엔드 전체 언어, 리소스 32개 로캘, NewLife.Core/Cube와 동일한 경로, NewLife.Cube ≥ 6.15.2026.1022 필요), 시스템 언어 따르기 및 강제 언어 지원, 언어 전환 시 서버 메뉴·필드 메타데이터·런타임 메시지를 다시 가져옴
-- **테스트 완비**: 단위 테스트 416개 + E2E 121개 모두 통과, Playwright 로그인 세션 재사용
+- **테스트 완비**: 단위 테스트 420개 + E2E 122개 모두 통과, Playwright 로그인 세션 재사용
 
 ## 생태계 지도
 
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # ../wwwroot 출력 (.NET 내장용)
 pnpm type-check   # tsc 타입 검사
-pnpm test:unit    # Vitest 단위 테스트 (416개)
-pnpm test:e2e     # Playwright E2E (121개; 기본 5050, $env:E2E_BASE_URL로 재정의)
+pnpm test:unit    # Vitest 단위 테스트 (420개)
+pnpm test:e2e     # Playwright E2E (122개; 기본 5050, $env:E2E_BASE_URL로 재정의)
 
 # .NET 빌드 (wwwroot를 DLL에 내장)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## 테스트
 
-- **단위 테스트**: Vitest + React Testing Library + jsdom, 416개 사례 모두 통과
-- **E2E 테스트**: Playwright 121개 사례(로그인/회원가입/활성화/비밀번호 찾기/보안 센터/목록 CRUD/가져오기·내보내기/레이아웃/업로드/AI), 로그인 세션 재사용
+- **단위 테스트**: Vitest + React Testing Library + jsdom, 420개 사례 모두 통과
+- **E2E 테스트**: Playwright 122개 사례(로그인/회원가입/활성화/비밀번호 찾기/보안 센터/목록 CRUD/가져오기·내보내기/레이아웃/업로드/AI), 로그인 세션 재사용
 - **.NET 통합**: CubeDemo + `UseReact` 전체 흐름(로그인 → 메뉴 → CRUD → 내보내기 → 새로고침 시 404 없음)
 
 ## 릴리스

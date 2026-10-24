@@ -262,4 +262,44 @@ describe('TableContent 列呈现与数据动作（LIST-12/15/16）', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /追\s*踪/ })[0]);
     expect(onRowAction).toHaveBeenCalledWith('a');
   });
+
+  it('树形表渲染上移/下移并按行回调（LIST-18）', () => {
+    const onMoveUp = vi.fn();
+    const onMoveDown = vi.fn();
+    render(
+      <TableContent
+        fields={FIELDS}
+        data={DATA}
+        canView={false}
+        canEdit
+        canDelete={false}
+        selectable={false}
+        treeField="ParentID"
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: /上\s*移/ })[0]);
+    expect(onMoveUp).toHaveBeenCalledWith(expect.objectContaining({ Name: 'a' }));
+
+    fireEvent.click(screen.getAllByRole('button', { name: /下\s*移/ })[0]);
+    expect(onMoveDown).toHaveBeenCalledWith(expect.objectContaining({ Name: 'a' }));
+  });
+
+  it('非树形表不渲染上移/下移（无 treeField）', () => {
+    render(
+      <TableContent
+        fields={FIELDS}
+        data={DATA}
+        canView={false}
+        canEdit
+        canDelete={false}
+        selectable={false}
+        onMoveUp={() => {}}
+        onMoveDown={() => {}}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /上\s*移/ })).toBeNull();
+  });
 });

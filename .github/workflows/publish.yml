@@ -11,25 +11,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup dotNET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.x
-          7.x
           8.x
           9.x
           10.x
     - name: Get Version
       run: echo "VERSION=$(date '+%Y.%m%d')" >> $GITHUB_ENV
+    # 皮肤包的 wwwroot（前端产物）由 web/ 构建后嵌入。npm 发布就绪前，CI 无法独立构建
+    # 前端（web 的 @newlifex/* 为 file: 引用同级 monorepo），故打包在本地执行：
+    #   cd NewLife.Cube.React/web && pnpm install && pnpm build
+    #   dotnet build 魔方React.slnx -c Release && dotnet pack ...
     - name: Build
-      run: |
-        dotnet build 魔方.sln -c Release --version-suffix ${{ env.VERSION }}
+      run: dotnet build 魔方React.slnx -c Release --version-suffix ${{ env.VERSION }}
     - name: Pack
-      run: |
-        dotnet pack --no-build --version-suffix ${{ env.VERSION }} -c Release -o out NewLife.Cube/NewLife.Cube.csproj
-        dotnet pack --no-build --version-suffix ${{ env.VERSION }} -c Release -o out NewLife.CubeNC/NewLife.CubeNC.csproj
-        dotnet pack --no-build --version-suffix ${{ env.VERSION }} -c Release -o out NewLife.Cube.Swagger/NewLife.Cube.Swagger.csproj
+      run: dotnet pack --no-build --version-suffix ${{ env.VERSION }} -c Release -o out NewLife.Cube.React/NewLife.Cube.React.csproj
 
     - name: Publish
       run: |
