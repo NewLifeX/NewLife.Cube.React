@@ -8,13 +8,63 @@ on:
   workflow_dispatch:
 
 jobs:
-  dotnet:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    # web 的 @newlifex/* 依赖以 file:../../../NewLife.Cube/packages/* 引用共享包源码，
+    # 因此需把 monorepo 检出到该相对位置（$GITHUB_WORKSPACE/../NewLife.Cube）。
+    - name: Checkout shared packages monorepo
+      uses: actions/checkout@v4
+      with:
+        repository: NewLifeX/NewLife.Cube
+        path: _deps/NewLife.Cube
+
+    - name: Link monorepo into path expected by web dependencies
+      run: ln -s "$GITHUB_WORKSPACE/_deps/NewLife.Cube" "$GITHUB_WORKSPACE/../NewLife.Cube"
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: pnpm
+        cache-dependency-path: |
+          NewLife.Cube.React/web/pnpm-lock.yaml
+          _deps/NewLife.Cube/pnpm-lock.yaml
+
+    - name: Build shared packages
+      run: |
+        cd _deps/NewLife.Cube
+        pnpm install --frozen-lockfile
+        pnpm build
+
+    - name: Install web dependencies
+      working-directory: NewLife.Cube.React/web
+      run: pnpm install --frozen-lockfile
+
+    - name: Type check
+      working-directory: NewLife.Cube.React/web
+      run: pnpm type-check
+
+    - name: Unit test
+      working-directory: NewLife.Cube.React/web
+      run: pnpm test:unit
+
+    # 产出 ../wwwroot，供下一步 .NET 构建嵌入到皮肤包
+    - name: Build web
+      working-directory: NewLife.Cube.React/web
+      run: pnpm build
+
     - name: Setup dotNET
       uses: actions/setup-dotnet@v4
       with:
@@ -22,9 +72,6 @@ jobs:
           8.x
           9.x
           10.x
-    # 编译健康检查：解决方案含皮肤库与 CubeDemo 示例。
-    # 前端产物（wwwroot）不在 CI 构建——web 的 @newlifex/* 依赖以 file: 指向同级的
-    # NewLife.Cube monorepo，CI 无法检出该目录；前端检查在本地执行
-    # （pnpm type-check / test:unit / build），公共包发布到 npm 后可改为版本引用并在此启用。
-    - name: Build
+
+    - name: Build .NET solution
       run: dotnet build 魔方React.slnx -c Release

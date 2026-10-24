@@ -10,9 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    # 皮肤包需内含 wwwroot（前端产物），而 web 的 @newlifex/* 以 file: 引用共享包源码，
+    # 故把 monorepo 检出到该相对位置后再构建前端。
+    - name: Checkout shared packages monorepo
+      uses: actions/checkout@v4
+      with:
+        repository: NewLifeX/NewLife.Cube
+        path: _deps/NewLife.Cube
+
+    - name: Link monorepo into path expected by web dependencies
+      run: ln -s "$GITHUB_WORKSPACE/_deps/NewLife.Cube" "$GITHUB_WORKSPACE/../NewLife.Cube"
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: pnpm
+        cache-dependency-path: |
+          NewLife.Cube.React/web/pnpm-lock.yaml
+          _deps/NewLife.Cube/pnpm-lock.yaml
+
+    - name: Build shared packages
+      run: |
+        cd _deps/NewLife.Cube
+        pnpm install --frozen-lockfile
+        pnpm build
+
+    - name: Build web (wwwroot)
+      working-directory: NewLife.Cube.React/web
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm build
+
     - name: Setup dotNET
       uses: actions/setup-dotnet@v4
       with:
@@ -20,14 +59,13 @@ jobs:
           8.x
           9.x
           10.x
+
     - name: Get Version
       run: echo "VERSION=$(date '+%Y.%m%d')" >> $GITHUB_ENV
-    # 皮肤包的 wwwroot（前端产物）由 web/ 构建后嵌入。npm 发布就绪前，CI 无法独立构建
-    # 前端（web 的 @newlifex/* 为 file: 引用同级 monorepo），故打包在本地执行：
-    #   cd NewLife.Cube.React/web && pnpm install && pnpm build
-    #   dotnet build 魔方React.slnx -c Release && dotnet pack ...
+
     - name: Build
       run: dotnet build 魔方React.slnx -c Release --version-suffix ${{ env.VERSION }}
+
     - name: Pack
       run: dotnet pack --no-build --version-suffix ${{ env.VERSION }} -c Release -o out NewLife.Cube.React/NewLife.Cube.React.csproj
 
