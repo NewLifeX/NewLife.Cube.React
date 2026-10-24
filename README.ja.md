@@ -28,7 +28,7 @@ Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキ�
 - **単一テーマ × ライト／ダーク**：antd トークンによるネイティブな見た目、ライト／ダーク切り替えはワンクリック
 - **AI アシスタント**：SSE ストリーミング対話 + クイックコマンド + スマート入力 + システム診断、mermaid レンダリング内蔵
 - **多言語ローカライズ**：11言語の完全翻訳 UI（バックエンド一覧 ∩ フロントエンド完全対応言語、リソースは32ロケール。NewLife.Core/Cube と同じ経路、NewLife.Cube ≥ 6.15.2026.1022 が必要）。システム追従と強制言語に対応し、言語切り替え時にサーバーメニュー、フィールドメタデータ、実行時メッセージを再取得
-- **テスト充実**：単体テスト390件 + E2E 117件がすべて成功、Playwright のログインセッションを再利用
+- **テスト充実**：単体テスト416件 + E2E 119件がすべて成功、Playwright のログインセッションを再利用
 
 ## エコシステムマップ
 
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # ../wwwroot に出力（.NET への埋め込み用）
 pnpm type-check   # tsc 型チェック
-pnpm test:unit    # Vitest 単体テスト（390件）
-pnpm test:e2e     # Playwright E2E（117件、既定 5050、$env:E2E_BASE_URL で上書き可）
+pnpm test:unit    # Vitest 単体テスト（416件）
+pnpm test:e2e     # Playwright E2E（119件、既定 5050、$env:E2E_BASE_URL で上書き可）
 
 # .NET ビルド（wwwroot を DLL に埋め込み）
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## テスト
 
-- **単体テスト**：Vitest + React Testing Library + jsdom、390件すべて成功
-- **E2E テスト**：Playwright 117件（ログイン／登録／アクティベーション／パスワード忘れ／セキュリティセンター／リスト CRUD／インポート・エクスポート／レイアウト／アップロード／AI）、ログインセッションを再利用
+- **単体テスト**：Vitest + React Testing Library + jsdom、416件すべて成功
+- **E2E テスト**：Playwright 119件（ログイン／登録／アクティベーション／パスワード忘れ／セキュリティセンター／リスト CRUD／インポート・エクスポート／レイアウト／アップロード／AI）、ログインセッションを再利用
 - **.NET 統合**：CubeDemo + `UseReact` の全フロー（ログイン→メニュー→CRUD→エクスポート→更新しても404にならない）
 
 ## リリース
