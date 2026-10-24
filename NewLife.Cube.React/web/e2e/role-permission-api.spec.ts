@@ -7,10 +7,12 @@
  * 测试角色 e2e-api-{ts}-role 用完即删，数据隔离。
  */
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { ALT_PASS, ALT_USER } from './utils/env';
 
 const PREFIX = `e2e-api-${Date.now()}`;
-const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
+// 单会话策略：本套件会重新登录多次，用副账号避免吊销共享 storageState 的主账号令牌
+const ADMIN_USER = ALT_USER;
+const ADMIN_PASS = ALT_PASS;
 
 /** 登录并返回授权头 */
 async function loginHeaders(request: APIRequestContext): Promise<Record<string, string>> {

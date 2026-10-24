@@ -7,14 +7,15 @@
  * 覆盖：登录 → 用户菜单 → 退出登录 → 跳回登录页。
  */
 import { expect, test } from '@playwright/test';
+import { ALT_PASS, ALT_USER } from './utils/env';
 
 test('退出登录跳转登录页', async ({ browser }) => {
-  // 独立 context 重新登录：登出会撤销服务端 token，避免污染共享 storageState 会话
+  // 独立 context 重新登录：登出会撤销服务端 token；用副账号避免吊销共享 storageState
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.goto('/login');
-  await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(process.env.ADMIN_USER || 'admin');
-  await page.getByPlaceholder('请输入密码').fill(process.env.ADMIN_PASS || 'admin');
+  await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(ALT_USER);
+  await page.getByPlaceholder('请输入密码').fill(ALT_PASS);
   await page.getByRole('button', { name: '登 录' }).click();
   await page.waitForURL('**/', { timeout: 10000 });
   await page.locator('.cube-user-trigger').first().click();

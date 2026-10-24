@@ -14,6 +14,7 @@ import { Card, Spin } from 'antd';
 import { useLocation } from 'react-router-dom';
 import { routeToApiPrefix } from '@/utils/url';
 import { isEntityMeta } from '@/utils/pageMeta';
+import { isSpecialApiPath } from '@/utils/specialPage';
 import { api } from '@/api';
 import EntityListPage from './EntityListPage';
 import ConfigPage from '@/views/config/ConfigPage';
@@ -35,8 +36,9 @@ export default function DefaultListPage() {
   useEffect(() => {
     let cancelled = false;
     setKind('probe');
-    // 已知特殊页（如服务器信息 /Admin/Index/Main）不探测 meta，直接按特殊页分发
-    if (type.toLowerCase().endsWith('/index/main')) {
+    // 已知特殊页不探测 meta（后端无对应实体端点，探测只会产生一次 404）：
+    // 服务器信息 / 数据库页 / 工作台部件 / 视图解析诊断
+    if (isSpecialApiPath(type)) {
       setKind('special');
       return;
     }

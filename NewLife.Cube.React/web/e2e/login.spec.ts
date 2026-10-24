@@ -2,6 +2,7 @@
  * 登录页 E2E（AUTH-1 标准场景）
  */
 import { expect, test } from '@playwright/test';
+import { ALT_PASS, ALT_USER } from './utils/env';
 
 test.describe('登录页', () => {
   test('登录页加载无错误且展示系统名', async ({ page }) => {
@@ -120,12 +121,13 @@ test.describe('验证码按 LoginConfig 开关请求', () => {
 });
 
 test.describe('保存密码跨会话恢复（干净上下文）', () => {
-  // 不复用登录态，走完整登录流程验证"再次访问免登录"
+  // 不复用登录态，走完整登录流程验证"再次访问免登录"；
+  // 单会话策略：使用副账号，避免吊销共享 storageState 的主账号令牌
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('勾选保存密码登录后，localStorage 丢失可从 Cookie 恢复免登录', async ({ page }) => {
-    const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-    const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
+    const ADMIN_USER = ALT_USER;
+    const ADMIN_PASS = ALT_PASS;
 
     await page.goto('/login');
     await page.getByRole('checkbox', { name: '保存密码' }).check();
@@ -185,16 +187,24 @@ test.describe('第三方登录（OAuth 入口）', () => {
     expect(req.url()).toContain('redirect_uri=');
   });
 
-  test('未配置 OAuth 提供商时不显示第三方登录入口', async ({ page }) => {
-    await mockOAuthProviders(page, []);
+  test('未配置 OAuth 提供商时不显示第三方登录入口', async ({ page, request }) => {
+    // 与后端真实配置对齐：真实未配则断言不显示，已配则断言显示（不依赖 mock 缓存行为）
+    // 注意后端字段名是 camelCase 的 oAuth（C# OAuth 首字母 小写）
+    const res = await request.get('/Auth/LoginConfig');
+    const json = (await res.json()) as { data?: { oauth?: unknown[]; oAuth?: unknown[] } };
+    const providers = json.data?.oauth ?? json.data?.oAuth ?? [];
 
     await page.goto('/login');
-    await expect(page.getByText('第三方登录')).toHaveCount(0);
+    if (providers.length === 0) {
+      await expect(page.getByText('第三方登录')).toHaveCount(0);
+    } else {
+      await expect(page.getByText('第三方登录')).toBeVisible();
+    }
   });
 
   test('SSO 回调：携带 #token 访问自动登录并清理 URL', async ({ page }) => {
-    const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-    const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
+    const ADMIN_USER = ALT_USER;
+    const ADMIN_PASS = ALT_PASS;
 
     // 先密码登录拿一个真实 token（模拟后端 SSO 颁发）
     await page.goto('/login');

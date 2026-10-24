@@ -6,6 +6,7 @@
  * 不保存记录，避免污染用户数据。
  */
 import { expect, test } from '@playwright/test';
+import { ALT_PASS, ALT_USER } from './utils/env';
 
 // 1x1 红色 PNG
 const PNG = Buffer.from(
@@ -18,10 +19,10 @@ test.describe('上传组件（CMP-2 /Cube/App 图标）', () => {
   async function openAddForm(page: import('@playwright/test').Page) {
     await page.goto('/Cube/App');
     // 全量并发时，home.spec 登出用例的 admin 重新登录可能在单设备模式下踢掉共享 storageState token
-    // → 跳登录后自动重登，保证上传用例可独立稳定运行
+    // → 跳登录后自动重登，保证上传用例可独立稳定运行；用副账号，避免吊销共享 storageState
     if (page.url().includes('/login')) {
-      await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(process.env.ADMIN_USER || 'admin');
-      await page.getByPlaceholder('请输入密码').fill(process.env.ADMIN_PASS || 'admin');
+      await page.getByPlaceholder('用户名 / 邮箱 / 手机号').fill(ALT_USER);
+      await page.getByPlaceholder('请输入密码').fill(ALT_PASS);
       await page.getByRole('button', { name: '登 录' }).click();
     }
     // 登录成功跳回 /Cube/App 后出现工具栏"新增"按钮（若仍在登录页则超时，暴露登录失败）

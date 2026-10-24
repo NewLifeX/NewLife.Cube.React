@@ -84,45 +84,44 @@ test.describe('配置中心（Config Hub）', () => {
     const nav = page.locator('.cube-config-nav');
     await expect(nav).toBeVisible({ timeout: NAV_TIMEOUT });
 
-    // 5 个核心配置标签
-    for (const p of MAIN_PAGES) {
-      await expect(nav.getByText(p.label).first()).toBeVisible();
+    // 全部配置项一字排开（核心 6 项 + 更多 4 项，无下拉入口）
+    for (const p of [...MAIN_PAGES, ...MORE_PAGES]) {
+      await expect(nav.getByText(p.label, { exact: true }).first()).toBeVisible();
     }
-    // 更多配置下拉入口
-    await expect(nav.getByText(/更多配置/)).toBeVisible();
+    await expect(nav.getByText(/更多配置/)).toHaveCount(0);
 
-    // 当前项高亮为魔方设置
-    await expect(page.locator('.ant-segmented-item-selected')).toContainText('魔方设置');
-    expect(errors.filter((e) => !e.includes('favicon')), `控制台错误: ${errors.join('; ')}`).toEqual([]);
+    // 当前项高亮为主色按钮
+    await expect(nav.locator('.ant-btn-primary')).toContainText('魔方设置');
+    expect(errors.filter((e) => !e.includes('favicon'))).toEqual([]);
   });
 
   test('切换 5 个核心配置页均可达且配置表单渲染', async ({ page }) => {
     for (const p of MAIN_PAGES) {
       await page.goto(p.path);
-      await expect(page.locator('.cube-config-nav')).toBeVisible({ timeout: NAV_TIMEOUT });
+      const nav = page.locator('.cube-config-nav');
+      await expect(nav).toBeVisible({ timeout: NAV_TIMEOUT });
       // 当前项高亮
-      await expect(page.locator('.ant-segmented-item-selected')).toContainText(p.label);
+      await expect(nav.locator('.ant-btn-primary')).toContainText(p.label);
       // 配置字段容器渲染（非 404）
       await expect(page.locator('.cube-config-fields').first()).toBeVisible({ timeout: NAV_TIMEOUT });
     }
   });
 
-  test('更多配置下拉切换 短信/邮件/OAuth/访问规则', async ({ page }) => {
+  test('更多配置页可直接进入且面包屑正确', async ({ page }) => {
     for (const p of MORE_PAGES) {
       await page.goto(p.path);
-      await expect(page.locator('.cube-config-nav')).toBeVisible({ timeout: NAV_TIMEOUT });
-      // 更多配置按钮高亮
-      await expect(page.locator('.cube-config-nav-more')).toHaveClass(/active/);
-      // 面包屑显示 系统管理 / 配置名
-      await expect(page.locator('.cube-shell-header-breadcrumb')).toContainText(p.label);
+      const nav = page.locator('.cube-config-nav');
+      await expect(nav).toBeVisible({ timeout: NAV_TIMEOUT });
+      await expect(nav.locator('.ant-btn-primary')).toContainText(p.label);
+      // 面包屑显示配置名（后端菜单名为「短信配置」「邮件配置」等，与导航文案不同）
+      const breadcrumbText = p.label.replace(/设置$/, '');
+      await expect(page.locator('.cube-shell-header-breadcrumb')).toContainText(breadcrumbText);
     }
 
-    // 从魔方设置通过下拉切换到短信设置
+    // 从魔方设置通过导航按钮切到短信设置
     await page.goto('/Admin/Cube');
-    await page.locator('.cube-config-nav-more').click();
-    await page.getByRole('menuitem', { name: '短信设置' }).click();
+    await page.locator('.cube-config-nav-item', { hasText: '短信设置' }).click();
     await expect(page).toHaveURL(/\/Admin\/SmsConfig/);
-    await expect(page.locator('.cube-config-nav-more')).toHaveClass(/active/);
   });
 
   test('配置页每行一个配置项且右侧显示 Description', async ({ page }) => {

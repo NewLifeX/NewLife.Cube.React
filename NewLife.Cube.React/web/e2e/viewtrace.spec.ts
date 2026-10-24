@@ -5,8 +5,15 @@
  * 仅开发模式 + 系统管理员可用（SysConfig.Develop + IsSystem 角色）。
  */
 import { expect, test } from '@playwright/test';
+import { endpointExists } from './utils/env';
 
 test.describe('视图解析诊断页（/Cube/ViewTrace）', () => {
+  // 能力探测：该页依赖后端 ViewTraceController，未部署的环境返回 404，整组跳过
+  test.beforeEach(async ({ request }) => {
+    const res = await request.get('/api/Cube/ViewTrace');
+    test.skip(!endpointExists(res.status()), '后端未部署 ViewTraceController');
+  });
+
   test('页面加载显示表单与候选路径表格', async ({ page }) => {
     await page.goto('/Cube/ViewTrace');
     await expect(page.getByText('视图解析诊断', { exact: true }).first()).toBeVisible({ timeout: 15000 });

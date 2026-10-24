@@ -12,8 +12,15 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('AI 助手（CMP-8）', () => {
-  test('悬浮按钮打开面板（列表页快捷指令），关闭后恢复', async ({ page }) => {
+  // 能力探测：未开启 AISwitch 的环境不渲染悬浮球，整组跳过（而非假失败）
+  test.beforeEach(async ({ page }) => {
     await page.goto('/Admin/User');
+    await page.waitForSelector('.ant-table-tbody tr.ant-table-row', { timeout: 20000 });
+    const hasFab = (await page.locator('.cube-ai-fab').count()) > 0;
+    test.skip(!hasFab, '环境未开启 AI（AISwitch）');
+  });
+
+  test('悬浮按钮打开面板（列表页快捷指令），关闭后恢复', async ({ page }) => {
     const fab = page.locator('.cube-ai-fab');
     await expect(fab).toBeVisible({ timeout: 10000 });
 

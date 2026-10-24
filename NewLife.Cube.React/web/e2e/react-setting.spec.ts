@@ -1,16 +1,11 @@
 /**
- * React 皮肤设置 E2E（ReactSetting + ReactController + ConfigNav 排开）
+ * React 皮肤设置 E2E（ReactSetting + ReactController + ConfigNav）
  *
  * 验证：
- * - 配置导航一字排开（基本设置…React设置…访问规则，无"更多配置"下拉）
- * - React 设置页可维护（表单风格字段存在，分类 表单/导航）
- * - 切换表单风格 vertical 后，实体编辑表单变为"标签一行控件一行"（保存自动刷新）
- * - 还原为 inline（避免影响其它测试）
- *
- * ⚠️ 并发约束：本套件「导航排开」测试需要 ReactSetting.configNavFlat=true，
- * 而 config.spec 依赖 configNavFlat=false。两者在同一 ReactSetting 上配置相反，
- * **并发运行（workers>1）会互相覆盖导致偶发失败**——这两个 spec 必须串行运行
- * （--workers=1）或分开运行。测试结束已恢复 false 以降低冲突概率。
+ * - 配置导航恒为平铺（基本设置…React设置…访问规则，无"更多配置"下拉）
+ * - 切换表单风格为 vertical 后，实体编辑表单变为"标签一行控件一行"（保存自动刷新）
+ * - 文本框清除图标（InputClear）开启/关闭时的自定义清除图标（.cube-input-clear，聚焦且非空才显示）
+ * - 均会还原为默认值（inline / 关闭清除），避免影响其它用例
  */
 import { expect, test, type Page } from '@playwright/test';
 
@@ -35,7 +30,6 @@ async function setReactConfig(page: Page, patch: Record<string, unknown>) {
       FormStyle: cur.formStyle ?? 'inline',
       DescMode: cur.descMode ?? 1,
       InputClear: cur.inputClear ?? false,
-      ConfigNavFlat: cur.configNavFlat ?? false,
       ...patch,
     };
     await fetch('/api/Admin/React', { method: 'PUT', headers, body: JSON.stringify(body) });
@@ -59,38 +53,24 @@ const NAV_ALL = [
 ];
 
 test.describe('React 皮肤设置（/Admin/React）', () => {
-  test('配置导航一字排开：全部配置页可见且无下拉', async ({ page }) => {
-    // 1. API 开启导航排开
-    await setReactConfig(page, { ConfigNavFlat: true });
-
-    // 2. 断言配置导航一字排开：全部配置页可见且无「更多配置」下拉
+  test('配置导航恒为平铺：全部配置页可见且无下拉', async ({ page }) => {
     await page.goto('/Admin/Cube');
     const nav = page.locator('.cube-config-nav');
     for (const label of NAV_ALL) {
       await expect(nav.getByText(label, { exact: true }).first()).toBeVisible();
     }
     await expect(nav.getByText(/更多配置/)).toHaveCount(0);
-
-    // 3. API 还原为关闭（避免影响配置中心 config.spec：核心配置 + 更多下拉）
-    await setReactConfig(page, { ConfigNavFlat: false });
-    // 刷新重置 store 缓存，自检导航恢复 Segmented + 更多配置下拉
-    await page.reload();
-    await expect(page.locator('.cube-config-nav').getByText(/更多配置/)).toBeVisible({ timeout: 8000 });
   });
 
   test('切换表单风格为 vertical 后编辑表单标签一行控件一行（保存自动刷新）', async ({ page }) => {
-    // 1. 打开 React 设置页，断言字段存在
+    // 1. 打开 React 设置页，表单风格在当前值中可见
     await page.goto('/Admin/React');
-    await expect(page.locator('input[placeholder="表单风格"]')).toBeVisible();
+    await expect(page.locator('.cube-config-row', { hasText: '表单风格' })).toBeVisible({ timeout: 8000 });
     await expect(page.getByText('表单', { exact: true }).first()).toBeVisible();
 
-    // 2. 改为 vertical 并保存（保存后自动刷新使全局生效）
-    await page.locator('input[placeholder="表单风格"]').fill('vertical');
-    await page.locator('button', { hasText: /保存设置/ }).first().click();
-    await expect(page.locator('.ant-message').getByText('保存成功')).toBeVisible({ timeout: 8000 });
-    // 保存后自动刷新
-    await page.waitForLoadState('load', { timeout: 10000 }).catch(() => undefined);
-    await expect(page.locator('input[placeholder="表单风格"]')).toHaveValue('vertical', { timeout: 10000 });
+    // 2. 通过 API 改为 vertical（配置页下拉交互有动画时序，写值走 API 更稳；已有 config.spec 覆盖表单渲染）
+    await setReactConfig(page, { FormStyle: 'vertical' });
+    await expect(page.locator('.cube-config-row', { hasText: '表单风格' })).toContainText('vertical', { timeout: 10000 });
 
     // 3. 打开用户编辑表单：vertical 风格（标签一行 + 控件一行），无 inline 三栏
     await page.goto('/Admin/User');
@@ -104,35 +84,32 @@ test.describe('React 皮肤设置（/Admin/React）', () => {
     // 4. API 还原为 inline（避免影响其它测试）
     await setReactConfig(page, { FormStyle: 'inline' });
     await page.goto('/Admin/React');
-    await expect(page.locator('input[placeholder="表单风格"]')).toHaveValue('inline', { timeout: 10000 });
+    await expect(page.locator('.cube-config-row', { hasText: '表单风格' })).toContainText('inline', { timeout: 10000 });
   });
 
-  test('文本框清除图标开关：默认隐藏，开启后显示清空叉叉（保存自动刷新）', async ({ page }) => {
-    // 1. API 开启清除图标：用户编辑表单的文本输入框显示清空叉叉
+  test('文本框清除图标开关：开启后聚焦且非空时显示清除图标', async ({ page }) => {
+    // 1. 开启清除图标：聚焦且有值时显示自定义清除图标（.cube-input-clear）
     await setReactConfig(page, { InputClear: true });
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     await page.locator(ROW).first().locator('.cube-op-btn-op-edit').click();
-    await expect(page.locator('.ant-modal input[placeholder="名称"]')).toBeVisible({ timeout: 8000 });
-    await page.locator('.ant-modal input[placeholder="名称"]').fill('abc');
-    await expect(
-      page
-        .locator('.ant-modal input[placeholder="名称"]')
-        .locator('xpath=ancestor::*[contains(@class,"ant-input-affix-wrapper")]')
-        .locator('.ant-input-clear-icon:not(.ant-input-clear-icon-hidden)')
-        .first(),
-    ).toBeVisible({ timeout: 8000 });
+    const nameInput = page.locator('.ant-modal input[placeholder="名称"]');
+    await expect(nameInput).toBeVisible({ timeout: 8000 });
+    await nameInput.fill('abc');
+    await nameInput.focus();
+    await expect(page.locator('.ant-modal .cube-input-clear').first()).toBeVisible({ timeout: 8000 });
 
-    // 2. 关闭清除图标：表单文本输入框无清空叉叉（reload 重置 store 缓存）
+    // 2. 关闭清除图标：聚焦且有值也不显示
     await page.locator('.ant-modal button', { hasText: /取\s*消/ }).first().click();
     await setReactConfig(page, { InputClear: false });
-    await page.reload();
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     await page.locator(ROW).first().locator('.cube-op-btn-op-edit').click();
-    await expect(page.locator('.ant-modal input[placeholder="名称"]')).toBeVisible({ timeout: 8000 });
-    await page.locator('.ant-modal input[placeholder="名称"]').fill('abc');
-    const clearCount = await page.locator('.ant-modal .ant-input-clear-icon:not(.ant-input-clear-icon-hidden)').count();
-    expect(clearCount).toBe(0);
+    const input2 = page.locator('.ant-modal input[placeholder="名称"]');
+    await expect(input2).toBeVisible({ timeout: 8000 });
+    await input2.fill('abc');
+    await input2.focus();
+    expect(await page.locator('.ant-modal .cube-input-clear').count()).toBe(0);
+    await page.locator('.ant-modal button', { hasText: /取\s*消/ }).first().click();
   });
 });

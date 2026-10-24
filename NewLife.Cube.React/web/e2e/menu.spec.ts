@@ -23,10 +23,11 @@ test.describe('菜单页（/Admin/Menu）', () => {
       hasText: '父编号',
     });
     await parentRow.locator('.ant-select').click();
-    // 选项含层级路径（系统管理/xxx）
+    // 选项含层级路径（如 系统管理/部门）：不绑定具体菜单名，只要存在带 / 的层级选项
     await expect(page.locator('.ant-select-item-option').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('.ant-select-item-option', { hasText: '系统管理/' }).first()).toBeVisible();
-    await expect(page.locator('.ant-select-item-option', { hasText: '系统管理' }).first()).toBeVisible();
+    const optionTexts = await page.locator('.ant-select-item-option').allInnerTexts();
+    expect(optionTexts.length, '父编号下拉选项数').toBeGreaterThan(2);
+    expect(optionTexts.some((text) => /.+\/.+/.test(text)), `应有层级路径选项: ${optionTexts.join(',')}`).toBe(true);
     // 关闭下拉与弹窗
     await page.keyboard.press('Escape');
     await page.locator('.ant-modal button', { hasText: /取\s*消/ }).first().click();

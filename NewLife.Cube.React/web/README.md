@@ -79,6 +79,11 @@ pnpm test:e2e
 ```
 
 **E2E 运行前提**：先启动被测站点（`Bin/CubeDemo/ReactCubeDemo.exe --urls http://localhost:5050`），并提供一个**管理员账号**——通过 `$env:ADMIN_USER` / `$env:ADMIN_PASS` 传入，缺省为 `admin/admin`。演示库若是他人环境，请勿沿用内置账号，另建专用账号；账号名不要以 `e2e-` 开头（`list.spec` 的批量删除用例会按该前缀搜索并清理数据）。
+
+**副账号（强烈建议）**：魔方是单会话策略——同一账号再次登录会吊销旧令牌。凡会**重新登录**的用例（保存密码、SSO 回调、退出登录、权限 API 集成）使用副账号，避免共享登录态失效；配置 `$env:E2E_ALT_USER` / `$env:E2E_ALT_PASS`（缺省回退主账号）。
+
+**环境能力差异**：AI 助手（AISwitch 未启用）、ViewTrace（后端无该控制器）等用例会**自动跳过**而非失败（`e2e/utils/env.ts` + 用例内 `test.skip`）。
+
 浏览器语言固定为 `zh-CN`（`playwright.config.ts` 的 `use.locale`），因为断言文案为中文，而测试上下文默认 `en-US`。
 
 ---

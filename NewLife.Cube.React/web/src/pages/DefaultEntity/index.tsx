@@ -14,17 +14,13 @@ import NotFoundPage from '@/pages/NotFound';
 import ConfigNav, { findConfigCenter } from '@/views/config/ConfigNav';
 import { routeToApiPrefix } from '@/utils/url';
 import { isEntityMeta } from '@/utils/pageMeta';
+import { isSpecialApiPath } from '@/utils/specialPage';
 import { api } from '@/api';
 
 /** 是否表单类路径（含 ?id= 或 /Edit /Add /New /Detail 后缀） */
 function isFormPath(pathname: string, search: string): boolean {
   if (search.includes('id=')) return true;
   return /\/+(edit|add|new|detail)$/i.test(pathname);
-}
-
-/** 已知特殊页（不在菜单树、非实体 CRUD，如服务器信息 /Admin/Index/Main），放行给 DefaultListPage 内部按路径分发 */
-function isSpecialApiPath(pathname: string): boolean {
-  return /\/index\/main$/i.test(pathname);
 }
 
 export default function DefaultEntityPage() {
