@@ -24,11 +24,11 @@ Adicione referências a `NewLife.Cube` e `NewLife.Cube.React`, execute `dotnet r
 - **Pronto para usar**: uma linha `app.UseReact(env)`; a saída de build é incorporada à DLL e distribuída com o pacote NuGet, sem dependência de arquivos físicos
 - **Orientado por metadados de campos**: listas, formulários, busca e detalhes são renderizados dinamicamente a partir dos metadados `meta` do backend; adicionar uma entidade não exige trabalho front-end
 - **Segue a especificação de design de skins do Cube**: fluxo completo de autenticação, lista genérica, formulário genérico, LOV/upload/texto rico/assistente de IA e outros componentes compartilhados
-- **Consome os pacotes compartilhados**: baseado em `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), com núcleo independente de framework compartilhado entre skins
+- **Consome os pacotes compartilhados**: baseado em `@newlifex/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), com núcleo independente de framework compartilhado entre skins
 - **Tema único × claro/escuro**: aparência nativa orientada por tokens do antd, alternância claro/escuro com um clique
 - **Assistente de IA**: chat em streaming SSE + comandos rápidos + preenchimento inteligente de formulários + diagnóstico do sistema, com renderização mermaid integrada
 - **Localização multilíngue**: 11 idiomas de interface totalmente traduzidos (lista do backend ∩ idiomas completos do front-end; o backend expõe 32 idiomas e os outros 21 voltam ao inglês; mesma cadeia do NewLife.Core/Cube, requer NewLife.Cube ≥ 6.15.2026.1022), com idioma do sistema ou forçado; menus, metadados de campos e mensagens de execução do servidor são recarregados ao trocar de idioma
-- **Bem testado**: 136 testes unitários + 48 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
+- **Bem testado**: 390 testes unitários + 117 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
 
 ## Mapa do ecossistema
 
@@ -110,8 +110,8 @@ Abra <http://localhost:5188> no navegador para ver a página de login; após ent
 cd NewLife.Cube.React/web
 pnpm build        # gera ../wwwroot (para incorporação no .NET)
 pnpm type-check   # verificação de tipos com tsc
-pnpm test:unit    # testes unitários Vitest (136)
-pnpm test:e2e     # Playwright E2E (48; padrão 5050, substitua com $env:E2E_BASE_URL)
+pnpm test:unit    # testes unitários Vitest (390)
+pnpm test:e2e     # Playwright E2E (117; padrão 5050, substitua com $env:E2E_BASE_URL)
 
 # Build .NET (incorpora wwwroot na DLL)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## Testes
 
-- **Testes unitários**: Vitest + React Testing Library + jsdom, 136 casos aprovados
-- **Testes E2E**: 48 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
+- **Testes unitários**: Vitest + React Testing Library + jsdom, 390 casos aprovados
+- **Testes E2E**: 117 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
 - **Integração .NET**: fluxo ponta a ponta com CubeDemo + `UseReact` (login → menus → CRUD → exportação → atualização sem 404)
 
 ## Publicação
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | Repositório | Descrição |
 |-------------|-----------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Núcleo do Cube (Web API/permissões/menus/metadados de campos) + pacotes front-end compartilhados `packages/@cube/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Núcleo do Cube (Web API/permissões/menus/metadados de campos) + pacotes front-end compartilhados `packages/@newlifex/*` |
 | [Especificação de design de skins do Cube](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | Especificação de design unificada que todos os skins do Cube devem seguir; o skin React está em conformidade |
 | NewLife.Cube.Vue | Skin front-end da família Vue (Vue 3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | Este repositório (skin front-end da família React) |

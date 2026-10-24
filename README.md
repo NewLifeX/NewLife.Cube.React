@@ -22,11 +22,11 @@ Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`
 - **Out of the box**: one line `app.UseReact(env)`; the build output is embedded in the DLL and shipped with the NuGet package, with no physical file dependency
 - **Field metadata driven**: lists, forms, search and detail views are all rendered dynamically from backend `meta` metadata; adding an entity requires zero front-end work
 - **Conforms to the Cube skin design specification**: complete authentication flow, generic list, generic form, LOV/upload/rich text/AI assistant and other shared components
-- **Consumes the shared packages**: built on `@cube/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), with a framework-agnostic core shared by multiple skins
+- **Consumes the shared packages**: built on `@newlifex/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), with a framework-agnostic core shared by multiple skins
 - **Single theme × light/dark**: native look driven by antd tokens, with one-click light/dark switching
 - **AI assistant**: SSE streaming chat + quick commands + smart form filling + system diagnostics, with built-in mermaid rendering
 - **Multilingual localization**: 11 fully translated UI languages (backend list ∩ frontend complete languages; the backend exposes 32 languages, and the other 21 fall back to English; same pipeline as NewLife.Core/Cube, requires NewLife.Cube ≥ 6.15.2026.1022), supporting follow-system and forced languages; server menus, field metadata and runtime messages are re-fetched when the language changes
-- **Well tested**: 136 unit tests + 48 E2E tests all passing, with Playwright login session reuse
+- **Well tested**: 390 unit tests + 117 E2E tests all passing, with Playwright login session reuse
 
 ## Ecosystem Map
 
@@ -108,8 +108,8 @@ Open <http://localhost:5188> in a browser to see the sign-in page; after signing
 cd NewLife.Cube.React/web
 pnpm build        # outputs to ../wwwroot (for .NET embedding)
 pnpm type-check   # tsc type checking
-pnpm test:unit    # Vitest unit tests (136)
-pnpm test:e2e     # Playwright E2E (48; defaults to port 5050, override with $env:E2E_BASE_URL)
+pnpm test:unit    # Vitest unit tests (390)
+pnpm test:e2e     # Playwright E2E (117; defaults to port 5050, override with $env:E2E_BASE_URL)
 
 # .NET build (embeds wwwroot into the DLL)
 dotnet build 魔方React.slnx -c Release
@@ -119,8 +119,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## Testing
 
-- **Unit tests**: Vitest + React Testing Library + jsdom, 136 cases all passing
-- **E2E tests**: 48 Playwright cases (sign-in/sign-up/activation/forgot password/security center/list create-update-delete/import-export/layout/upload/AI), with login session reuse
+- **Unit tests**: Vitest + React Testing Library + jsdom, 390 cases all passing
+- **E2E tests**: 117 Playwright cases (sign-in/sign-up/activation/forgot password/security center/list create-update-delete/import-export/layout/upload/AI), with login session reuse
 - **.NET integration**: CubeDemo + `UseReact` end-to-end flow (sign-in → menus → CRUD → export → refresh without 404)
 
 ## Release
@@ -132,7 +132,7 @@ dotnet build 魔方React.slnx -c Release
 
 | Repository | Description |
 |------------|-------------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cube core (Web API/permissions/menus/field metadata) + shared front-end packages `packages/@cube/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cube core (Web API/permissions/menus/field metadata) + shared front-end packages `packages/@newlifex/*` |
 | [Cube skin design specification](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | Unified design specification all Cube skins should follow; the React skin conforms to it |
 | NewLife.Cube.Vue | Vue-family front-end skin (Vue 3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | This repository (React-family front-end skin) |

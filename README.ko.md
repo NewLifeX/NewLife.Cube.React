@@ -24,11 +24,11 @@ Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독
 - **즉시 사용 가능**: `app.UseReact(env)` 한 줄로 연동되며, 빌드 산출물이 DLL에 내장되어 NuGet 패키지로 배포되므로 물리 파일 의존성이 없습니다
 - **필드 메타데이터 기반**: 목록/폼/검색/상세 화면이 모두 백엔드 `meta` 메타데이터로 동적 렌더링되며, 엔티티 추가 시 프런트엔드 개발이 필요 없습니다
 - **큐브 스킨 디자인 규격 준수**: 인증 로그인 전체 흐름, 범용 목록, 범용 폼, LOV/업로드/리치 텍스트/AI 어시스턴트 등 공용 컴포넌트 제공
-- **공용 패키지 사용**: `@cube/*`(api-core/auth-logic/page-logic/field-mapping/page-utils) 기반이며, 프레임워크 독립 코어를 여러 스킨이 공유합니다
+- **공용 패키지 사용**: `@newlifex/*`(api-core/auth-logic/page-logic/field-mapping/page-utils) 기반이며, 프레임워크 독립 코어를 여러 스킨이 공유합니다
 - **단일 테마 × 라이트/다크**: antd 토큰 기반의 네이티브한 느낌, 라이트/다크 전환은 클릭 한 번
 - **AI 어시스턴트**: SSE 스트리밍 대화 + 빠른 명령 + 스마트 폼 채우기 + 시스템 진단, mermaid 렌더링 내장
 - **다국어 현지화**: 11개 언어 전체 번역 UI(백엔드 목록 ∩ 프런트엔드 전체 언어, 리소스 32개 로캘, NewLife.Core/Cube와 동일한 경로, NewLife.Cube ≥ 6.15.2026.1022 필요), 시스템 언어 따르기 및 강제 언어 지원, 언어 전환 시 서버 메뉴·필드 메타데이터·런타임 메시지를 다시 가져옴
-- **테스트 완비**: 단위 테스트 136개 + E2E 48개 모두 통과, Playwright 로그인 세션 재사용
+- **테스트 완비**: 단위 테스트 390개 + E2E 117개 모두 통과, Playwright 로그인 세션 재사용
 
 ## 생태계 지도
 
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # ../wwwroot 출력 (.NET 내장용)
 pnpm type-check   # tsc 타입 검사
-pnpm test:unit    # Vitest 단위 테스트 (136개)
-pnpm test:e2e     # Playwright E2E (48개; 기본 5050, $env:E2E_BASE_URL로 재정의)
+pnpm test:unit    # Vitest 단위 테스트 (390개)
+pnpm test:e2e     # Playwright E2E (117개; 기본 5050, $env:E2E_BASE_URL로 재정의)
 
 # .NET 빌드 (wwwroot를 DLL에 내장)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## 테스트
 
-- **단위 테스트**: Vitest + React Testing Library + jsdom, 136개 사례 모두 통과
-- **E2E 테스트**: Playwright 48개 사례(로그인/회원가입/활성화/비밀번호 찾기/보안 센터/목록 CRUD/가져오기·내보내기/레이아웃/업로드/AI), 로그인 세션 재사용
+- **단위 테스트**: Vitest + React Testing Library + jsdom, 390개 사례 모두 통과
+- **E2E 테스트**: Playwright 117개 사례(로그인/회원가입/활성화/비밀번호 찾기/보안 센터/목록 CRUD/가져오기·내보내기/레이아웃/업로드/AI), 로그인 세션 재사용
 - **.NET 통합**: CubeDemo + `UseReact` 전체 흐름(로그인 → 메뉴 → CRUD → 내보내기 → 새로고침 시 404 없음)
 
 ## 릴리스
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | 저장소 | 설명 |
 |--------|------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 큐브 코어(WebAPI/권한/메뉴/필드 메타데이터) + 프런트엔드 공용 패키지 `packages/@cube/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 큐브 코어(WebAPI/권한/메뉴/필드 메타데이터) + 프런트엔드 공용 패키지 `packages/@newlifex/*` |
 | [큐브 스킨 디자인 규격](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | 모든 큐브 스킨이 따라야 하는 통합 디자인 규격이며, React 스킨은 이를 준수합니다 |
 | NewLife.Cube.Vue | Vue 계열 프런트엔드 스킨(Vue3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 이 저장소(React 계열 프런트엔드 스킨) |

@@ -7,12 +7,28 @@
  * 注意：表格启用 scroll.x 后 antd 会渲染隐藏的测量行（.ant-table-measure-row），
  * 数据行选择器统一使用 `tr.ant-table-row` 排除测量行。
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const PREFIX = `e2e-${Date.now()}`;
 const TABLE_TIMEOUT = 15000;
 /** 数据行（排除 antd 测量行） */
 const ROW = '.ant-table-tbody tr.ant-table-row';
+
+/**
+ * 打开用户列表并按关键字定位
+ *
+ * `/Admin/User` 搜索区没有文本关键字（只有角色/部门/性别/在线/启用/地区下拉），但后端支持 `q`
+ * 关键字查询（与日志页一致），且页面会把 URL 查询参数直接透传给接口。新建用户后按下而地址
+ * 打开即可精确定位，不依赖分页与排序。
+ *
+ * @param page 页面对象
+ * @param keyword 关键字（测试用户名前缀）
+ */
+async function gotoUserList(page: Page, keyword: string) {
+  await page.goto(`/Admin/User?q=${encodeURIComponent(keyword)}`);
+  await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+  await page.waitForTimeout(800);
+}
 
 test.describe('通用列表页（/Admin/User）', () => {
   test('列表页加载无错误且展示数据', async ({ page }) => {
@@ -57,18 +73,13 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.locator('.ant-modal input').first().fill(name);
     await page.getByRole('button', { name: /保\s*存/ }).click();
     await expect(page.locator('.ant-message')).toBeVisible({ timeout: 8000 });
-    // 搜索确认落库（避免分页影响）
-    await page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first().fill(name);
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1000);
-    await expect(page.locator('.ant-table-tbody').getByText(name).first()).toBeVisible({ timeout: 10000 });
-    // 刷新页面后重新搜索，记录仍存在（后端落库，而非前端内存态）
+    // 按关键字 q 定位（后端生效，URL 参数透传），避免依赖不存在的搜索框
+    await gotoUserList(page, name);
+    await expect(page.locator(ROW, { hasText: name }).first()).toBeVisible({ timeout: 10000 });
+    // 刷新页面后仍可查（后端落库，而非前端内存态）
     await page.reload();
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
-    await page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first().fill(name);
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1000);
-    await expect(page.locator('.ant-table-tbody').getByText(name).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(ROW, { hasText: name }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('列表列定制：编号后头像列，名称列优先显示昵称', async ({ page }) => {
@@ -88,12 +99,10 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.getByRole('button', { name: /保\s*存/ }).click();
     await expect(page.locator('.ant-modal:not([style*="display: none"])')).toHaveCount(0, { timeout: 8000 });
 
-    // 搜索定位（兼容分页）
-    await page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first().fill(name);
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1000);
+    // 按关键字 q 定位（后端生效）
+    await gotoUserList(page, name);
     // 无昵称 → 名称列显示用户名
-    await expect(page.locator('.ant-table-tbody').getByText(name).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(ROW, { hasText: name }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('编辑用户后值更新并刷新可查（防前端虚假编辑）', async ({ page }) => {
@@ -108,12 +117,12 @@ test.describe('通用列表页（/Admin/User）', () => {
     // 新增成功 → 弹窗关闭（失败则弹窗保持并显示错误）
     await expect(page.locator('.ant-modal:not([style*="display: none"])')).toHaveCount(0, { timeout: 8000 });
 
-    // 搜索定位目标（兼容分页）
-    await page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first().fill(name);
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1000);
+    // 按关键字 q 定位目标
+    await gotoUserList(page, name);
     const row = page.locator(ROW, { hasText: name }).first();
     await expect(row).toBeVisible({ timeout: 10000 });
+    // 记住行主键：改昵称后名称列只显示昵称，不能再用登录名做文本定位
+    const rowKey = await row.getAttribute('data-row-key');
 
     // 编辑：断言登录名预填（从后端加载；修复前 camelCase↔PascalCase 不匹配导致全部为空）
     await row.getByRole('button', { name: '编辑' }).click();
@@ -129,17 +138,14 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.getByRole('button', { name: /保\s*存/ }).click();
     await expect(page.locator('.ant-modal:not([style*="display: none"])')).toHaveCount(0, { timeout: 8000 });
 
-    // 刷新页面重新搜索：新昵称仍在列表（后端落库）
+    // 刷新页面重新定位：新昵称仍在列表（后端落库）
     await page.reload();
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
-    await page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first().fill(name);
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1000);
-    await expect(page.locator(ROW, { hasText: display2 }).first()).toBeVisible({ timeout: 10000 });
+    const edited = page.locator(`${ROW}[data-row-key="${rowKey}"]`).first();
+    await expect(edited).toContainText(display2, { timeout: 10000 });
 
     // 重新打开编辑：昵称预填为新值（证明编辑从后端详情加载，非前端缓存）
-    // 名称列已优先显示昵称，按新昵称定位行
-    await page.locator(ROW, { hasText: display2 }).first().getByRole('button', { name: '编辑' }).click();
+    await edited.getByRole('button', { name: '编辑' }).click();
     await page.waitForSelector('.ant-modal:not([style*="display: none"])', { timeout: 8000 });
     const reEditCell = page.locator('.ant-modal:visible .cube-form-inline-cell', { hasText: '昵称' });
     if ((await reEditCell.count()) > 0) {
@@ -177,22 +183,16 @@ test.describe('通用列表页（/Admin/User）', () => {
   });
 
   test('删除新增用户', async ({ page }) => {
-    await page.goto('/Admin/User');
-    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
-    // 搜索定位目标（兼容分页）
-    const searchInput = page.locator('.ant-card input[type="text"], .ant-card input:not([type])').first();
-    if (await searchInput.isVisible().catch(() => false)) {
-      await searchInput.fill(PREFIX);
-      await page.getByRole('button', { name: /搜\s*索/ }).click();
-      await page.waitForTimeout(1000);
-    }
-    const target = page.locator(ROW, { hasText: PREFIX }).first();
-    if ((await target.count()) > 0) {
-      await target.getByRole('button', { name: '删除' }).click();
-      // 危险操作二次确认（Popconfirm）
-      await page.locator('.ant-popover:visible').getByRole('button', { name: /删\s*除/ }).click();
-      await expect(page.locator('.ant-message')).toBeVisible({ timeout: 8000 });
-    }
+    // 按关键字 q 一次列出本批次创建的用户（关键字在 URL 参数中透传给后端）
+    await gotoUserList(page, PREFIX);
+    const rows = page.locator(ROW, { hasText: PREFIX });
+    const before = await rows.count();
+    expect(before).toBeGreaterThan(0);
+    await rows.first().getByRole('button', { name: '删除' }).click();
+    // 危险操作二次确认（Popconfirm）
+    await page.locator('.ant-popover:visible').getByRole('button', { name: /删\s*除/ }).click();
+    await expect(page.locator('.ant-message')).toBeVisible({ timeout: 8000 });
+    await expect(rows).toHaveCount(before - 1, { timeout: 10000 });
   });
 
   test('空状态（不存在的实体 → 404）', async ({ page }) => {

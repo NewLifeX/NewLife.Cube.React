@@ -24,11 +24,11 @@
 - **開箱即用**：`app.UseReact(env)` 一行接入，建置產物內嵌 DLL 隨 NuGet 散布，無實體檔案依賴
 - **欄位中繼資料驅動**：清單/表單/搜尋/詳情全部由後端 `meta` 中繼資料動態渲染，新增實體零前端開發
 - **符合魔方皮膚設計規範**：認證登入全流程、通用清單、通用表單、LOV/上傳/富文字/AI 助理等公共元件
-- **消費共享公共套件**：基於 `@cube/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架無關核心多皮膚共享
+- **消費共享公共套件**：基於 `@newlifex/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架無關核心多皮膚共享
 - **單一主題 × 明暗**：antd token 驅動的原生觀感，明暗切換一鍵完成
 - **AI 智慧助理**：SSE 串流對話 + 快捷指令 + 智慧填表 + 系統診斷，內建 mermaid 渲染
 - **多語言在地化**：11 種全量翻譯介面語言（後端清單 ∩ 前端全量語言；後端語言清單 32 種，其餘 21 種統一回退英文；與 NewLife.Core/Cube 同鏈路，需 NewLife.Cube ≥ 6.15.2026.1022），支援跟隨系統與強制語言，伺服器選單、欄位中繼資料與執行時訊息隨語言切換重新拉取
-- **測試完備**：單元測試 136 個 + E2E 48 個全過，Playwright 登入工作階段重用
+- **測試完備**：單元測試 390 個 + E2E 117 個全過，Playwright 登入工作階段重用
 
 ## 生態版圖
 
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # 輸出 ../wwwroot（供 .NET 內嵌）
 pnpm type-check   # tsc 型別檢查
-pnpm test:unit    # Vitest 單元測試（136 個）
-pnpm test:e2e     # Playwright E2E（48 個；預設 5050，可用 $env:E2E_BASE_URL 覆寫）
+pnpm test:unit    # Vitest 單元測試（390 個）
+pnpm test:e2e     # Playwright E2E（117 個；預設 5050，可用 $env:E2E_BASE_URL 覆寫）
 
 # .NET 建置（內嵌 wwwroot → DLL）
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## 測試
 
-- **單元測試**：Vitest + React Testing Library + jsdom，136 個案例全過
-- **E2E 測試**：Playwright 48 個案例（登入/註冊/啟用/忘記密碼/安全中心/清單增刪改/匯入匯出/版面/上傳/AI），登入工作階段重用
+- **單元測試**：Vitest + React Testing Library + jsdom，390 個案例全過
+- **E2E 測試**：Playwright 117 個案例（登入/註冊/啟用/忘記密碼/安全中心/清單增刪改/匯入匯出/版面/上傳/AI），登入工作階段重用
 - **.NET 整合**：CubeDemo + `UseReact` 全流程端對端（登入→選單→CRUD→匯出→重新整理不 404）
 
 ## 發佈
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | 儲存庫 | 說明 |
 |------|------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方核心（WebAPI/權限/選單/欄位中繼資料）+ 前端公共套件 `packages/@cube/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方核心（WebAPI/權限/選單/欄位中繼資料）+ 前端公共套件 `packages/@newlifex/*` |
 | [魔方皮膚設計規範](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | 魔方所有皮膚應遵循的統一設計規範，React 皮膚符合該規範 |
 | NewLife.Cube.Vue | Vue 系前端皮膚（Vue3 + Element Plus） |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 本儲存庫（React 系前端皮膚） |
