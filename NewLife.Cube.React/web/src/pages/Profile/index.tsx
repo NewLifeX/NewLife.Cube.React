@@ -35,7 +35,7 @@ import { api } from '@/api';
 import { getCurrentLanguage, t } from '@/i18n';
 import { useUserStore, logoutAndRedirect } from '@/stores/user';
 import { useDashboard } from '@/hooks/useDashboard';
-import type { BindsResult, UserInfo } from '@newlifex/cube';
+import { normalizeRoles, type BindsResult, type UserInfo } from '@newlifex/cube';
 
 /** 性别枚举（对齐 XCode SexKinds：0 未知 / 1 男 / 2 女，标签按当前语言生成） */
 const sexOptions = () => [
@@ -70,7 +70,7 @@ export default function ProfilePage() {
   const wbProfile = wb?.profile;
   const displayName = user?.displayName || userInfo?.displayName || userInfo?.name || t('用户');
   const userName = user?.name || userInfo?.name || '—';
-  const roles = user?.roles?.join(' / ') || userInfo?.roleName || t('用户');
+  const roles = normalizeRoles(user?.roles).join(' / ') || userInfo?.roleName || t('用户');
   const online = wbProfile?.online;
   const avatar = profile?.avatar || userInfo?.avatar;
 

@@ -92,4 +92,18 @@ export const api: CubeApi = createCubeApi({
   },
 });
 
+/**
+ * 共享包 `resolveRequestUrl` 对不带前导斜杠的 url 会拼成 `/apiAdmin/...`（路径粘连），
+ * 而 `createWorkbenchLoader` / `createWidgetLayoutLoader` 等共享 loader 传入的是 `Admin/Index`。
+ * 这里统一补齐前导斜杠，待上游修复后可移除。
+ */
+const pageApi = api.page;
+const withLeadingSlash = (type: string) => (type.startsWith('/') ? type : `/${type}`);
+api.page = {
+  ...pageApi,
+  getAction: <T,>(type: string, action: string, params?: Record<string, unknown>) =>
+    pageApi.getAction<T>(withLeadingSlash(type), action, params),
+  postAction: <T,>(type: string, action: string, data?: unknown) => pageApi.postAction<T>(withLeadingSlash(type), action, data),
+};
+
 export default api;

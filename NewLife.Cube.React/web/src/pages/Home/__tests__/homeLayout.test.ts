@@ -21,6 +21,7 @@ const widget = (name: string, cols: number, partial: Partial<DashboardWidget> = 
   title: name,
   cols,
   widgetType: 'Content',
+  data: null,
   ...partial,
 });
 

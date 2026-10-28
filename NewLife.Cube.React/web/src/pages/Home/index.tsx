@@ -28,6 +28,18 @@ import {
 import { App, Button, Card, Dropdown, Empty, Popover } from 'antd';
 import * as echarts from 'echarts';
 import { useNavigate } from 'react-router-dom';
+import {
+  appendMonitorPoint,
+  createWidgetLayoutLoader,
+  MAX_MONITOR_POINTS,
+  MONITOR_POLL_INTERVAL,
+  normalizeCols,
+  normalizeKpiColor,
+  normalizeRoles,
+  type MonitorPoint,
+  type WidgetLayout,
+  type WidgetLayoutMap,
+} from '@newlifex/cube';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
 import { useSiteStore } from '@/stores/site';
@@ -82,11 +94,8 @@ export const parseHtmlLink = (raw: string): { href: string; target?: string; tex
   return href ? { href, target, text } : null;
 };
 
-/** 工作台卡片布局项（排序 + 隐藏），对应后端 WidgetLayout */
-interface WidgetLayoutItem {
-  sort?: number;
-  hide?: boolean;
-}
+/** 工作台卡片布局项（排序 + 隐藏），对应后端 WidgetLayout（共享契约） */
+type WidgetLayoutItem = WidgetLayout;
 
 /** 工作台统一布局项：KPI 卡或内容部件（拖动排序共用一张 layout map） */
 export interface HomeItem {
@@ -116,7 +125,7 @@ export const normalizeLayout = (raw: Record<string, WidgetLayoutItem>) => {
 /** 合并 KPI 与内容部件为统一布局项（KPI 前、部件后，保持后端顺序） */
 export const buildHomeItems = (allKpis: DashboardKpi[], allWidgets: DashboardWidget[]): HomeItem[] => [
   ...allKpis.map((k) => ({ kind: 'kpi' as const, key: layoutKey(k.name), cols: 2, kpi: k })),
-  ...allWidgets.map((w) => ({ kind: 'widget' as const, key: layoutKey(w.name), cols: w.cols || 6, widget: w })),
+  ...allWidgets.map((w) => ({ kind: 'widget' as const, key: layoutKey(w.name), cols: normalizeCols(w.cols), widget: w })),
 ];
 
 /**
@@ -167,11 +176,11 @@ export default function HomePage() {
   const navigate = useNavigate();
   const userInfo = useUserStore((s) => s.userInfo);
   const siteName = useSiteStore((s) => s.config?.name);
-  const { data: wb, reload: reloadWb } = useDashboard();
+  const { data: wb, reload: reloadWb, pollMonitor } = useDashboard();
   const [now, setNow] = useState(new Date());
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstRef = useRef<echarts.ECharts | null>(null);
-  const [monitor, setMonitor] = useState<{ xs: string[]; cpu: number[]; mem: number[] }>({ xs: [], cpu: [], mem: [] });
+  const [monitorPoints, setMonitorPoints] = useState<MonitorPoint[]>([]);
 
   // 时钟
   useEffect(() => {
@@ -179,34 +188,29 @@ export default function HomePage() {
     return () => clearInterval(t);
   }, []);
 
-  // 监控数据轮询（对齐 MVC MonitorData 契约：{ xs, series: [[cpu],[mem]] }）
+  // 监控数据轮询（共享 loader 解析 MonitorData 契约，前端累计点数受 MAX_MONITOR_POINTS 限制）
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
       try {
-        const res = await api.client.get('/Admin/Index/MonitorData');
-        const d = (res.data as { data?: { xs?: string[]; series?: number[][] } })?.data ?? (res.data as { xs?: string[]; series?: number[][] });
-        if (!d || cancelled) return;
-        setMonitor((prev) => ({
-          xs: [...prev.xs, ...(d.xs ?? [])].slice(-60),
-          cpu: [...prev.cpu, ...(d.series?.[0] ?? [])].slice(-60),
-          mem: [...prev.mem, ...(d.series?.[1] ?? [])].slice(-60),
-        }));
+        const point = await pollMonitor();
+        if (!point || cancelled) return;
+        setMonitorPoints((prev) => appendMonitorPoint(prev, point));
       } catch {
         /* 接口不可用静默 */
       }
     };
     void poll();
-    const t = setInterval(() => void poll(), 5000);
+    const t = setInterval(() => void poll(), MONITOR_POLL_INTERVAL);
     return () => {
       cancelled = true;
       clearInterval(t);
     };
-  }, []);
+  }, [pollMonitor]);
 
   // 性能曲线渲染（文字/边框色取主题 CSS 变量，明暗两套自适应）
   useEffect(() => {
-    if (!chartRef.current || monitor.xs.length < 2) return;
+    if (!chartRef.current || monitorPoints.length < 2) return;
     // 卡片隐藏后重新显示时，旧实例已挂在已卸载节点上，先释放再重建
     chartInstRef.current?.dispose();
     const textColor =
@@ -221,7 +225,7 @@ export default function HomePage() {
       grid: { left: 8, right: 8, top: 32, bottom: 0, containLabel: true },
       xAxis: {
         type: 'category',
-        data: monitor.xs,
+        data: monitorPoints.map((p) => p.label),
         boundaryGap: false,
         axisLine: { lineStyle: { color: borderColor } },
         axisLabel: { color: textColor },
@@ -234,8 +238,8 @@ export default function HomePage() {
         axisLabel: { color: textColor, formatter: '{value}%' },
       },
       series: [
-        { name: 'CPU', type: 'line', smooth: true, showSymbol: false, data: monitor.cpu, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
-        { name: t('内存'), type: 'line', smooth: true, showSymbol: false, data: monitor.mem, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
+        { name: 'CPU', type: 'line', smooth: true, showSymbol: false, data: monitorPoints.map((p) => p.cpu), lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
+        { name: t('内存'), type: 'line', smooth: true, showSymbol: false, data: monitorPoints.map((p) => p.memory), lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
       ],
     });
     const onResize = () => chart.resize();
@@ -245,7 +249,7 @@ export default function HomePage() {
       chart.dispose();
       if (chartInstRef.current === chart) chartInstRef.current = null;
     };
-  }, [monitor]);
+  }, [monitorPoints]);
 
   // ── 工作台布局（卡片三能力：拖动排序 / 即时保存 / 隐藏，统一扁平列表）──
   const [layout, setLayout] = useState<Record<string, WidgetLayoutItem>>({});
@@ -261,15 +265,17 @@ export default function HomePage() {
   const [dragPos, setDragPos] = useState<{ x: number; y: number; w: number; h: number; ox: number; oy: number } | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(-1);
 
+  // 布局读写由共享 loader 承载（GetWidgetLayout / SaveWidgetLayout / ResetWidgetLayout）
+  const layoutLoader = useMemo(() => createWidgetLayoutLoader(api), []);
+
   // 读取用户布局（后端 Parameter 持久化，key 统一归一化为 camelCase）
   useEffect(() => {
     let cancelled = false;
-    api.client
-      .get('/Admin/Index/GetWidgetLayout')
-      .then((res) => {
+    void layoutLoader
+      .load()
+      .then((raw) => {
         if (cancelled) return;
-        const data = (res.data as { data?: Record<string, WidgetLayoutItem> })?.data;
-        if (data && Object.keys(data).length) setLayout(normalizeLayout(data));
+        if (raw && Object.keys(raw).length) setLayout(normalizeLayout(raw));
       })
       .catch(() => {
         /* 布局接口不可用静默 */
@@ -277,25 +283,23 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [layoutLoader]);
 
   // 提交布局：更新状态 + 即时保存服务端（对齐 MVC HideWidget/SaveOrder 即时持久化）
-  const commitLayout = (next: Record<string, WidgetLayoutItem>) => {
+  const commitLayout = (next: WidgetLayoutMap) => {
     layoutRef.current = next;
     setLayout(next);
-    api.client
-      .post('/Admin/Index/SaveWidgetLayout', next)
-      .catch(() => {
-        /* 保存失败静默，下次操作重试 */
-      });
+    void layoutLoader.save(next).catch(() => {
+      /* 保存失败静默，下次操作重试 */
+    });
   };
 
   const handleResetLayout = () => {
     setLayout({});
     layoutRef.current = {};
-    api.client
-      .post('/Admin/Index/ResetWidgetLayout')
-      .then(() => message.success(t('布局已重置')))
+    void layoutLoader
+      .reset()
+      .then((ok) => (ok ? message.success(t('布局已重置')) : message.error(t('重置失败'))))
       .catch(() => message.error(t('重置失败')));
   };
 
@@ -440,7 +444,7 @@ export default function HomePage() {
 
   const today = new Intl.DateTimeFormat(getCurrentLanguage(), { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(now);
   const displayName = userCard?.displayName || userCard?.name || userInfo?.displayName || userInfo?.name || t('用户');
-  const roles = userCard?.roles?.join(' / ') || userInfo?.roleName || '';
+  const roles = normalizeRoles(userCard?.roles).join(' / ') || userInfo?.roleName || '';
   // 时间段问候（对齐 MVC Index/Dashboard：夜深了/早上好/中午好/下午好/晚上好）
   const greet =
     now.getHours() < 6
@@ -514,7 +518,7 @@ export default function HomePage() {
         </div>
         <div className="cube-home-profile-info">
           <div className="cube-home-profile-name">{p?.displayName || displayName}</div>
-          <div className="cube-home-profile-role">{p?.roleNames || roles || '—'}</div>
+          <div className="cube-home-profile-role">{normalizeRoles(p?.roleNames).join(' / ') || roles || '—'}</div>
         </div>
       </div>
       <div className="cube-home-profile-table">
@@ -617,7 +621,7 @@ export default function HomePage() {
         return (
           <>
             <div ref={chartRef} className="cube-home-monitor-chart" />
-            {monitor.xs.length < 2 && (
+            {monitorPoints.length < 2 && (
               <div style={{ textAlign: 'center', color: 'var(--cube-text-muted)', padding: '20px 0' }}>{t('等待监控数据…')}</div>
             )}
           </>
@@ -659,8 +663,8 @@ export default function HomePage() {
           </span>
         </span>
         <div className="cube-home-kpi-head">
-          <div className={`cube-home-kpi-icon ${k.color || 'blue'}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
-          <div className="cube-home-kpi-value" title={k.value}>
+          <div className={`cube-home-kpi-icon ${normalizeKpiColor(k.color)}`}>{KPI_ICONS[k.name ?? ''] ?? null}</div>
+          <div className="cube-home-kpi-value" title={String(k.value)}>
             {k.value}
           </div>
         </div>
