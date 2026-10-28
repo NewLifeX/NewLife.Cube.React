@@ -15,6 +15,17 @@ function searchCell(page: import('@playwright/test').Page, label: string) {
   return page.locator('.cube-search-item', { hasText: label }).first();
 }
 
+/**
+ * 展开搜索区。
+ *
+ * Cube 6.16 起 `/meta` 额外下发主时间区间项（`kind=range` 的 dtStart，占 2 列），
+ * 用户页搜索项变多后「地区」可能被折叠在「展开」之后，断言前需先展开。
+ */
+async function ensureSearchExpanded(page: import('@playwright/test').Page) {
+  const expand = page.getByRole('button', { name: /展\s*开/ });
+  if (await expand.isVisible().catch(() => false)) await expand.click();
+}
+
 /** 按标签文本定位表单字段所在单元格，再取控件 */
 function fieldCell(page: import('@playwright/test').Page, label: string) {
   return page.locator('.ant-modal').locator('.cube-form-inline-cell', { hasText: label }).first();
@@ -51,6 +62,7 @@ test.describe('用户页省市区级联选择器（/Admin/User）', () => {
   test('搜索区出现「地区」级联，选省→市→搜索携带 AreaId', async ({ page }) => {
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+    await ensureSearchExpanded(page);
 
     // 搜索区「地区」为级联选择器（非数字范围）
     const areaItem = searchCell(page, '地区');
@@ -74,20 +86,17 @@ test.describe('用户页省市区级联选择器（/Admin/User）', () => {
     await expect(areaItem.locator('.ant-select-content-has-value').first()).toBeVisible({ timeout: 5000 });
     await expect(areaItem.locator('.ant-select-content-has-value').first()).not.toBeEmpty();
 
-    // 监听列表请求，断言携带 AreaId=<数值>
-    let listReq: string | null = null;
-    const onReq = (req: { url: () => string; method: () => string }) => {
-      if (req.url().includes('/api/Admin/User') && req.method() === 'GET') listReq = req.url();
-    };
-    page.on('request', onReq as never);
-
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1200);
-
-    expect(listReq, '搜索请求应携带 AreaId').toMatch(/[?&]AreaId=\d+/);
+    // 点击搜索，断言列表请求携带 AreaId=<数值>（waitForRequest 避免请求早于监听注册导致的竞态）
+    const [listReq] = await Promise.all([
+      page.waitForRequest(
+        (r) => r.url().includes('/api/Admin/User') && r.method() === 'GET' && /[?&]AreaId=\d+/.test(r.url()),
+        { timeout: 15000 },
+      ),
+      page.getByRole('button', { name: /搜\s*索/ }).click(),
+    ]);
+    expect(listReq.url(), '搜索请求应携带 AreaId').toMatch(/[?&]AreaId=\d+/);
     // 搜索后列表仍正常渲染
     await expect(page.locator(ROW).first()).toBeVisible({ timeout: TABLE_TIMEOUT });
-    page.off('request', onReq as never);
   });
 
   test('编辑表单「地区」为级联选择器（非数字输入）', async ({ page }) => {
@@ -113,6 +122,7 @@ test.describe('用户页省市区级联选择器（/Admin/User）', () => {
     try {
       await page.goto('/Admin/User');
       await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+      await ensureSearchExpanded(page);
 
       // tabs 方案：地区控件为只读文本框（非 .ant-cascader 级联下拉）
       const areaItem = searchCell(page, '地区');
@@ -137,16 +147,15 @@ test.describe('用户页省市区级联选择器（/Admin/User）', () => {
       await expect(district).toBeVisible({ timeout: 8000 });
       await district.click();
 
-      // 监听列表请求，断言携带 AreaId=<数值>
-      let listReq: string | null = null;
-      const onReq = (req: { url: () => string; method: () => string }) => {
-        if (req.url().includes('/api/Admin/User') && req.method() === 'GET') listReq = req.url();
-      };
-      page.on('request', onReq as never);
-      await page.getByRole('button', { name: /搜\s*索/ }).click();
-      await page.waitForTimeout(1200);
-      expect(listReq, '搜索请求应携带 AreaId').toMatch(/[?&]AreaId=\d+/);
-      page.off('request', onReq as never);
+      // 点击搜索，断言列表请求携带 AreaId=<数值>（waitForRequest 避免请求早于监听注册导致的竞态）
+      const [listReq] = await Promise.all([
+        page.waitForRequest(
+          (r) => r.url().includes('/api/Admin/User') && r.method() === 'GET' && /[?&]AreaId=\d+/.test(r.url()),
+          { timeout: 15000 },
+        ),
+        page.getByRole('button', { name: /搜\s*索/ }).click(),
+      ]);
+      expect(listReq.url(), '搜索请求应携带 AreaId').toMatch(/[?&]AreaId=\d+/);
     } finally {
       await setAreaPickerStyle(page, 'cascader');
     }

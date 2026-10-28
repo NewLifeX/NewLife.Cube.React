@@ -58,7 +58,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.403">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -91,9 +91,9 @@
 
   <ItemGroup>
     <!-- 多语言基线：Cube 6.15.2026.1022 起内置请求级本地化（UseCubeLocalization），界面元数据按请求语言翻译 -->
-    <PackageReference Include="NewLife.Cube" Version="6.15.2026.1023" />
+    <PackageReference Include="NewLife.Cube" Version="6.16.2026.1027" />
     <!-- 直接引用 Core：导入 build/NewLife.Core.props，使本包 Locales/*.yml 自动编译进词表 -->
-    <PackageReference Include="NewLife.Core" Version="12.0.2026.1021-beta121526" />
+    <PackageReference Include="NewLife.Core" Version="12.0.2026.1024" />
   </ItemGroup>
 
 </Project>

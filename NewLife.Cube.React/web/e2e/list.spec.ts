@@ -254,8 +254,11 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     const name = `e2e-import-${Date.now()}`;
+    // 显式给出主键：导入走实体 Merge（按主键/唯一索引匹配合并），无主键列时可能命中并改写已有行
+    // （实测会覆盖环境管理员账号），给定不冲突的高位主键可确保只新增。
+    const id = 9_100_000 + (Date.now() % 800_000);
     // CSV 首行为表头（字段名），后续行为数据
-    const csv = `Name,DisplayName,Password\n${name},导入测试,admin123\n`;
+    const csv = `ID,Name,DisplayName,Password\n${id},${name},导入测试,admin123\n`;
     const buffer = Buffer.from(csv, 'utf-8');
     // 导入收纳在「高级」菜单内（规范 §7.8），触发隐藏文件选择框并上传
     await page.getByRole('button', { name: /高\s*级/ }).click();

@@ -30,8 +30,9 @@ test.describe('首页（/）', () => {
     await page.goto('/');
     const kpis = page.locator('.cube-home-grid > .cube-home-kpi-card');
     await expect(kpis.first()).toBeVisible({ timeout: 10000 });
-    // 管理员默认系统 KPI 卡（UserCount/TodayLogin/OnlineCount/MaxOnline/Error24h/OnlineTime），降级时至少 3 个
-    expect(await kpis.count()).toBeGreaterThanOrEqual(3);
+    // 管理员默认系统 KPI 卡（UserCount/TodayLogin/OnlineCount/MaxOnline/Error24h/OnlineTime），降级时至少 3 个。
+    // 卡片数据异步到达后逐个渲染，直接 count() 会在加载中途读到 2 个，改为轮询等待。
+    await expect.poll(async () => kpis.count(), { timeout: 10000 }).toBeGreaterThanOrEqual(3);
     // KPI 卡是网格直接子元素，未包在 Card 容器内
     await expect(page.locator('.cube-home-grid > .cube-home-widget').first()).toBeVisible();
   });
@@ -45,8 +46,14 @@ test.describe('首页（/）', () => {
     // 跳转到审计日志页并携带时间范围 + 失败条件
     await page.waitForURL(/\/Admin\/Log\?.*(dtStart|success=false)/, { timeout: 10000 });
     // 搜索区回显时间范围（开始/结束日期非空）
-    await expect(page.getByPlaceholder('开始日期')).not.toHaveValue('');
-    await expect(page.getByPlaceholder('结束日期')).not.toHaveValue('');
+    // Cube 6.16 起日志页同时下发实体时间字段与 dtStart 区间项，同名日期输入可能有两个，
+    // 因此不按单个元素断言，而是确认「至少一个」开始/结束日期被回显。
+    for (const placeholder of ['开始日期', '结束日期']) {
+      const inputs = page.getByPlaceholder(placeholder);
+      await expect(inputs.first()).toBeVisible({ timeout: 5000 });
+      const anyFilled = await inputs.evaluateAll((els) => els.some((e) => (e as HTMLInputElement).value !== ''));
+      expect(anyFilled, `搜索区应回显${placeholder}`).toBe(true);
+    }
     // 成功条件回显为「否」（success=false）
     await expect(page.locator('.ant-card').getByText('成功').locator('..').getByText('否')).toBeVisible({ timeout: 5000 });
   });
