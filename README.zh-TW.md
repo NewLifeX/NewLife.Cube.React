@@ -24,7 +24,7 @@
 - **開箱即用**：`app.UseReact(env)` 一行接入，建置產物內嵌 DLL 隨 NuGet 散布，無實體檔案依賴
 - **欄位中繼資料驅動**：清單/表單/搜尋/詳情全部由後端 `meta` 中繼資料動態渲染，新增實體零前端開發
 - **符合魔方皮膚設計規範**：認證登入全流程、通用清單、通用表單、LOV/上傳/富文字/AI 助理等公共元件
-- **消費共享公共套件**：基於 `@newlifex/*`（api-core/auth-logic/page-logic/field-mapping/page-utils），框架無關核心多皮膚共享
+- **消費共享公共套件**：基於 npm 套件 `@newlifex/cube`（API 呼叫層、頁面邏輯、欄位對映、認證），框架無關核心多皮膚共享
 - **單一主題 × 明暗**：antd token 驅動的原生觀感，明暗切換一鍵完成
 - **AI 智慧助理**：SSE 串流對話 + 快捷指令 + 智慧填表 + 系統診斷，內建 mermaid 渲染
 - **多語言在地化**：11 種全量翻譯介面語言（後端清單 ∩ 前端全量語言；後端語言清單 32 種，其餘 21 種統一回退英文；與 NewLife.Core/Cube 同鏈路，需 NewLife.Cube ≥ 6.15.2026.1022），支援跟隨系統與強制語言，伺服器選單、欄位中繼資料與執行時訊息隨語言切換重新拉取
@@ -89,7 +89,7 @@ NewLife 生態系按相依分層，各專案獨立版本、獨立發行。下面
 
 ## 快速開始
 
-前置：本機需有 `../NewLife.Cube` monorepo（團隊公共前端套件儲存庫，且已 `pnpm install` 保證 `packages/*/dist` 存在）。
+前置：Node.js 24 + pnpm 9（共享前端邏輯來自 npm 套件 `@newlifex/cube`，無需本機檢出 monorepo）。
 
 ```bash
 # 1. 啟動後端 API（CubeDemo，預設 http://localhost:5050，SQLite 免外部依賴）
@@ -117,7 +117,7 @@ pnpm test:e2e     # Playwright E2E（124 個；預設 5050，可用 $env:E2E_BAS
 dotnet build 魔方React.slnx -c Release
 ```
 
-**修改公共套件**：改 `../NewLife.Cube/packages/*` 原始碼後，在 monorepo 執行 `pnpm build:packages`（或 `pnpm dev:packages` watch 即時重建），皮膚（`file:` 符號連結）即時生效。
+**修改公共套件**：公共邏輯發佈為 npm 套件 `@newlifex/cube`。需要本機聯調時，先在 `../NewLife.Cube` 建置（`pnpm --filter @newlifex/cube build`），再在 `web` 執行 `pnpm link ../NewLife.Cube/packages/cube`；聯調結束移除連結即回到發佈的 beta 版本。
 
 ## 測試
 
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | 儲存庫 | 說明 |
 |------|------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方核心（WebAPI/權限/選單/欄位中繼資料）+ 前端公共套件 `packages/@newlifex/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方核心（WebAPI/權限/選單/欄位中繼資料）+ 前端公共 npm 套件 `@newlifex/cube` |
 | [魔方皮膚設計規範](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | 魔方所有皮膚應遵循的統一設計規範，React 皮膚符合該規範 |
 | NewLife.Cube.Vue | Vue 系前端皮膚（Vue3 + Element Plus） |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 本儲存庫（React 系前端皮膚） |

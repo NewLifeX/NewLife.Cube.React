@@ -24,11 +24,11 @@ Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキ�
 - **すぐに使える**：`app.UseReact(env)` の1行で導入。ビルド成果物は DLL に埋め込まれ NuGet パッケージとして配布されるため、実ファイルへの依存はありません
 - **フィールドメタデータ駆動**：リスト／フォーム／検索／詳細はすべてバックエンドの `meta` メタデータから動的に描画。エンティティ追加時のフロントエンド開発は不要です
 - **魔方スキン設計仕様に準拠**：認証ログイン全フロー、汎用リスト、汎用フォーム、LOV／アップロード／リッチテキスト／AI アシスタントなどの共通コンポーネントを提供
-- **共有パッケージを利用**：`@newlifex/*`（api-core/auth-logic/page-logic/field-mapping/page-utils）に基づき、フレームワーク非依存のコアを複数スキンで共有
+- **共有パッケージを利用**：npm パッケージ `@newlifex/cube`（API 呼び出し層・ページロジック・フィールドマッピング・認証）に基づき、フレームワーク非依存のコアを複数スキンで共有
 - **単一テーマ × ライト／ダーク**：antd トークンによるネイティブな見た目、ライト／ダーク切り替えはワンクリック
 - **AI アシスタント**：SSE ストリーミング対話 + クイックコマンド + スマート入力 + システム診断、mermaid レンダリング内蔵
 - **多言語ローカライズ**：11言語の完全翻訳 UI（バックエンド一覧 ∩ フロントエンド完全対応言語、リソースは32ロケール。NewLife.Core/Cube と同じ経路、NewLife.Cube ≥ 6.15.2026.1022 が必要）。システム追従と強制言語に対応し、言語切り替え時にサーバーメニュー、フィールドメタデータ、実行時メッセージを再取得
-- **テスト充実**：単体テスト420件 + E2E 124件がすべて成功、Playwright のログインセッションを再利用
+- **テスト充実**：単体テスト422件 + E2E 124件がすべて成功、Playwright のログインセッションを再利用
 
 ## エコシステムマップ
 
@@ -89,7 +89,7 @@ NewLife は、独立したバージョン管理を行うオープンソースプ
 
 ## クイックスタート
 
-前提：ローカルに `../NewLife.Cube` monorepo（チーム共通のフロントエンドパッケージリポジトリ）があり、`pnpm install` 済みで `packages/*/dist` が存在すること。
+前提：Node.js 24 + pnpm 9（共有フロントエンドロジックは npm パッケージ `@newlifex/cube` から取得するため、ローカル monorepo は不要です）。
 
 ```bash
 # 1. バックエンド API を起動（CubeDemo、既定 http://localhost:5050、SQLite で外部依存なし）
@@ -110,18 +110,18 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # ../wwwroot に出力（.NET への埋め込み用）
 pnpm type-check   # tsc 型チェック
-pnpm test:unit    # Vitest 単体テスト（420件）
+pnpm test:unit    # Vitest 単体テスト（422件）
 pnpm test:e2e     # Playwright E2E（124件、既定 5050、$env:E2E_BASE_URL で上書き可）
 
 # .NET ビルド（wwwroot を DLL に埋め込み）
 dotnet build 魔方React.slnx -c Release
 ```
 
-**共有パッケージの変更**：`../NewLife.Cube/packages/*` のソースを変更した後、monorepo で `pnpm build:packages`（または `pnpm dev:packages` で watch 再ビルド）を実行すると、スキン（`file:` シンボリックリンク）に即時反映されます。
+**共有パッケージの変更**：共有ロジックは npm パッケージ `@newlifex/cube` として公開されています。ローカルで共同開発する場合は `../NewLife.Cube` でビルド（`pnpm --filter @newlifex/cube build`）し、`web` で `pnpm link ../NewLife.Cube/packages/cube` を実行してください。終了後はリンクを解除すると公開ベータに戻ります。
 
 ## テスト
 
-- **単体テスト**：Vitest + React Testing Library + jsdom、420件すべて成功
+- **単体テスト**：Vitest + React Testing Library + jsdom、422件すべて成功
 - **E2E テスト**：Playwright 124件（ログイン／登録／アクティベーション／パスワード忘れ／セキュリティセンター／リスト CRUD／インポート・エクスポート／レイアウト／アップロード／AI）、ログインセッションを再利用
 - **.NET 統合**：CubeDemo + `UseReact` の全フロー（ログイン→メニュー→CRUD→エクスポート→更新しても404にならない）
 
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | リポジトリ | 説明 |
 |------------|------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方コア（WebAPI／権限／メニュー／フィールドメタデータ）+ フロントエンド共有パッケージ `packages/@newlifex/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 魔方コア（WebAPI／権限／メニュー／フィールドメタデータ）+ フロントエンド共有 npm パッケージ `@newlifex/cube` |
 | [魔方スキン設計仕様](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | すべての魔方スキンが従う統一設計仕様。React スキンはこれに準拠 |
 | NewLife.Cube.Vue | Vue 系フロントエンドスキン（Vue3 + Element Plus） |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 本リポジトリ（React 系フロントエンドスキン） |

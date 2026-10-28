@@ -24,7 +24,7 @@ Référencez `NewLife.Cube` et `NewLife.Cube.React`, lancez `dotnet run`, puis o
 - **Prêt à l'emploi** : une ligne `app.UseReact(env)` ; la sortie de build est intégrée à la DLL et livrée avec le package NuGet, sans dépendance à des fichiers physiques
 - **Piloté par les métadonnées de champs** : listes, formulaires, recherche et détail sont rendus dynamiquement à partir des métadonnées `meta` du backend ; l'ajout d'une entité ne nécessite aucun travail front-end
 - **Conforme à la spécification de conception des skins Cube** : parcours d'authentification complet, liste générique, formulaire générique, LOV/téléversement/texte enrichi/assistant IA et autres composants partagés
-- **Consomme les packages partagés** : basé sur `@newlifex/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), avec un cœur indépendant du framework partagé par plusieurs skins
+- **Consomme les packages partagés** : basé sur le package npm `@newlifex/cube` (couche API, logique de pages, mapping de champs et authentification), avec un cœur indépendant du framework partagé par plusieurs skins
 - **Thème unique × clair/sombre** : apparence native pilotée par les tokens antd, bascule clair/sombre en un clic
 - **Assistant IA** : chat en streaming SSE + commandes rapides + remplissage intelligent de formulaires + diagnostic système, rendu mermaid intégré
 - **Localisation multilingue** : 11 langues d'interface entièrement traduites (liste backend ∩ langues complètes du front-end ; le backend expose 32 langues et les 21 autres reviennent à l'anglais ; même chaîne que NewLife.Core/Cube, nécessite NewLife.Cube ≥ 6.15.2026.1022), avec langue du système ou langue forcée ; les menus, métadonnées de champs et messages d'exécution du serveur sont rechargés au changement de langue
@@ -89,7 +89,7 @@ NewLife est un écosystème en couches de projets open source versionnés indép
 
 ## Démarrage rapide
 
-Prérequis : un monorepo local `../NewLife.Cube` (dépôt partagé des packages front-end de l'équipe, déjà `pnpm install` pour que `packages/*/dist` existe).
+Prérequis : Node.js 24 + pnpm 9 (la logique front-end partagée provient du package npm `@newlifex/cube` ; aucun monorepo local n'est nécessaire).
 
 ```bash
 # 1. Démarrer l'API backend (CubeDemo, http://localhost:5050 par défaut, SQLite sans dépendance externe)
@@ -117,7 +117,7 @@ pnpm test:e2e     # Playwright E2E (124 ; port 5050 par défaut, remplacer avec 
 dotnet build 魔方React.slnx -c Release
 ```
 
-**Modifier les packages partagés** : après modification des sources sous `../NewLife.Cube/packages/*`, exécutez `pnpm build:packages` dans le monorepo (ou `pnpm dev:packages` pour reconstruire en watch) ; les changements prennent effet immédiatement dans le skin via son lien symbolique `file:`.
+**Modifier les packages partagés** : la logique partagée est publiée sous forme de package npm `@newlifex/cube`. Pour développer en local, compilez-le dans `../NewLife.Cube` (`pnpm --filter @newlifex/cube build`) puis exécutez `pnpm link ../NewLife.Cube/packages/cube` dans `web` ; retirez le lien ensuite pour revenir à la beta publiée.
 
 ## Tests
 
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | Dépôt | Description |
 |-------|-------------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cœur de Cube (Web API/permissions/menus/métadonnées de champs) + packages front-end partagés `packages/@newlifex/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cœur de Cube (Web API/permissions/menus/métadonnées de champs) + package front-end partagé npm `@newlifex/cube` |
 | [Spécification de conception des skins Cube](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | Spécification de conception unifiée que tous les skins Cube doivent suivre ; le skin React y est conforme |
 | NewLife.Cube.Vue | Skin front-end de la famille Vue (Vue 3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | Ce dépôt (skin front-end de la famille React) |

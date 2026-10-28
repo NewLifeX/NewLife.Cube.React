@@ -22,11 +22,11 @@ Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`
 - **Out of the box**: one line `app.UseReact(env)`; the build output is embedded in the DLL and shipped with the NuGet package, with no physical file dependency
 - **Field metadata driven**: lists, forms, search and detail views are all rendered dynamically from backend `meta` metadata; adding an entity requires zero front-end work
 - **Conforms to the Cube skin design specification**: complete authentication flow, generic list, generic form, LOV/upload/rich text/AI assistant and other shared components
-- **Consumes the shared packages**: built on `@newlifex/*` (api-core/auth-logic/page-logic/field-mapping/page-utils), with a framework-agnostic core shared by multiple skins
+- **Consumes the shared packages**: built on the npm package `@newlifex/cube` (API client, page logic, field mapping and auth), with a framework-agnostic core shared by multiple skins
 - **Single theme × light/dark**: native look driven by antd tokens, with one-click light/dark switching
 - **AI assistant**: SSE streaming chat + quick commands + smart form filling + system diagnostics, with built-in mermaid rendering
 - **Multilingual localization**: 11 fully translated UI languages (backend list ∩ frontend complete languages; the backend exposes 32 languages, and the other 21 fall back to English; same pipeline as NewLife.Core/Cube, requires NewLife.Cube ≥ 6.15.2026.1022), supporting follow-system and forced languages; server menus, field metadata and runtime messages are re-fetched when the language changes
-- **Well tested**: 420 unit tests + 124 E2E tests all passing, with Playwright login session reuse
+- **Well tested**: 422 unit tests + 124 E2E tests all passing, with Playwright login session reuse
 
 ## Ecosystem Map
 
@@ -87,7 +87,7 @@ NewLife is a layered ecosystem of independently versioned open-source projects. 
 
 ## Quick Start
 
-Prerequisite: a local `../NewLife.Cube` monorepo (the team's shared front-end package repository, already `pnpm install`-ed so that `packages/*/dist` exists).
+Prerequisite: Node.js 24 + pnpm 9 (the shared front-end logic comes from the npm package `@newlifex/cube`; no local monorepo checkout is needed).
 
 ```bash
 # 1. Start the backend API (CubeDemo, http://localhost:5050 by default, SQLite with no external dependencies)
@@ -108,18 +108,18 @@ Open <http://localhost:5188> in a browser to see the sign-in page; after signing
 cd NewLife.Cube.React/web
 pnpm build        # outputs to ../wwwroot (for .NET embedding)
 pnpm type-check   # tsc type checking
-pnpm test:unit    # Vitest unit tests (420)
+pnpm test:unit    # Vitest unit tests (422)
 pnpm test:e2e     # Playwright E2E (124; defaults to port 5050, override with $env:E2E_BASE_URL)
 
 # .NET build (embeds wwwroot into the DLL)
 dotnet build 魔方React.slnx -c Release
 ```
 
-**Changing shared packages**: after editing sources under `../NewLife.Cube/packages/*`, run `pnpm build:packages` in the monorepo (or `pnpm dev:packages` to watch and rebuild); the changes take effect immediately in the skin through its `file:` symlink.
+**Changing shared packages**: the shared logic is published as the npm package `@newlifex/cube`. For local co-development, build it in `../NewLife.Cube` (`pnpm --filter @newlifex/cube build`) and run `pnpm link ../NewLife.Cube/packages/cube` in `web`; remove the link to return to the published beta.
 
 ## Testing
 
-- **Unit tests**: Vitest + React Testing Library + jsdom, 420 cases all passing
+- **Unit tests**: Vitest + React Testing Library + jsdom, 422 cases all passing
 - **E2E tests**: 124 Playwright cases (sign-in/sign-up/activation/forgot password/security center/list create-update-delete/import-export/layout/upload/AI), with login session reuse
 - **.NET integration**: CubeDemo + `UseReact` end-to-end flow (sign-in → menus → CRUD → export → refresh without 404)
 
@@ -132,7 +132,7 @@ dotnet build 魔方React.slnx -c Release
 
 | Repository | Description |
 |------------|-------------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cube core (Web API/permissions/menus/field metadata) + shared front-end packages `packages/@newlifex/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | Cube core (Web API/permissions/menus/field metadata) + shared front-end npm package `@newlifex/cube` |
 | [Cube skin design specification](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | Unified design specification all Cube skins should follow; the React skin conforms to it |
 | NewLife.Cube.Vue | Vue-family front-end skin (Vue 3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | This repository (React-family front-end skin) |

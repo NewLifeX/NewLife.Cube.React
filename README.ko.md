@@ -24,7 +24,7 @@ Cube(NewLife.Cube) 3세대 WebAPI 프런트엔드의 **React 스킨**으로, 독
 - **즉시 사용 가능**: `app.UseReact(env)` 한 줄로 연동되며, 빌드 산출물이 DLL에 내장되어 NuGet 패키지로 배포되므로 물리 파일 의존성이 없습니다
 - **필드 메타데이터 기반**: 목록/폼/검색/상세 화면이 모두 백엔드 `meta` 메타데이터로 동적 렌더링되며, 엔티티 추가 시 프런트엔드 개발이 필요 없습니다
 - **큐브 스킨 디자인 규격 준수**: 인증 로그인 전체 흐름, 범용 목록, 범용 폼, LOV/업로드/리치 텍스트/AI 어시스턴트 등 공용 컴포넌트 제공
-- **공용 패키지 사용**: `@newlifex/*`(api-core/auth-logic/page-logic/field-mapping/page-utils) 기반이며, 프레임워크 독립 코어를 여러 스킨이 공유합니다
+- **공용 패키지 사용**: npm 패키지 `@newlifex/cube`(API 호출 계층, 페이지 로직, 필드 매핑, 인증) 기반이며, 프레임워크 독립 코어를 여러 스킨이 공유합니다
 - **단일 테마 × 라이트/다크**: antd 토큰 기반의 네이티브한 느낌, 라이트/다크 전환은 클릭 한 번
 - **AI 어시스턴트**: SSE 스트리밍 대화 + 빠른 명령 + 스마트 폼 채우기 + 시스템 진단, mermaid 렌더링 내장
 - **다국어 현지화**: 11개 언어 전체 번역 UI(백엔드 목록 ∩ 프런트엔드 전체 언어, 리소스 32개 로캘, NewLife.Core/Cube와 동일한 경로, NewLife.Cube ≥ 6.15.2026.1022 필요), 시스템 언어 따르기 및 강제 언어 지원, 언어 전환 시 서버 메뉴·필드 메타데이터·런타임 메시지를 다시 가져옴
@@ -89,7 +89,7 @@ NewLife는 독립적으로 버전이 관리되는 오픈소스 프로젝트의 �
 
 ## 빠른 시작
 
-사전 조건: 로컬에 `../NewLife.Cube` monorepo(팀 공용 프런트엔드 패키지 저장소)가 있고 `pnpm install`을 실행해 `packages/*/dist`가 존재해야 합니다.
+사전 조건: Node.js 24 + pnpm 9(공용 프런트엔드 로직은 npm 패키지 `@newlifex/cube`에서 가져오므로 로컬 monorepo가 필요 없습니다).
 
 ```bash
 # 1. 백엔드 API 시작 (CubeDemo, 기본 http://localhost:5050, SQLite로 외부 의존성 없음)
@@ -117,7 +117,7 @@ pnpm test:e2e     # Playwright E2E (124개; 기본 5050, $env:E2E_BASE_URL로 �
 dotnet build 魔方React.slnx -c Release
 ```
 
-**공용 패키지 수정**: `../NewLife.Cube/packages/*` 소스를 수정한 뒤 monorepo에서 `pnpm build:packages`(또는 `pnpm dev:packages` watch 재빌드)를 실행하면 스킨(`file:` 심볼릭 링크)에 즉시 반영됩니다.
+**공용 패키지 수정**: 공용 로직은 npm 패키지 `@newlifex/cube`로 배포됩니다. 로컬 공동 개발 시 `../NewLife.Cube`에서 빌드(`pnpm --filter @newlifex/cube build`)한 뒤 `web`에서 `pnpm link ../NewLife.Cube/packages/cube`를 실행하세요. 작업 후 링크를 제거하면 게시된 베타로 돌아갑니다.
 
 ## 테스트
 
@@ -134,7 +134,7 @@ dotnet build 魔方React.slnx -c Release
 
 | 저장소 | 설명 |
 |--------|------|
-| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 큐브 코어(WebAPI/권한/메뉴/필드 메타데이터) + 프런트엔드 공용 패키지 `packages/@newlifex/*` |
+| [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube) | 큐브 코어(WebAPI/권한/메뉴/필드 메타데이터) + 프런트엔드 공용 npm 패키지 `@newlifex/cube` |
 | [큐브 스킨 디자인 규격](https://github.com/NewLifeX/NewLife.Cube/blob/master/Doc/UI设计/皮肤设计规范.md) | 모든 큐브 스킨이 따라야 하는 통합 디자인 규격이며, React 스킨은 이를 준수합니다 |
 | NewLife.Cube.Vue | Vue 계열 프런트엔드 스킨(Vue3 + Element Plus) |
 | [NewLife.Cube.React](https://github.com/NewLifeX/NewLife.Cube.React) | 이 저장소(React 계열 프런트엔드 스킨) |
