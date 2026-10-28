@@ -5,7 +5,7 @@
  * 取 `Root.AllChilds`），父字段是自引用外键。前端按父字段重建树，交给 antd Table 的
  * `children` 机制渲染缩进与展开/收起。
  */
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 import { getValueByKey } from '@/utils/url';
 
 /** 归一化键值：null/undefined 视为空串，其余转字符串（后端可能下数字或字符串） */

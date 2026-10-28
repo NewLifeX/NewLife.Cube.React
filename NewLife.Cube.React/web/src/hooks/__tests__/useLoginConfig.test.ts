@@ -11,7 +11,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useLoginConfig } from '@/hooks/useLoginConfig';
-import type { ApiResponse, LoginConfig } from '@newlifex/api-core';
+import type { ApiResponse, LoginConfig } from '@newlifex/cube';
 
 // ── 模块 Mock：拦截 api.user.getLoginConfig（vi.hoisted 保证 hoist 安全）──
 const { mockGetLoginConfig } = vi.hoisted(() => ({

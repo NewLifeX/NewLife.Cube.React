@@ -1,9 +1,9 @@
 /**
- * 页面 Store Hook（@newlifex/page-logic/zustand）
+ * 页面 Store Hook（@newlifex/cube/zustand）
  *
  * 按实体路径前缀（type）缓存 store hook，每个实体路径复用同一 store。
  */
-import { createPageStore, type ZustandPageState } from '@newlifex/page-logic/zustand';
+import { createPageStore, type ZustandPageState } from '@newlifex/cube/zustand';
 import type { StoreApi, UseBoundStore } from 'zustand';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';

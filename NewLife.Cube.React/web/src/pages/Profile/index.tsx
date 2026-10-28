@@ -35,7 +35,7 @@ import { api } from '@/api';
 import { getCurrentLanguage, t } from '@/i18n';
 import { useUserStore, logoutAndRedirect } from '@/stores/user';
 import { useDashboard } from '@/hooks/useDashboard';
-import type { BindsResult, UserInfo } from '@newlifex/api-core';
+import type { BindsResult, UserInfo } from '@newlifex/cube';
 
 /** 性别枚举（对齐 XCode SexKinds：0 未知 / 1 男 / 2 女，标签按当前语言生成） */
 const sexOptions = () => [

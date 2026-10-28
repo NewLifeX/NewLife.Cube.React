@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TableContent, { resolveTextAlign } from '../TableContent';
 import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 
 /** 构造列表字段（widget 固定 text，按字段元数据驱动渲染） */
 function textField(name: string, displayName: string): FieldMapping {

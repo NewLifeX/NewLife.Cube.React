@@ -5,7 +5,7 @@
  * 用户在表格设置里的勾选与排序保存在浏览器，**用户偏好覆盖 `visible=false`**。
  * 新字段（未参与过配置）沿用 `/meta` 的 `visible` 默认值，避免升级后列凭空消失。
  */
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 
 /** 列偏好：列序与隐藏列（字段名，大小写不敏感） */
 export interface ColumnPrefs {

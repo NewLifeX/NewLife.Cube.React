@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SearchBar, { splitSearchFields } from '../SearchBar';
 import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 
 /** 构造搜索字段 */
 function textField(name: string, displayName: string): FieldMapping {

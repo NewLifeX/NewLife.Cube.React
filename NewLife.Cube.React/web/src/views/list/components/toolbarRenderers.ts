@@ -5,7 +5,7 @@
  * 未注册时跳过渲染并告警一次（不阻断其它按钮）。
  */
 import type { ComponentType } from 'react';
-import type { ToolbarItem } from '@newlifex/api-core';
+import type { ToolbarItem } from '@newlifex/cube';
 
 /** 自定义按钮渲染器入参 */
 export interface ToolbarRendererProps {

@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { extractTokenFromHash } from '@newlifex/api-core';
+import { extractTokenFromHash } from '@newlifex/cube';
 import { api } from '@/api';
 import './styles/global.css';
 

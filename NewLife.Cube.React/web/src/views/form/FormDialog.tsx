@@ -11,8 +11,7 @@ import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayou
 import { t } from '@/i18n';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { getValueByKey, setValueByKey } from '@/utils/url';
-import type { FieldMapping } from '@newlifex/field-mapping';
-import type { PagePreset } from '@newlifex/page-logic';
+import type { FieldMapping, PagePreset } from '@newlifex/cube';
 import { useAiFillForm } from '@/hooks/useAiFillForm';
 
 export interface FormDialogProps {

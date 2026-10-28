@@ -3,7 +3,7 @@
  *
  * 功能：
  * 1. 并行加载 /Cube/Site（品牌/语言/功能开关）与 /Auth/LoginConfig（登录能力），支持 ?tenant= 租户标识
- * 2. 密码登录自动 RSA-OAEP Challenge 加密（@newlifex/auth-logic 内置）
+ * 2. 密码登录自动 RSA-OAEP Challenge 加密（@newlifex/cube 内置）
  * 3. 图片验证码（login.captcha=true 时显示）
  * 4. MFA 二步验证（登录返回 mfa_required 时进入）
  * 5. 账号未激活时展示重发激活入口
@@ -23,7 +23,7 @@ import { useLoginConfig, useCaptcha } from '@/hooks/useLoginConfig';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
 import { parsePasswordRules } from '@/utils/passwordRules';
 import RegisterPanel from './RegisterPanel';
-import type { AuthCategory, LoginResult } from '@newlifex/api-core';
+import type { AuthCategory, LoginResult } from '@newlifex/cube';
 
 const useAuthStore = useUserStore;
 

@@ -9,7 +9,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import FieldControl from '../FieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { clearFieldRenderers, registerFieldRenderer } from '@/rendering/fieldRenderers';
-import type { DataField } from '@newlifex/api-core';
+import type { DataField } from '@newlifex/cube';
 
 /** 构造字段元数据 */
 function f(partial: Partial<DataField>): FieldMeta {

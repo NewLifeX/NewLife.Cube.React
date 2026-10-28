@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { filterVisibleFields } from '../ColumnSetting';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 
 /** 构造一个 FieldMapping */
 function mk(name: string, visible?: boolean): FieldMapping {

@@ -5,7 +5,7 @@
  * 避免服务端设置的系统名称/Logo 只在登录页生效；并发挂载时复用同一个请求。
  */
 import { create } from 'zustand';
-import type { SiteConfig } from '@newlifex/api-core';
+import type { SiteConfig } from '@newlifex/cube';
 import { api } from '@/api';
 import { applySiteLanguage } from '@/i18n';
 

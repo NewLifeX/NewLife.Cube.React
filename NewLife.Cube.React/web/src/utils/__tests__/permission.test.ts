@@ -1,11 +1,11 @@
 /**
  * 权限串解析与位测试单元测试（META-3）
  *
- * 覆盖共享包 `@newlifex/page-logic` 导出的纯函数：`parsePermissionString` / `hasPermissionAction`。
+ * 覆盖共享包 `@newlifex/cube` 导出的纯函数：`parsePermissionString` / `hasPermissionAction`。
  * 契约来源：服务端 `UserInfo.permission` 为 `menuId#flag,menuId#flag`，`-1` 等价 All。
  */
 import { describe, expect, it } from 'vitest';
-import { hasPermissionAction, parsePermissionString, PermissionFlags } from '@newlifex/page-logic';
+import { hasPermissionAction, parsePermissionString, PermissionFlags } from '@newlifex/cube';
 
 describe('parsePermissionString', () => {
   it('解析标准串为 menuId → 权限位', () => {

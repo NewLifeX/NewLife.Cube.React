@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/api';
 import { t } from '@/i18n';
-import type { CaptchaResult, LoginConfig, OAuthProvider } from '@newlifex/api-core';
+import type { CaptchaResult, LoginConfig, OAuthProvider } from '@newlifex/cube';
 
 /**
  * 归一化登录配置字段名（兼容尚未升级的后端）

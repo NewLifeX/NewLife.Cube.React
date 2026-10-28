@@ -7,7 +7,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { ToolbarItem } from '@newlifex/api-core';
+import type { ToolbarItem } from '@newlifex/cube';
 import Toolbar, { buildMetaLinkUrl, buildMetaToolbarPayload } from '../Toolbar';
 import { clearToolbarRenderers, registerToolbarRenderer } from '../toolbarRenderers';
 import i18n from '@/i18n';

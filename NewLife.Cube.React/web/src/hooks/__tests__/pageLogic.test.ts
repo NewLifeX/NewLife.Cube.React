@@ -6,8 +6,7 @@
  * 系统管理员直通；meta 未下发 menuId 时回退菜单树权限映射。
  */
 import { describe, expect, it, vi } from 'vitest';
-import type { CubeApi } from '@newlifex/api-core';
-import { PageLogic } from '@newlifex/page-logic';
+import { PageLogic, type CubeApi } from '@newlifex/cube';
 
 /** 构造已由 api-core 展开的页面元数据（addForm/editForm/detail 为消费结构） */
 function makeMeta(overrides: Record<string, unknown> = {}) {

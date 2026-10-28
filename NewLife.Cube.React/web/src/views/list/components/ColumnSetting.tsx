@@ -10,7 +10,7 @@ import { App, Button, Checkbox, Popover, Tooltip } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined, SettingOutlined } from '@ant-design/icons';
 import { t } from '@/i18n';
 import { toFieldMeta } from '@/types/field';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 import { clearColumnPrefs, saveColumnPrefs, type ColumnPrefs } from '../utils/columnPrefs';
 
 export interface ColumnSettingProps {

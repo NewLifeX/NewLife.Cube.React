@@ -20,7 +20,7 @@ import AreaCascader from '@/components/field/AreaCascader';
 import { resolveSearchControl, resolveAreaMaxLevel } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 import type { FieldMeta, SearchControlType } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
 import { t } from '@/i18n';

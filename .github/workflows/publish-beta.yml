@@ -22,17 +22,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 皮肤包需内含 wwwroot（前端产物）；web 的 @newlifex/* 以 file: 引用共享包源码，
-    # 故把 monorepo 检出到该相对位置后再构建前端。
-    - name: Checkout shared packages monorepo
-      uses: actions/checkout@v4
-      with:
-        repository: NewLifeX/NewLife.Cube
-        path: _deps/NewLife.Cube
-
-    - name: Link monorepo into path expected by web dependencies
-      run: ln -s "$GITHUB_WORKSPACE/_deps/NewLife.Cube" "$GITHUB_WORKSPACE/../NewLife.Cube"
-
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
@@ -43,15 +32,7 @@ jobs:
       with:
         node-version: 24
         cache: pnpm
-        cache-dependency-path: |
-          NewLife.Cube.React/web/pnpm-lock.yaml
-          _deps/NewLife.Cube/pnpm-lock.yaml
-
-    - name: Build shared packages
-      run: |
-        cd _deps/NewLife.Cube
-        pnpm install --frozen-lockfile
-        pnpm build
+        cache-dependency-path: NewLife.Cube.React/web/pnpm-lock.yaml
 
     - name: Build web (wwwroot)
       working-directory: NewLife.Cube.React/web

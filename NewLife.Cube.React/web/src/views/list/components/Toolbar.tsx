@@ -10,8 +10,7 @@ import { useRef } from 'react';
 import { Button, Dropdown, Popconfirm, Segmented, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { DeleteOutlined, DownOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { ToolbarItem } from '@newlifex/api-core';
-import { EXPORT_FORMATS } from '@newlifex/page-utils';
+import { EXPORT_FORMATS, type ToolbarItem } from '@newlifex/cube';
 import { getToolbarRenderer } from './toolbarRenderers';
 import { t } from '@/i18n';
 

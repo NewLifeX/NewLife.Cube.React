@@ -10,7 +10,7 @@
  */
 import type { ReactNode } from 'react';
 import type { ColumnsType } from 'antd/es/table';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 import type { FieldMeta } from '@/types/field';
 
 /** 扩展点通用上下文 */

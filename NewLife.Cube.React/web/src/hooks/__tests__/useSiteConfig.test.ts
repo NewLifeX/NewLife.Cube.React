@@ -10,7 +10,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
 import { useSiteStore } from '@/stores/site';
-import type { ApiResponse, SiteConfig } from '@newlifex/api-core';
+import type { ApiResponse, SiteConfig } from '@newlifex/cube';
 
 const { mockGetSite } = vi.hoisted(() => ({
   mockGetSite: vi.fn(),

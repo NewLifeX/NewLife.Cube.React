@@ -7,7 +7,7 @@
  *
  * 因此以 `list` 是否为数组作为实体页判据；旧后端未匹配的请求会被 SPA 回退成 HTML 字符串，同样判为非实体页。
  */
-import type { ApiResponse, PageMeta } from '@newlifex/api-core';
+import type { ApiResponse, PageMeta } from '@newlifex/cube';
 
 /**
  * 判断 meta 响应是否为实体页元数据

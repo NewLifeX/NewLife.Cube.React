@@ -5,7 +5,7 @@
  * 只改呈现字段（header/textAlign/view/visible）与页面设置，不改字段类型与提交语义。
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CubeApi, DataField } from '@newlifex/api-core';
+import type { CubeApi, DataField } from '@newlifex/cube';
 import {
   applyFieldPreset,
   clearPagePresets,
@@ -13,7 +13,7 @@ import {
   PageLogic,
   registerPagePreset,
   type PagePreset,
-} from '@newlifex/page-logic';
+} from '@newlifex/cube';
 
 /** 构造字段 */
 function f(name: string, extra: Partial<DataField> = {}): DataField {

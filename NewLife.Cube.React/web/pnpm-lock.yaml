@@ -4,13 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@newlifex/api-core': file:../../../NewLife.Cube/packages/api-core
-  '@newlifex/page-utils': file:../../../NewLife.Cube/packages/page-utils
-  '@newlifex/field-mapping': file:../../../NewLife.Cube/packages/field-mapping
-  '@newlifex/auth-logic': file:../../../NewLife.Cube/packages/auth-logic
-  '@newlifex/page-logic': file:../../../NewLife.Cube/packages/page-logic
-
 importers:
 
   .:
@@ -18,21 +11,9 @@ importers:
       '@ant-design/icons':
         specifier: ^6.3.2
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@newlifex/api-core':
-        specifier: file:C:\X\NewLife.Cube\packages\api-core
-        version: file:../../../NewLife.Cube/packages/api-core
-      '@newlifex/auth-logic':
-        specifier: file:C:\X\NewLife.Cube\packages\auth-logic
-        version: file:../../../NewLife.Cube/packages/auth-logic(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))
-      '@newlifex/field-mapping':
-        specifier: file:C:\X\NewLife.Cube\packages\field-mapping
-        version: file:../../../NewLife.Cube/packages/field-mapping
-      '@newlifex/page-logic':
-        specifier: file:C:\X\NewLife.Cube\packages\page-logic
-        version: file:../../../NewLife.Cube/packages/page-logic(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))
-      '@newlifex/page-utils':
-        specifier: file:C:\X\NewLife.Cube\packages\page-utils
-        version: file:../../../NewLife.Cube/packages/page-utils
+      '@newlifex/cube':
+        specifier: beta
+        version: 0.1.0-beta.20261028090442(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))
       '@wangeditor/editor':
         specifier: ^5.1.23
         version: 5.1.23
@@ -528,36 +509,19 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@newlifex/api-core@file:../../../NewLife.Cube/packages/api-core':
-    resolution: {directory: ../../../NewLife.Cube/packages/api-core, type: directory}
-
-  '@newlifex/auth-logic@file:../../../NewLife.Cube/packages/auth-logic':
-    resolution: {directory: ../../../NewLife.Cube/packages/auth-logic, type: directory}
+  '@newlifex/cube@0.1.0-beta.20261028090442':
+    resolution: {integrity: sha512-si2FMB71j0KbvRucxYITQ8MBpBZp9NpxyIhyR43hCJKtiW+5ByuK997uAZfDXBL6cHb1ldzrXulPXznoGMIVgA==}
     peerDependencies:
       pinia: '>=2.0.0'
+      vue: '>=3.0.0'
       zustand: '>=4.0.0'
     peerDependenciesMeta:
       pinia:
         optional: true
-      zustand:
-        optional: true
-
-  '@newlifex/field-mapping@file:../../../NewLife.Cube/packages/field-mapping':
-    resolution: {directory: ../../../NewLife.Cube/packages/field-mapping, type: directory}
-
-  '@newlifex/page-logic@file:../../../NewLife.Cube/packages/page-logic':
-    resolution: {directory: ../../../NewLife.Cube/packages/page-logic, type: directory}
-    peerDependencies:
-      pinia: '>=2.0.0'
-      zustand: '>=4.0.0'
-    peerDependenciesMeta:
-      pinia:
+      vue:
         optional: true
       zustand:
         optional: true
-
-  '@newlifex/page-utils@file:../../../NewLife.Cube/packages/page-utils':
-    resolution: {directory: ../../../NewLife.Cube/packages/page-utils, type: directory}
 
   '@playwright/test@1.62.1':
     resolution: {integrity: sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==}
@@ -2686,43 +2650,15 @@ snapshots:
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
-  '@newlifex/api-core@file:../../../NewLife.Cube/packages/api-core':
+  '@newlifex/cube@0.1.0-beta.20261028090442(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))':
     dependencies:
       axios: 1.20.0
       qs: 6.16.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@newlifex/auth-logic@file:../../../NewLife.Cube/packages/auth-logic(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))':
-    dependencies:
-      '@newlifex/api-core': file:../../../NewLife.Cube/packages/api-core
-      '@newlifex/page-utils': file:../../../NewLife.Cube/packages/page-utils
     optionalDependencies:
       zustand: 5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8)
     transitivePeerDependencies:
       - debug
       - supports-color
-
-  '@newlifex/field-mapping@file:../../../NewLife.Cube/packages/field-mapping':
-    dependencies:
-      '@newlifex/api-core': file:../../../NewLife.Cube/packages/api-core
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@newlifex/page-logic@file:../../../NewLife.Cube/packages/page-logic(zustand@5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8))':
-    dependencies:
-      '@newlifex/api-core': file:../../../NewLife.Cube/packages/api-core
-      '@newlifex/field-mapping': file:../../../NewLife.Cube/packages/field-mapping
-      '@newlifex/page-utils': file:../../../NewLife.Cube/packages/page-utils
-    optionalDependencies:
-      zustand: 5.0.15(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8)
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@newlifex/page-utils@file:../../../NewLife.Cube/packages/page-utils': {}
 
   '@playwright/test@1.62.1':
     dependencies:

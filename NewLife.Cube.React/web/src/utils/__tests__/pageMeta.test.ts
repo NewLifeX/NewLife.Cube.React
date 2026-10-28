@@ -7,7 +7,7 @@
  * - 旧后端 SPA 回退的 HTML 字符串、空响应 → false
  */
 import { describe, expect, it } from 'vitest';
-import type { ApiResponse, PageMeta } from '@newlifex/api-core';
+import type { ApiResponse, PageMeta } from '@newlifex/cube';
 import { isEntityMeta } from '../pageMeta';
 
 /** 构造 ApiResponse<PageMeta> */

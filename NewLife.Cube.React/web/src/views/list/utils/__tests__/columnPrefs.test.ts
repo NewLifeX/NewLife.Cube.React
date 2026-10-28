@@ -5,7 +5,7 @@
  * 用户偏好覆盖 `visible=false`；未参与过配置的新字段沿用元数据默认值。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 import {
   applyColumnPrefs,
   clearColumnPrefs,

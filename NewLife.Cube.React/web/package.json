@@ -19,11 +19,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
-    "@newlifex/api-core": "file:../../../NewLife.Cube/packages/api-core",
-    "@newlifex/auth-logic": "file:../../../NewLife.Cube/packages/auth-logic",
-    "@newlifex/field-mapping": "file:../../../NewLife.Cube/packages/field-mapping",
-    "@newlifex/page-logic": "file:../../../NewLife.Cube/packages/page-logic",
-    "@newlifex/page-utils": "file:../../../NewLife.Cube/packages/page-utils",
+    "@newlifex/cube": "beta",
     "@wangeditor/editor": "^5.1.23",
     "antd": "^6.6.2",
     "axios": "^1.8.4",
@@ -65,13 +61,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ],
-    "overrides": {
-      "@newlifex/api-core": "file:../../../NewLife.Cube/packages/api-core",
-      "@newlifex/page-utils": "file:../../../NewLife.Cube/packages/page-utils",
-      "@newlifex/field-mapping": "file:../../../NewLife.Cube/packages/field-mapping",
-      "@newlifex/auth-logic": "file:../../../NewLife.Cube/packages/auth-logic",
-      "@newlifex/page-logic": "file:../../../NewLife.Cube/packages/page-logic"
-    }
+    ]
   }
 }

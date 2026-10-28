@@ -3,8 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { buildTreeRows, detectTreeField } from '../treeData';
-import type { FieldMapping } from '@newlifex/field-mapping';
-import type { DataField } from '@newlifex/api-core';
+import type { DataField, FieldMapping } from '@newlifex/cube';
 
 function mapping(name: string, partial: Partial<DataField> = {}): FieldMapping {
   return { widget: 'text', field: { name, typeName: 'Int32', ...partial } };

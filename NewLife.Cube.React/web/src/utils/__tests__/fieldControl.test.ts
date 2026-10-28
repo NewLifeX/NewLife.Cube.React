@@ -25,7 +25,7 @@ import {
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
-import type { DataField } from '@newlifex/api-core';
+import type { DataField } from '@newlifex/cube';
 
 function f(partial: Partial<DataField>): FieldMeta {
   return toFieldMeta({ name: 'F', typeName: 'String', ...partial });

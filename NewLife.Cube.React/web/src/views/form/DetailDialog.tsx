@@ -13,7 +13,7 @@ import LovCell from '@/components/field/LovCell';
 import { getValueByKey } from '@/utils/url';
 import { groupByCategory, hasCategory, resolveListControl } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { FieldMapping } from '@newlifex/cube';
 
 export interface DetailDialogProps {
   open: boolean;

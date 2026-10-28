@@ -10,8 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import FormDialog from '../FormDialog';
-import type { DataField } from '@newlifex/api-core';
-import type { FieldMapping } from '@newlifex/field-mapping';
+import type { DataField, FieldMapping } from '@newlifex/cube';
 
 /** 构造字段映射（widget 固定 text，按字段元数据驱动渲染） */
 function mapping(name: string, partial: Partial<DataField> = {}): FieldMapping {
