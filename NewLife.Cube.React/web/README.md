@@ -84,6 +84,8 @@ pnpm test:e2e
 
 **环境能力差异**：AI 助手（AISwitch 未启用）、ViewTrace（后端无该控制器）等用例会**自动跳过**而非失败（`e2e/utils/env.ts` + 用例内 `test.skip`）。
 
+**数据隔离提醒（实测）**：`list.spec` 的「导入 CSV 新增用户并落库」会向 `/Admin/User` 做一次合并导入。若演示库中的账号行是**用 SQL 直接改库**建的（未经实体写入路径），全量回归后该行可能被导入改写（现象：用户名变成 `e2e-import-*`、显示名变成「导入测试」）。建议跑全量前备份 `Bin/Data/Membership.db`，跑完还原；账号创建优先走后台「新增用户」。
+
 浏览器语言固定为 `zh-CN`（`playwright.config.ts` 的 `use.locale`），因为断言文案为中文，而测试上下文默认 `en-US`。
 
 ---
