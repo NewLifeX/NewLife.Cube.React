@@ -46,8 +46,8 @@ test.describe('首页（/）', () => {
     // 跳转到审计日志页并携带时间范围 + 失败条件
     await page.waitForURL(/\/Admin\/Log\?.*(dtStart|success=false)/, { timeout: 10000 });
     // 搜索区回显时间范围（开始/结束日期非空）
-    // Cube 6.16 起日志页同时下发实体时间字段与 dtStart 区间项，同名日期输入可能有两个，
-    // 因此不按单个元素断言，而是确认「至少一个」开始/结束日期被回显。
+    // 旧版 Cube 的日志页会同时下发实体时间字段与 dtStart 区间项（两个同名日期输入），
+    // 新版已合并为单个区间控件；这里只要求「至少一个」开始/结束日期被回显，两种都兼容。
     for (const placeholder of ['开始日期', '结束日期']) {
       const inputs = page.getByPlaceholder(placeholder);
       await expect(inputs.first()).toBeVisible({ timeout: 5000 });
