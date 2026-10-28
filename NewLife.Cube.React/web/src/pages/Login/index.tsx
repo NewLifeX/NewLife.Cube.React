@@ -23,7 +23,7 @@ import { useLoginConfig, useCaptcha } from '@/hooks/useLoginConfig';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
 import { parsePasswordRules } from '@/utils/passwordRules';
 import RegisterPanel from './RegisterPanel';
-import type { AuthCategory, LoginResult } from '@newlifex/cube';
+import { MfaLoginLogic, type AuthCategory, type LoginResult } from '@newlifex/cube';
 
 const useAuthStore = useUserStore;
 
@@ -56,6 +56,8 @@ export default function LoginPage() {
   const [mfaToken, setMfaToken] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaSubmitting, setMfaSubmitting] = useState(false);
+  // MFA 二步验证逻辑由共享包承载（请求、令牌持久化、错误状态）
+  const mfaLogicRef = useRef<MfaLoginLogic | null>(null);
   const [activation, setActivation] = useState<Partial<LoginResult> | null>(null);
 
   const loginCfg = config?.login;
@@ -117,6 +119,9 @@ export default function LoginPage() {
       // MFA 二步验证
       const mfa = extractMfaToken(res.message);
       if (mfa && !data?.accessToken) {
+        mfaLogicRef.current = new MfaLoginLogic(api, mfa, (partial) => {
+          setMfaSubmitting((prev) => partial.verifying ?? prev);
+        });
         setMfaToken(mfa);
         return;
       }
@@ -141,20 +146,14 @@ export default function LoginPage() {
   };
 
   const handleMfaVerify = async () => {
-    if (!mfaCode) return;
-    setMfaSubmitting(true);
-    try {
-      const res = await api.user.mfaVerify({ mfaToken, code: mfaCode });
-      if (res.data?.accessToken) {
-        api.tokenManager.setToken(res.data.accessToken);
-        afterLogin();
-      } else {
-        message.error(res.message || t('验证码错误'));
-      }
-    } catch (err) {
-      message.error((err as Error)?.message || t('验证失败'));
-    } finally {
-      setMfaSubmitting(false);
+    const logic = mfaLogicRef.current;
+    if (!logic || !mfaCode) return;
+
+    const result = await logic.verify(mfaCode);
+    if (result?.accessToken) {
+      afterLogin();
+    } else {
+      message.error(logic.state.error || t('验证码错误'));
     }
   };
 
@@ -229,7 +228,7 @@ export default function LoginPage() {
           <Button type="primary" block size="large" loading={mfaSubmitting} onClick={() => void handleMfaVerify()}>
             {t('验证')}
           </Button>
-          <Button type="link" block onClick={() => setMfaToken('')}>
+          <Button type="link" block onClick={() => { mfaLogicRef.current = null; setMfaToken(''); }}>
             {t('返回登录')}
           </Button>
         </div>
