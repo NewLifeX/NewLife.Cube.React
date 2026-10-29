@@ -28,7 +28,7 @@ Référencez `NewLife.Cube` et `NewLife.Cube.React`, lancez `dotnet run`, puis o
 - **Thème unique × clair/sombre** : apparence native pilotée par les tokens antd, bascule clair/sombre en un clic
 - **Assistant IA** : chat en streaming SSE + commandes rapides + remplissage intelligent de formulaires + diagnostic système, rendu mermaid intégré
 - **Localisation multilingue** : 11 langues d'interface entièrement traduites (liste backend ∩ langues complètes du front-end ; le backend expose 32 langues et les 21 autres reviennent à l'anglais ; même chaîne que NewLife.Core/Cube, nécessite NewLife.Cube ≥ 6.15.2026.1022), avec langue du système ou langue forcée ; les menus, métadonnées de champs et messages d'exécution du serveur sont rechargés au changement de langue
-- **Bien testé** : 420 tests unitaires + 124 tests E2E tous réussis, avec réutilisation de session de connexion Playwright
+- **Bien testé** : 432 tests unitaires + 124 tests E2E tous réussis, avec réutilisation de session de connexion Playwright
 
 ## Carte de l'écosystème
 
@@ -110,7 +110,7 @@ Ouvrez <http://localhost:5188> dans un navigateur pour voir la page de connexion
 cd NewLife.Cube.React/web
 pnpm build        # génère ../wwwroot (pour l'intégration .NET)
 pnpm type-check   # vérification de types tsc
-pnpm test:unit    # tests unitaires Vitest (420)
+pnpm test:unit    # tests unitaires Vitest (432)
 pnpm test:e2e     # Playwright E2E (124 ; port 5050 par défaut, remplacer avec $env:E2E_BASE_URL)
 
 # Build .NET (intègre wwwroot dans la DLL)
@@ -121,7 +121,7 @@ dotnet build 魔方React.slnx -c Release
 
 ## Tests
 
-- **Tests unitaires** : Vitest + React Testing Library + jsdom, 420 cas tous réussis
+- **Tests unitaires** : Vitest + React Testing Library + jsdom, 432 cas tous réussis
 - **Tests E2E** : 124 cas Playwright (connexion/inscription/activation/mot de passe oublié/centre de sécurité/CRUD de liste/import-export/mise en page/téléversement/IA), avec réutilisation de session
 - **Intégration .NET** : parcours de bout en bout CubeDemo + `UseReact` (connexion → menus → CRUD → export → actualisation sans 404)
 

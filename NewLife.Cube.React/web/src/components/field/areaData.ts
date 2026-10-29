@@ -53,17 +53,40 @@ function nodeBigArea(n: AreaNode): string {
   return n.bigArea ?? n.BigArea ?? '';
 }
 
+/**
+ * 拉取地区数据（带一次重试）
+ *
+ * 后端 `/Cube/*` 服务接口在权限缓存刷新窗口会瞬时返回 code=401/空数据
+ * （同一时刻 /Auth/Info 正常，已登记 FIX-5）；这里失败后 300ms 重试一次，
+ * 仍失败则返回空列表由 UI 降级，不抛异常、不打断会话。
+ *
+ * @param url 接口路径（/Cube/AreaChilds | /Cube/AreaParents）
+ * @param params 查询参数
+ * @returns 地区节点列表（失败时为空数组）
+ */
+async function getAreaList(url: string, params: Record<string, unknown>): Promise<AreaNode[]> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await api.client.get(url, { params });
+      const body = res.data as { code?: number; data?: AreaNode[] };
+      if ((body.code === 0 || body.code === undefined) && Array.isArray(body.data)) return body.data;
+    } catch {
+      /* 网络/接口异常：走下方重试或降级 */
+    }
+    if (attempt >= 1) return [];
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+}
+
 /** 拉取指定地区的子级（id=0 返回省级，含大区） */
 export async function fetchChildren(parentId: number): Promise<AreaOption[]> {
-  const res = await api.client.get('/Cube/AreaChilds', { params: { id: parentId } });
-  const list = (res.data?.data ?? []) as AreaNode[];
+  const list = await getAreaList('/Cube/AreaChilds', { id: parentId });
   return list.map((n) => ({ id: nodeId(n), name: nodeName(n), bigArea: nodeBigArea(n), isLeaf: false }));
 }
 
 /** 解析地区编号的父级路径（含自身），用于受控回显 */
 export async function fetchAreaPath(areaId: number): Promise<number[]> {
-  const res = await api.client.get('/Cube/AreaParents', { params: { id: areaId, isContainSelf: true } });
-  const list = (res.data?.data ?? []) as AreaNode[];
+  const list = await getAreaList('/Cube/AreaParents', { id: areaId, isContainSelf: true });
   return list.map(nodeId).filter((id) => id > 0);
 }
 

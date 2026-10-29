@@ -9,10 +9,11 @@
  *
  * ⚠️ 并发约束：本套件依赖 ReactSetting.configNavFlat=false（Segmented + 更多下拉），
  * 而 react-setting.spec 的「导航排开」测试需要 configNavFlat=true。两者在同一 ReactSetting
- * 上配置相反，**并发运行（workers>1）会互相覆盖导致偶发失败**——这两个 spec 必须串行运行
- * （--workers=1）或分开运行。beforeAll 已做幂等恢复以降低冲突概率。
+ * 上配置相反，**并行运行（workers>1）会互相覆盖导致偶发失败**——本文件从
+ * `./utils/accountLock` 导入 test，自动与 react-setting / user-area 串行（跨 worker 文件锁），
+ * 无需再手动 `--workers=1`。beforeAll 的幂等恢复仍保留，用于兜底中断残留。
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './utils/accountLock';
 
 const NAV_TIMEOUT = 10000;
 

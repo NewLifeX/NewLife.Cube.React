@@ -5,10 +5,10 @@
  * 语言/明暗切换、用户菜单入口展示。
  *
  * ⚠️ 并发约束：本文件与 widget.spec.ts 共享同一登录用户的工作台布局状态，
- * 需 --workers=1 串行运行（见 widget.spec.ts 文件头说明）。
+ * 已从 `./utils/accountLock` 导入 test 自动串行（跨 worker 文件锁），无需手动 `--workers=1`。
  * 退出登录用例独立在 logout.spec.ts（单会话策略会禁用共享 admin token）。
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './utils/accountLock';
 
 test.describe('首页（/）', () => {
   test('首页加载无错误且展示欢迎信息与工作台部件', async ({ page }) => {
@@ -60,7 +60,9 @@ test.describe('首页（/）', () => {
 
   test('点击横幅头像进入个人中心', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.cube-home-banner-avatar')).toBeVisible({ timeout: 10000 });
+    // 先等工作台栅格出现（依赖 dashboard 聚合接口），再断言横幅头像，避免慢接口下 10s 不够
+    await expect(page.locator('.cube-home-grid')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.cube-home-banner-avatar')).toBeVisible({ timeout: 15000 });
     await page.locator('.cube-home-banner-avatar').click();
     await page.waitForURL('**/profile');
     await expect(page.getByText('基础信息').first()).toBeVisible({ timeout: 10000 });

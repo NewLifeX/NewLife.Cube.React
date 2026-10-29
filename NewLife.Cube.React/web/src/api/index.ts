@@ -7,6 +7,7 @@
  * - 统一错误处理：字段级错误 / 业务错误 / 401 未授权
  */
 import { createCubeApi, clearPageMetaCache, type CubeApi, type TokenStorage } from '@newlifex/cube';
+import { wrapPageActions } from './pageActions';
 import { getConfig } from '@/configure';
 import { getCurrentLanguage } from '@/i18n';
 import { getMessage } from '@/utils/antdApp';
@@ -21,14 +22,27 @@ function readCookie(key: string): string | null {
 }
 
 /**
+ * 最近一次读取到的有效令牌
+ *
+ * 共享包在业务码 401 时会**先** `clearToken()` 再回调 `onUnauthorized`，
+ * 调用方拿不到被清掉的令牌；这里在每次读取时留一份，供辅助接口偶发 401 时恢复会话。
+ */
+let lastValidToken: string | null = null;
+
+/**
  * 双通道 Token 存储：localStorage 优先 + Cookie 兜底
  *
  * 「保存密码」登录后 token 同时写入持久 Cookie（对齐 MVC 版写 365 天 Cookie 的行为），
  * 当 localStorage 被浏览器清理但 Cookie 保留时，仍可从 Cookie 恢复登录态免登录。
  */
 const tokenStorage: TokenStorage = {
-  getToken: () => localStorage.getItem('token') ?? readCookie('token'),
+  getToken: () => {
+    const token = localStorage.getItem('token') ?? readCookie('token');
+    if (token) lastValidToken = token;
+    return token;
+  },
   setToken: (t, expireIn) => {
+    lastValidToken = t;
     localStorage.setItem('token', t);
     // 有有效期（保存密码=365 天）写持久 Cookie，否则会话级
     const exp = expireIn && expireIn > 0 ? `; max-age=${expireIn}` : '';
@@ -48,6 +62,14 @@ window.addEventListener(CUBE_TOKEN_EVENT, () => clearPageMetaCache());
 // 同一响应若携带 fieldErrors，onFieldError 会弹出更精确的字段提示；
 // 此处标记抑制紧随其后的 onBusinessError，避免"操作失败！xxx"与"xxx"重复弹出
 let fieldErrorShown = false;
+
+/** 允许 401 软失败的辅助接口前缀（不打断会话，由调用方降级/重试）
+ *
+ * `/Cube/*` 为服务端点（菜单 / 地区 / LOV / 配置 / 头像）：实测并发下后端会瞬时返回
+ * code=401（同一时刻 `/Auth/Info` 正常），属于权限缓存刷新窗口问题（已登记 FIX-5）。
+ * 这些接口失败只影响局部功能，不应把用户踢下线；真正的会话失效会由实体接口 401 兜住。
+ */
+const SOFT_401_PREFIXES = ['/Cube/'];
 
 /**
  * 全局 CubeApi 实例
@@ -82,7 +104,15 @@ export const api: CubeApi = createCubeApi({
         fieldErrorShown = false;
       });
   },
-  onUnauthorized: () => {
+  onUnauthorized: (url) => {
+    // 记录触发登录跳转的请求（HTTP 401 或业务 code=401），便于排查共享会话被何处打断
+    console.warn(`[cube] unauthorized: ${url ?? '-'}`);
+    // 辅助接口的偶发 401 不打断会话：菜单失败只影响导航，不应把用户踢下线。
+    // 实测并发下 /Auth/Info 正常而 /Cube/MenuTree 返回 code=401（后端瞬时问题，已登记 FIX-5）。
+    if (url && SOFT_401_PREFIXES.some((p) => url.startsWith(p)) && lastValidToken) {
+      tokenStorage.setToken(lastValidToken);
+      return;
+    }
     // 401 → 清除 token 并跳转登录页（避免在登录页重复跳转）
     const { pathname } = window.location;
     const { loginPageUrl } = getConfig().auth;
@@ -92,18 +122,7 @@ export const api: CubeApi = createCubeApi({
   },
 });
 
-/**
- * 共享包 `resolveRequestUrl` 对不带前导斜杠的 url 会拼成 `/apiAdmin/...`（路径粘连），
- * 而 `createWorkbenchLoader` / `createWidgetLayoutLoader` 等共享 loader 传入的是 `Admin/Index`。
- * 这里统一补齐前导斜杠，待上游修复后可移除。
- */
-const pageApi = api.page;
-const withLeadingSlash = (type: string) => (type.startsWith('/') ? type : `/${type}`);
-api.page = {
-  ...pageApi,
-  getAction: <T,>(type: string, action: string, params?: Record<string, unknown>) =>
-    pageApi.getAction<T>(withLeadingSlash(type), action, params),
-  postAction: <T,>(type: string, action: string, data?: unknown) => pageApi.postAction<T>(withLeadingSlash(type), action, data),
-};
+// 兼容层：补前导斜杠，规避上游 resolveRequestUrl 拼出 /apiAdmin/...（见 pageActions.ts）
+wrapPageActions(api);
 
 export default api;

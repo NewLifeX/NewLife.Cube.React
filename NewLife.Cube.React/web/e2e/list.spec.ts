@@ -68,11 +68,12 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     const name = `${PREFIX}-user`;
     await page.getByRole('button', { name: /新增/ }).click();
-    await page.waitForSelector('.ant-modal:not([style*="display: none"])', { timeout: 8000 });
+    // 并发负载下 meta/表单渲染较慢，弹窗等待放宽到 15s
+    await page.waitForSelector('.ant-modal:not([style*="display: none"])', { timeout: 15000 });
     // 填写必填字段（用户名，主键已过滤，首个输入框为名称）
     await page.locator('.ant-modal input').first().fill(name);
     await page.getByRole('button', { name: /保\s*存/ }).click();
-    await expect(page.locator('.ant-message')).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('.ant-message')).toBeVisible({ timeout: 15000 });
     // 按关键字 q 定位（后端生效，URL 参数透传），避免依赖不存在的搜索框
     await gotoUserList(page, name);
     await expect(page.locator(ROW, { hasText: name }).first()).toBeVisible({ timeout: 10000 });

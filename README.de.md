@@ -28,7 +28,7 @@ Referenziere `NewLife.Cube` und `NewLife.Cube.React`, führe `dotnet run` aus un
 - **Ein Theme × hell/dunkel**: natives Erscheinungsbild über antd-Token, Umschalten zwischen hell und dunkel mit einem Klick
 - **KI-Assistent**: SSE-Streaming-Chat + Schnellbefehle + intelligentes Formularausfüllen + Systemdiagnose, integrierte mermaid-Darstellung
 - **Mehrsprachige Lokalisierung**: 11 vollständig übersetzte UI-Sprachen (Backend-Liste ∩ vollständige Frontend-Sprachen; 32 Ressourcen-Locales; gleiche Kette wie NewLife.Core/Cube, erfordert NewLife.Cube ≥ 6.15.2026.1022), Systemsprache oder erzwungene Sprache; Servermenüs, Feldmetadaten und Laufzeitmeldungen werden beim Sprachwechsel neu geladen
-- **Gut getestet**: 420 Unit-Tests + 124 E2E-Tests, alle bestanden, mit Wiederverwendung der Playwright-Login-Sitzung
+- **Gut getestet**: 432 Unit-Tests + 124 E2E-Tests, alle bestanden, mit Wiederverwendung der Playwright-Login-Sitzung
 
 ## Ökosystem-Karte
 
@@ -110,7 +110,7 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # schreibt nach ../wwwroot (für das Einbetten in .NET)
 pnpm type-check   # tsc-Typprüfung
-pnpm test:unit    # Vitest-Unit-Tests (420)
+pnpm test:unit    # Vitest-Unit-Tests (432)
 pnpm test:e2e     # Playwright-E2E (124; standardmäßig Port 5050, überschreibbar mit $env:E2E_BASE_URL)
 
 # .NET-Build (bettet wwwroot in die DLL ein)
@@ -121,7 +121,7 @@ dotnet build 魔方React.slnx -c Release
 
 ## Tests
 
-- **Unit-Tests**: Vitest + React Testing Library + jsdom, 420 Fälle, alle bestanden
+- **Unit-Tests**: Vitest + React Testing Library + jsdom, 432 Fälle, alle bestanden
 - **E2E-Tests**: 124 Playwright-Fälle (Anmeldung/Registrierung/Aktivierung/Passwort vergessen/Sicherheitszentrum/Listen-CRUD/Import-Export/Layout/Upload/KI), Wiederverwendung der Login-Sitzung
 - **.NET-Integration**: CubeDemo + `UseReact` End-to-End-Ablauf (Anmeldung → Menüs → CRUD → Export → Aktualisieren ohne 404)
 

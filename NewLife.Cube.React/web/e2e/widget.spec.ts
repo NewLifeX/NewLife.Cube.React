@@ -6,10 +6,9 @@
  * 以首页 / 为例。
  *
  * ⚠️ 并发约束：本文件与 home.spec.ts 共享同一登录用户的工作台布局状态（Parameter 按用户持久化），
- * 需 --workers=1 串行运行，否则并发下互相覆盖布局导致偶发失败（对齐 config/react-setting 的约束）：
- *   pnpm exec playwright test e2e/home.spec.ts e2e/widget.spec.ts --project=chromium --workers=1
+ * 从 `./utils/accountLock` 导入 test 后两者自动串行（跨 worker 文件锁），无需再手动 `--workers=1`。
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './utils/accountLock';
 
 test.describe('工作台卡片（卡片三能力）', () => {
   /** 重置布局并确认（清理测试残留）：工具栏「重置布局」已移除，恢复默认布局入口在已隐藏面板底部、
@@ -66,6 +65,9 @@ test.describe('工作台卡片（卡片三能力）', () => {
 
   test('KPI 指标卡可隐藏与恢复', async ({ page }) => {
     await page.goto('/');
+    // 必须先等工作台内容部件出现（dashboard 聚合接口返回），否则首屏只有降级 KPI（在线状态/我的角色），
+    // 等真实 KPI 到达后降级卡消失，隐藏记录就对不上恢复面板
+    await waitHome(page);
     const kpi = page.locator('.cube-home-grid > .cube-home-kpi-card').first();
     await expect(kpi).toBeVisible({ timeout: 10000 });
     const label = (await kpi.locator('.cube-home-kpi-label').first().innerText()).trim();

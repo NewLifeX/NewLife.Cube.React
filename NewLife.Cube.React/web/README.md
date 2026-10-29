@@ -84,7 +84,9 @@ pnpm test:e2e
 
 **环境能力差异**：AI 助手（AISwitch 未启用）、ViewTrace（后端无该控制器）等用例会**自动跳过**而非失败（`e2e/utils/env.ts` + 用例内 `test.skip`）。
 
-**并发建议（本地全量回归）**：`config.spec` / `react-setting.spec` / `user-area.spec` 都会写同一份 `ReactSetting`（表单风格、导航排布、地区选择方案），`workers>1` 时互相覆盖会导致偶发失败；**本地全量回归建议加 `--workers=1`**（约 4~5 分钟），或分组分开跑。
+**并发说明（已自动串行）**：`config` / `react-setting` / `user-area`（账号级 `ReactSetting`）与 `home` / `widget`（账号级工作台布局 `Parameter`）这五条 spec 会读写同一份账号状态，并行 worker 会互相覆盖。它们已从 `e2e/utils/accountLock.ts` 导入 `test`，**用例级跨 worker 文件锁自动串行**，无需再手动 `--workers=1`；其余 spec 仍按 `workers: 4` 并行。
+
+**副账号必配**：未设置 `$env:E2E_ALT_USER` / `$env:E2E_ALT_PASS` 时副账号回退主账号，重新登录/登出用例会吊销共享令牌，全量并行随机 401（`e2e/utils/env.ts` 会打印告警）。
 
 **数据隔离提醒（实测）**：「导入 CSV 新增用户并落库」走实体合并导入（Merge）。CSV **不带主键列**时可能命中并改写已有行（实测把环境管理员账号改写成了 `e2e-import-*`），因此该用例已在 CSV 首列显式给定不冲突的高位主键（`ID`），只新增不改写。自己手动验证导入时请同样带 `ID` 列；另外仍建议跑全量前备份 `Bin/Data/Membership.db`（`list.spec` 会创建/删除测试用户）。
 

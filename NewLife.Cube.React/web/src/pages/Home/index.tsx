@@ -255,6 +255,8 @@ export default function HomePage() {
   const [layout, setLayout] = useState<Record<string, WidgetLayoutItem>>({});
   // 布局实时镜像，供提交使用（避免 setLayout 异步导致的闭包过期）
   const layoutRef = useRef(layout);
+  // 用户是否已手动改过布局：置位后忽略迟到的 GetWidgetLayout 响应，避免回滚刚做的操作
+  const layoutDirtyRef = useRef(false);
   useEffect(() => {
     layoutRef.current = layout;
   }, [layout]);
@@ -274,7 +276,9 @@ export default function HomePage() {
     void layoutLoader
       .load()
       .then((raw) => {
-        if (cancelled) return;
+        // 用户已在本页操作过布局（隐藏/排序/重置）时不覆盖本地状态，
+        // 否则慢网络下初始 GET 返回会把刚做的操作回滚（E2E 偶发：隐藏后卡片又出现）
+        if (cancelled || layoutDirtyRef.current) return;
         if (raw && Object.keys(raw).length) setLayout(normalizeLayout(raw));
       })
       .catch(() => {
@@ -287,6 +291,7 @@ export default function HomePage() {
 
   // 提交布局：更新状态 + 即时保存服务端（对齐 MVC HideWidget/SaveOrder 即时持久化）
   const commitLayout = (next: WidgetLayoutMap) => {
+    layoutDirtyRef.current = true;
     layoutRef.current = next;
     setLayout(next);
     void layoutLoader.save(next).catch(() => {
@@ -295,6 +300,7 @@ export default function HomePage() {
   };
 
   const handleResetLayout = () => {
+    layoutDirtyRef.current = true;
     setLayout({});
     layoutRef.current = {};
     void layoutLoader

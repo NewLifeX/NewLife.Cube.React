@@ -6,8 +6,12 @@
  * - 切换表单风格为 vertical 后，实体编辑表单变为"标签一行控件一行"（保存自动刷新）
  * - 文本框清除图标（InputClear）开启/关闭时的自定义清除图标（.cube-input-clear，聚焦且非空才显示）
  * - 均会还原为默认值（inline / 关闭清除），避免影响其它用例
+ *
+ * ⚠️ 本文件会改写账号级 ReactSetting，与 config.spec / user-area.spec 存在配置冲突；
+ * 从 `./utils/accountLock` 导入 test 后三条 spec 自动串行（跨 worker 文件锁），无需 `--workers=1`。
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './utils/accountLock';
+import type { Page } from '@playwright/test';
 
 const ROW = '.ant-table-tbody tr.ant-table-row';
 const TABLE_TIMEOUT = 15000;

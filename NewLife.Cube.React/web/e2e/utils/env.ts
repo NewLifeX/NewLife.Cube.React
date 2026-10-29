@@ -19,10 +19,18 @@ export const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 /** 主账号口令 */
 export const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
 
-/** 副账号（会重新登录的用例专用，避免吊销共享令牌） */
+/** 副账号（会重新登录/登出的用例专用，避免吊销共享令牌） */
 export const ALT_USER = process.env.E2E_ALT_USER || ADMIN_USER;
 /** 副账号口令 */
 export const ALT_PASS = process.env.E2E_ALT_PASS || ADMIN_PASS;
+
+// 未配副账号时明确告警：重新登录/登出会吊销共享令牌，并行跑全量时其它 spec 会随机 401
+if (ALT_USER === ADMIN_USER) {
+  console.warn(
+    '[e2e] 未配置 E2E_ALT_USER/E2E_ALT_PASS，副账号回退主账号——凡是重新登录/登出的用例都会吊销共享令牌，' +
+      '全量并行可能出现随机 401；请配置独立副账号（见 web/README.md 测试说明）。',
+  );
+}
 
 /**
  * 探测后端是否具备某端点（用于环境能力差异跳过用例）

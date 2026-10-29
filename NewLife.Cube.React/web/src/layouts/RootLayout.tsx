@@ -38,10 +38,20 @@ export default function RootLayout({ children }: { children?: ReactNode }) {
       store.fetchUserInfo().catch(() => {});
     }
     if (!store.menus.length) {
-      store
-        .fetchMenus()
-        .then((list) => setFlatMenus(list))
-        .catch(() => {});
+      const loadMenus = () =>
+        store
+          .fetchMenus()
+          .then((list) => setFlatMenus(list))
+          .catch(() => {
+            // 启动瞬间菜单接口偶发 401（已由 api 层软失败恢复令牌），稍后重试一次
+            window.setTimeout(() => {
+              void store
+                .fetchMenus()
+                .then((list) => setFlatMenus(list))
+                .catch(() => {});
+            }, 800);
+          });
+      void loadMenus();
     } else if (!useMenuStore.getState().flatMenus.length) {
       setFlatMenus(store.menus);
     }
