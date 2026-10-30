@@ -8,7 +8,7 @@ namespace NewLife.Cube.React;
 public static class ReactService
 {
     /// <summary>Use the React front-end skin. Registers embedded static assets and the SPA fallback route</summary>
-    /// <remarks>When several skin packages are referenced, prefer <see cref="CubeSkinService.UseCubeSkin(WebApplication, IWebHostEnvironment, String)"/> so the skin can be switched by configuration</remarks>
+    /// <remarks>UseCube auto-detects and enables referenced skin packages, so this call is normally unnecessary; it only forces the React skin</remarks>
     /// <param name="app"></param>
     /// <param name="env"></param>
     /// <returns></returns>
