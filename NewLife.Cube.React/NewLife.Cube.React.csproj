@@ -64,10 +64,15 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- 将 wwwroot 静态文件嵌入程序集 -->
+  <!-- 将 wwwroot 静态文件嵌入程序集。sourcemap 仅用于本地调试，不随包分发 -->
   <ItemGroup>
-    <EmbeddedResource Include="wwwroot\**\*" />
+    <EmbeddedResource Include="wwwroot\**\*" Exclude="wwwroot\**\*.map" />
   </ItemGroup>
+
+  <!-- 打包前校验前端产物，避免把没有内置前端的空壳包发到 NuGet -->
+  <Target Name="VerifySpaAssets" BeforeTargets="GenerateNuspec" Condition="'$(IsPackable)' == 'true'">
+    <Error Condition="!Exists('wwwroot\index.html')" Text="wwwroot/index.html not found. Run 'pnpm install &amp;&amp; pnpm build' in NewLife.Cube.React/web before packing." />
+  </Target>
 
   <!-- SelfHost 调试文件统一不作为 None 项（Debug 时为 Content，Release 时完全排除） -->
   <ItemGroup>
@@ -91,7 +96,8 @@
 
   <ItemGroup>
     <!-- 多语言基线：Cube 6.15.2026.1022 起内置请求级本地化（UseCubeLocalization），界面元数据按请求语言翻译 -->
-    <PackageReference Include="NewLife.Cube" Version="6.16.2026.1027" />
+    <!-- 6.16.2026.1030 起提供 ICubeSkin/UseCubeSkin，多皮肤包共存时按设置切换 -->
+    <PackageReference Include="NewLife.Cube" Version="6.16.2026.1030" />
     <!-- 直接引用 Core：导入 build/NewLife.Core.props，使本包 Locales/*.yml 自动编译进词表 -->
     <PackageReference Include="NewLife.Core" Version="12.0.2026.1024" />
   </ItemGroup>

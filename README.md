@@ -19,7 +19,7 @@ Add references to both `NewLife.Cube` and `NewLife.Cube.React`, run `dotnet run`
 
 ## Highlights
 
-- **Out of the box**: one line `app.UseReact(env)`; the build output is embedded in the DLL and shipped with the NuGet package, with no physical file dependency
+- **Out of the box**: one line `app.UseReact(env)`; the build output is embedded in the DLL and shipped with the NuGet package, with no physical file dependency. When several skin packages are referenced, `app.UseCubeSkin(env)` switches the active skin from the `SpaSkin` setting without a restart
 - **Field metadata driven**: lists, forms, search and detail views are all rendered dynamically from backend `meta` metadata; adding an entity requires zero front-end work
 - **Conforms to the Cube skin design specification**: complete authentication flow, generic list, generic form, LOV/upload/rich text/AI assistant and other shared components
 - **Consumes the shared packages**: built on the npm package `@newlifex/cube` (API client, page logic, field mapping and auth), with a framework-agnostic core shared by multiple skins
@@ -126,7 +126,8 @@ dotnet build 魔方React.slnx -c Release
 ## Release
 
 - **NuGet package**: `NewLife.Cube.React` (version `1.0.{yyyy.MMdd}`, with a snupkg symbol package)
-- **CI automation**: ⏸ planned — to be implemented in `.github/workflows/` once the shared packages are published to npm (front-end pre-build → `dotnet pack` → publish to nuget.org + GitHub Packages); see [feature list](Doc/功能清单.md) §4
+- **CI automation**: `publish.yml` (tags) and `publish-beta.yml` (master) build the front-end with pnpm, embed `wwwroot` into the DLL, then `dotnet pack` and publish to nuget.org + GitHub Packages. Sourcemaps are excluded and packing fails when `wwwroot/index.html` is missing.
+- **Multi-skin switching**: requires `NewLife.Cube` ≥ `6.16.2026.1030` (the version that introduces `ICubeSkin` / `UseCubeSkin`); reference both `NewLife.Cube.Vue` and `NewLife.Cube.React`, call `app.UseCubeSkin(env)` and pick the skin in the Cube settings page.
 
 ## Related repositories
 

@@ -1,73 +1,34 @@
-﻿using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.FileProviders;
 using NewLife.Cube.Extensions;
-using NewLife.Cube.Modules;
 
 namespace NewLife.Cube.React;
 
-/// <summary>React前端皮肤服务</summary>
+/// <summary>React front-end skin service</summary>
 public static class ReactService
 {
-    /// <summary>使用React前端皮肤。替换WebRootFileProvider以注册嵌入式静态资源，并添加SPA回退路由，提供React+Ant Design管理后台前端</summary>
+    /// <summary>Use the React front-end skin. Registers embedded static assets and the SPA fallback route</summary>
+    /// <remarks>When several skin packages are referenced, prefer <see cref="CubeSkinService.UseCubeSkin(WebApplication, IWebHostEnvironment, String)"/> so the skin can be switched by configuration</remarks>
     /// <param name="app"></param>
     /// <param name="env"></param>
     /// <returns></returns>
-    public static WebApplication UseReact(this WebApplication app, IWebHostEnvironment env)
-    {
-        // 嵌入在 DLL 中的 wwwroot 文件，作为静态资源
-        var assembly = Assembly.GetExecutingAssembly();
-        var embeddedProvider = new CubeEmbeddedFileProvider(assembly, "NewLife.Cube.React.wwwroot");
-
-        if (!env.WebRootPath.IsNullOrEmpty() && Directory.Exists(env.WebRootPath) && env.WebRootFileProvider != null)
-        {
-            // 主机的 WebRootFileProvider 优先，再到embeddedProvider
-            env.WebRootFileProvider = new CompositeFileProvider(env.WebRootFileProvider, embeddedProvider);
-        }
-        else
-        {
-            env.WebRootFileProvider = embeddedProvider;
-        }
-
-        app.UseStaticFiles();
-
-        // SPA 回退路由：所有未匹配 endpoint 的请求回退到 index.html（React 使用 Browser History 路由）
-        app.MapFallbackToFile("index.html");
-
-        return app;
-    }
+    public static WebApplication UseReact(this WebApplication app, IWebHostEnvironment env) => app.UseCubeSkin(env, "React");
 }
 
-/// <summary>React front-end skin module</summary>
-[DisplayName("React front-end skin")]
-internal class ReactModule : IModule
+/// <summary>React front-end skin. Discovered automatically by Cube; can be switched by the SpaSkin setting when several skins are referenced</summary>
+internal sealed class ReactSkin : ICubeSkin
 {
-    /// <summary>添加模块</summary>
-    /// <param name="services"></param>
-    public void Add(IServiceCollection services) { }
+    /// <summary>Skin name</summary>
+    public String Name => "React";
 
-    /// <summary>使用模块</summary>
-    /// <remarks>Module模式仅注册静态文件，SPA回退路由需通过 app.UseReact() 显式调用</remarks>
-    /// <param name="app"></param>
-    /// <param name="env"></param>
-    public void Use(IApplicationBuilder app, IWebHostEnvironment env)
+    /// <summary>Display name</summary>
+    public String DisplayName => "React 19 + Ant Design";
+
+    /// <summary>Create the static asset provider. Assets are embedded into the assembly at build time</summary>
+    /// <returns></returns>
+    public IFileProvider CreateFileProvider()
     {
-        // Module接口签名为IApplicationBuilder，无法调用MapFallbackToFile
-        // SPA回退路由通过用户在Program.cs显式调用 app.UseReact(env) 注册
         var assembly = Assembly.GetExecutingAssembly();
-        var embeddedProvider = new CubeEmbeddedFileProvider(assembly, "NewLife.Cube.React.wwwroot");
-
-        if (!env.WebRootPath.IsNullOrEmpty() && Directory.Exists(env.WebRootPath) && env.WebRootFileProvider != null)
-        {
-            env.WebRootFileProvider = new CompositeFileProvider(
-                embeddedProvider,
-                env.WebRootFileProvider);
-        }
-        else
-        {
-            env.WebRootFileProvider = embeddedProvider;
-        }
-
-        app.UseStaticFiles();
+        return new CubeEmbeddedFileProvider(assembly, "NewLife.Cube.React.wwwroot");
     }
 }
