@@ -14,7 +14,8 @@ import IconSelector from './IconSelector';
 import RichEditor from './RichEditor';
 import FocusClearInput from './FocusClearInput';
 import AreaCascader from './AreaCascader';
-import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel, resolveUploadAccept } from '@/utils/fieldControl';
+import TimeSpanInput from './TimeSpanInput';
+import { resolveControl, isFullWidthControl, resolveNumberPrecision, resolveAreaMaxLevel, resolveUploadAccept, isNumericMapKey } from '@/utils/fieldControl';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
@@ -99,6 +100,18 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
         );
       case 'switch':
         return <Switch {...commonProps} checked={toBool(value)} onChange={(v) => onChange?.(v)} />;
+      case 'password':
+        // 密码/敏感字段：遮蔽输入，禁止浏览器自动填充旧值
+        return (
+          <Input.Password
+            {...commonProps}
+            value={(value as string) ?? ''}
+            onChange={(e) => onChange?.(e.target.value)}
+            placeholder={placeholder}
+            autoComplete="new-password"
+            style={{ width: '100%' }}
+          />
+        );
       case 'date':
         return (
           <DatePicker
@@ -124,6 +137,40 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
             {...commonProps}
             value={value ? dayjs(value as string) : null}
             onChange={(d) => onChange?.(d ? d.format('HH:mm:ss') : null)}
+            style={{ width: '100%' }}
+          />
+        );
+      case 'timeSpan':
+        // 时长（ItemType=TimeSpan）：时:分:秒 分栏输入，单位按描述推断，对外仍是原始存储值
+        return (
+          <TimeSpanInput
+            {...commonProps}
+            value={value}
+            description={field.description}
+            onChange={(v) => onChange?.(v)}
+          />
+        );
+      case 'mapSelect':
+        // 映射字段（RoleName→RoleID）：显示关联表名称，提交关联键
+        return (
+          <LovSelect
+            {...commonProps}
+            value={value as string}
+            onChange={(v) => onChange?.(v)}
+            dataSource={field.dataSource}
+            parent={parent}
+            placeholder={placeholder}
+          />
+        );
+      case 'mapInput':
+        // 映射字段无数据源（关联表过大）时退回键值输入（对齐 MVC _Form_Map 的数字回退）
+        return (
+          <InputNumber
+            {...commonProps}
+            value={typeof value === 'number' ? value : value != null && value !== '' ? Number(value) : undefined}
+            onChange={(v) => onChange?.(v)}
+            precision={isNumericMapKey(field) ? 0 : undefined}
+            placeholder={placeholder}
             style={{ width: '100%' }}
           />
         );

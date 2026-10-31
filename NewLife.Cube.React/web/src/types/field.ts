@@ -28,6 +28,10 @@ export type ControlType =
   | 'tel' // 手机（带校验）
   | 'url' // 网址（带校验）
   | 'areaCascader' // 省市区级联选择（省/市/区/乡镇，层级由 itemType 后缀 1~4 指定）
+  | 'timeSpan' // 时长（时:分:秒 分栏输入，ItemType=TimeSpan，值仍是整数秒/毫秒…）
+  | 'mapSelect' // 映射字段下拉（RoleName→RoleID 等，按关联表数据源选择并提交关联键）
+  | 'mapInput' // 映射键值输入（关联表过大、无数据源时退回）
+  | 'password' // 密码（遮蔽显示，ItemType=password/secret）
   | 'readonly'; // 只读文本（Guid 等）
 
 /** 动态搜索控件类型（搜索区子集，对齐 Vue SearchControlType） */
@@ -104,6 +108,10 @@ export interface FieldMeta {
   multiple?: boolean;
   /** 数据字典（键值对列表） */
   dataSource?: Record<string, string>;
+  /** 映射字段名（如 RoleName 通过 Map 指向 RoleID）。表单读写应落到该关联键 */
+  mapField?: string;
+  /** 映射键的 CLR 类型名（如 RoleID → Int32）；无数据源时据此决定退回数字输入还是只读 */
+  mapTypeName?: string;
   /** 选项（LOV 模式一般留空，由接口拉取） */
   options?: FieldOption[];
   /** 链接 URL（支持变量替换 {Id} 等） */
@@ -170,6 +178,9 @@ export function toFieldMeta(field: DataField): FieldMeta {
     lovCode: field.lovCode,
     multiple: field.multiple,
     dataSource: field.dataSource,
+    // 映射字段（RoleName→RoleID）：当前发布版 @newlifex/cube 的 DataField 类型未必带 mapTypeName，按结构读取
+    mapField: field.mapField,
+    mapTypeName: (field as DataField & { mapTypeName?: string }).mapTypeName,
     url: field.url,
     target: field.target,
     text: field.text,

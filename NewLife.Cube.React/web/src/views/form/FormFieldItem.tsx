@@ -11,7 +11,7 @@ import { Col, Form } from 'antd';
 import type { RuleObject } from 'antd/es/form';
 import FieldControl from '@/components/field/FieldControl';
 import { t } from '@/i18n';
-import { isFullWidthControl, resolveControl, resolveDescription } from '@/utils/fieldControl';
+import { isFullWidthControl, mapValueKey, resolveControl, resolveDescription } from '@/utils/fieldControl';
 import type { FieldMeta } from '@/types/field';
 import { useReactSetting } from '@/stores/reactSetting';
 
@@ -71,7 +71,7 @@ export default function FormFieldItem({ field, apiPrefix, recordId, columns = 2,
     return (
       <Col span={span}>
         <Form.Item
-          name={field.name}
+          name={mapValueKey(field)}
           label={labelNode}
           tooltip={descMode === 2 && desc ? desc : undefined}
           rules={buildRules(field, required)}
@@ -98,7 +98,7 @@ export default function FormFieldItem({ field, apiPrefix, recordId, columns = 2,
         <label className="cube-form-inline-label" title={displayName}>
           {displayName}
         </label>
-        <Form.Item name={field.name} rules={buildRules(field, required)} className="cube-form-inline-control">
+        <Form.Item name={mapValueKey(field)} rules={buildRules(field, required)} className="cube-form-inline-control">
           <FieldControl field={field} apiPrefix={apiPrefix} recordId={recordId} parent={parentValue} />
         </Form.Item>
         {desc && (

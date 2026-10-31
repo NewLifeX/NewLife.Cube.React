@@ -11,6 +11,7 @@
  * - `GMK`：1024 进制容量（对齐 `ToGMK`）。
  */
 import type { FieldMeta } from '@/types/field';
+import { timeSpanToSeconds, timeSpanUnitOfDescription } from '@/utils/timeSpan';
 
 /** 千分位 + 固定小数位 */
 function withThousands(value: number, digits: number): string {
@@ -251,11 +252,8 @@ export function formatTimeSpan(
   const num = Number(value);
   if (!Number.isFinite(num)) return String(value);
 
-  const description = (field?.description ?? '').toLowerCase();
-  let totalSeconds = num;
-  if (/毫秒|ms|millisecond/.test(description)) totalSeconds = num / 1000;
-  else if (/小时|hour/.test(description)) totalSeconds = num * 3600;
-  else if (/分|minute/.test(description)) totalSeconds = num * 60;
+  // 单位口径与表单时长控件共用（utils/timeSpan），避免「列表显示 6 小时、编辑框按秒回显」
+  const totalSeconds = timeSpanToSeconds(num, timeSpanUnitOfDescription(field?.description));
 
   const itemType = (field?.itemType ?? '').trim();
   const colon = itemType.indexOf(':');

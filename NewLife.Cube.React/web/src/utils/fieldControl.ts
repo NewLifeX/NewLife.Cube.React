@@ -31,6 +31,37 @@ const NUMERIC_TYPES: ReadonlySet<string> = new Set([
   'SByte',
 ]);
 
+/** 数值类型名（小写）集合：判断映射键是否数值类型 */
+const NUMERIC_TYPE_NAMES: ReadonlySet<string> = new Set(
+  ['int16', 'int32', 'int64', 'uint16', 'uint32', 'uint64', 'byte', 'sbyte', 'single', 'double', 'decimal', 'float'],
+);
+
+/** 后端是否下发了取值字典（枚举 / 关联表） */
+export function hasDataSource(field: FieldMeta): boolean {
+  return !!field.dataSource && Object.keys(field.dataSource).length > 0;
+}
+
+/**
+ * 表单实际读写的模型键。映射字段（`RoleName` 通过 Map 指向 `RoleID`）要提交的是关联键。
+ *
+ * @param field 字段元数据
+ * @returns 模型键（无映射时即字段名）
+ * @example mapValueKey({ name: 'RoleName', mapField: 'RoleID' }) // 'RoleID'
+ */
+export function mapValueKey(field: FieldMeta): string {
+  return field.mapField || field.name;
+}
+
+/**
+ * 映射键是否为数值类型（无数据源时据此退回数字输入而非只读文本）。
+ *
+ * @param field 字段元数据
+ * @returns 是否数值键
+ */
+export function isNumericMapKey(field: FieldMeta): boolean {
+  return NUMERIC_TYPE_NAMES.has((field.mapTypeName ?? '').trim().toLowerCase());
+}
+
 /** 已知基元类型集合。不在其中的 typeName 视为枚举（选项由后端 dataSource 下发，对齐 MVC _Form_Int） */
 const PRIMITIVE_TYPES: ReadonlySet<string> = new Set([
   ...NUMERIC_TYPES,
@@ -78,15 +109,24 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   textarea: 'textarea',
   // 显式文本（XCode 测试实体用 text 表示普通输入）
   text: 'input',
-  password: 'input',
-  // 敏感字段：编辑仍为文本（脱敏展示属列表侧职责，不在此改控件）
-  secret: 'input',
+  password: 'password',
+  // 敏感字段（*Password / AppSecret 等）：一律遮蔽输入，避免明文回显在表单里
+  secret: 'password',
   singleselect: 'lov',
   multipleselect: 'lovMulti',
   lovtable: 'lov',
   lovtablemulti: 'lovMulti',
   time: 'timePicker',
   date: 'date',
+  // 时长（ItemType=TimeSpan / TimeSpan:<格式>）：值仍是整数，单位由描述推断，编辑走「时:分:秒」分栏
+  timespan: 'timeSpan',
+  // MVC FormField.Type 同义写法：select/radio 单选下拉、checkbox 多选、files 多附件
+  select: 'lov',
+  radio: 'lov',
+  checkbox: 'lovMulti',
+  files: 'upload',
+  // 容量（GMK）：存的是字节数，编辑仍是数值输入
+  gmk: 'inputNumber',
   // 省市区级联选择：area1=省、area2=省/市、area3=省/市/区、area4=省/市/区/乡镇街道（对齐 MVC _Area1~_Area4）
   // 无后缀 area 等价 area3（CubeNC `_Form_Item` / `_Common_List_Search` 的 area3,area 口径）
   area: 'areaCascader',
@@ -100,8 +140,6 @@ const ITEM_TYPE_TO_CONTROL: Record<string, ControlType> = {
   percentage: 'inputNumber',
   money: 'inputNumber',
   decimal: 'inputNumber',
-  // 时长（存秒/毫秒等数值），编辑为数值输入，展示由列表侧按描述单位换算
-  timespan: 'inputNumber',
   // 压缩包附件（下载链接同 file）
   'file-zip': 'upload',
   // 附件/图片别名（Vue 皮肤 avatar / attachment）
@@ -184,14 +222,22 @@ export function resolveControl(field: FieldMeta): ControlType {
     return ITEM_TYPE_TO_CONTROL[itemType];
   }
 
+  // 2. 映射字段（RoleName→RoleID 等）：虚拟属性在元数据里可能是只读，必须在只读判定之前处理，
+  //    否则关联表下拉永远不会出现。有 lovCode 走值集，有 dataSource 走本地下拉，整型键无数据源退回键值输入。
+  if (field.mapField) {
+    if (field.lovCode) return field.multiple ? 'lovMulti' : 'lov';
+    if (hasDataSource(field)) return 'mapSelect';
+    return isNumericMapKey(field) ? 'mapInput' : 'readonly';
+  }
+
   const typeName = field.typeName;
 
-  // 2. Guid → 只读（主键 Id 不在此列，仍走数值/主键编辑）
+  // 3. Guid → 只读（主键 Id 不在此列，仍走数值/主键编辑）
   if (typeName === 'Guid') {
     return 'readonly';
   }
 
-  // 3. 枚举 / 单选 / 多选：lovCode 或 dataSource 由后端下发，统一走 LOV
+  // 4. 枚举 / 单选 / 多选：lovCode 或 dataSource 由后端下发，统一走 LOV
   const hasOptions =
     !!field.lovCode || (field.dataSource != null && Object.keys(field.dataSource).length > 0);
   if (hasOptions) {
@@ -204,7 +250,7 @@ export function resolveControl(field: FieldMeta): ControlType {
     return multi ? 'lovMulti' : 'lov';
   }
 
-  // 4. 已知 CLR 类型
+  // 5. 已知 CLR 类型
   if (typeName === 'Boolean') return 'switch';
   if (typeName === 'DateTime') return isDateOnlyField(field) ? 'date' : 'datePicker';
   if (typeName === 'TimeSpan') return 'timePicker';
@@ -213,14 +259,14 @@ export function resolveControl(field: FieldMeta): ControlType {
   // 枚举类型名（非标准基元，如 SexKinds，选项由后端 dataSource 下发）按 lov 渲染
   if (typeName === 'Enum' || (typeName && !PRIMITIVE_TYPES.has(typeName))) return 'lov';
 
-  // 5. 字符串：大文本 → textarea
+  // 6. 字符串：大文本 → textarea
   if (typeName === 'String') {
     const len = field.length ?? 0;
     if (len >= 300) return 'textarea';
     return 'input';
   }
 
-  // 6. 兜底：普通文本输入，永不白屏
+  // 7. 兜底：普通文本输入，永不白屏
   return 'input';
 }
 
@@ -232,7 +278,9 @@ export function resolveControl(field: FieldMeta): ControlType {
  * @returns 皮肤控件类型
  */
 export function widgetToControl(widget: WidgetType): ControlType {
-  const map: Record<WidgetType, ControlType> = {
+  // 以字符串为键：共享包后续版本新增 area/timeSpan/mapSelect/mapInput 等 widget 时，
+  // 本表无需等类型声明更新即可生效（旧版本不会产出这些值）。
+  const map: Record<string, ControlType> = {
     text: 'input',
     textarea: 'textarea',
     number: 'inputNumber',
@@ -258,8 +306,12 @@ export function widgetToControl(widget: WidgetType): ControlType {
     icon: 'icon',
     lov: 'lov',
     lovMulti: 'lovMulti',
+    area: 'areaCascader',
+    timeSpan: 'timeSpan',
+    mapSelect: 'mapSelect',
+    mapInput: 'mapInput',
   };
-  return map[widget] ?? 'input';
+  return map[widget as string] ?? 'input';
 }
 
 /**
@@ -590,10 +642,15 @@ export function serializeSubmitModel(
   );
   // 虚拟字段（virtual=true）仅用于界面交互，不参与实体提交
   const virtualNames = new Set(fields.filter((f) => f.virtual).map((f) => f.name.toLowerCase()));
+  // 映射字段的展示名（RoleName）不是实体列，表单已按关联键（RoleID）读写，这里再兜底剔除
+  const mapDisplayNames = new Set(
+    fields.filter((f) => f.mapField).map((f) => f.name.toLowerCase()),
+  );
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(model)) {
-    if (virtualNames.has(k.toLowerCase())) continue;
-    if (multiNames.has(k.toLowerCase()) && Array.isArray(v)) {
+    const lk = k.toLowerCase();
+    if (virtualNames.has(lk) || mapDisplayNames.has(lk)) continue;
+    if (multiNames.has(lk) && Array.isArray(v)) {
       out[k] = (v as unknown[]).map(String).join(',');
     } else {
       out[k] = v;
@@ -650,13 +707,15 @@ function toMultiArray(val: unknown): string[] {
 export function mapDataToFormValues(data: Record<string, unknown>, fields: FieldMeta[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
-    const v = getValueByKey(data, f.name);
+    // 映射字段（RoleName→RoleID）在表单里读写的是关联键，回填也要按键取值
+    const key = mapValueKey(f);
+    const v = getValueByKey(data, key);
     if (v === undefined) continue;
     let val: unknown = v === 'true' ? true : v === 'false' ? false : v;
     if (f.multiple || (f.itemType ?? '').toLowerCase() === 'multipleselect') {
       val = toMultiArray(val);
     }
-    out[f.name] = val;
+    out[key] = val;
   }
   return out;
 }

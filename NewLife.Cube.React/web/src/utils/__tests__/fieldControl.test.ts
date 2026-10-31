@@ -22,6 +22,8 @@ import {
   findPresetPatch,
   resolveUploadAccept,
   isAttachmentItemType,
+  mapValueKey,
+  isNumericMapKey,
 } from '@/utils/fieldControl';
 import { toFieldMeta } from '@/types/field';
 import type { FieldMeta } from '@/types/field';
@@ -141,14 +143,14 @@ describe('resolveControl 表单控件映射', () => {
     expect(resolveControl(f({ itemType: 'phone', typeName: 'String' }))).toBe('tel');
     expect(resolveControl(f({ itemType: 'fax', typeName: 'String' }))).toBe('tel');
     expect(resolveControl(f({ itemType: 'tel', typeName: 'String' }))).toBe('tel');
-    expect(resolveControl(f({ itemType: 'secret', typeName: 'String' }))).toBe('input');
+    expect(resolveControl(f({ itemType: 'secret', typeName: 'String' }))).toBe('password');
     expect(resolveControl(f({ itemType: 'text', typeName: 'String' }))).toBe('input');
     expect(resolveControl(f({ itemType: 'number', typeName: 'Int32' }))).toBe('inputNumber');
     expect(resolveControl(f({ itemType: 'richtext', typeName: 'String' }))).toBe('richHtml');
     expect(resolveControl(f({ itemType: 'avatar', typeName: 'String' }))).toBe('image');
     expect(resolveControl(f({ itemType: 'attachment', typeName: 'String' }))).toBe('upload');
-    // 时长存数值（秒/毫秒），编辑为数字；格式化在列表侧
-    expect(resolveControl(f({ itemType: 'timespan', typeName: 'Int32' }))).toBe('inputNumber');
+    // 时长（秒/毫秒/分/小时）：编辑为「时:分:秒」分栏，对外仍是原始存储值
+    expect(resolveControl(f({ itemType: 'timespan', typeName: 'Int32' }))).toBe('timeSpan');
   });
 
   it('附件后缀 ItemType（image-png / file-doc）→ 对应上传控件', () => {
@@ -572,5 +574,74 @@ describe('serializeSubmitModel 虚拟字段（FORM-10）', () => {
     const out = serializeSubmitModel({ Name: 'a', OrgRange: '1-9', RoleIds: ['1', '2'] }, fields);
     expect(out).toEqual({ Name: 'a', RoleIds: '1,2' });
     expect(out.OrgRange).toBeUndefined();
+  });
+});
+
+describe('映射字段、时长与 MVC 同义 ItemType（ItemType 全量对齐）', () => {
+  it('映射字段有数据源 → mapSelect，整型键无数据源 → mapInput，非整型无数据源 → readonly', () => {
+    const withDs = f({
+      name: 'RoleName',
+      mapField: 'RoleID',
+      mapTypeName: 'Int32',
+      dataSource: { '1': '管理员' },
+    } as Partial<DataField>);
+    expect(resolveControl(withDs)).toBe('mapSelect');
+    expect(mapValueKey(withDs)).toBe('RoleID');
+
+    const noDs = f({ name: 'RoleName', mapField: 'RoleID', mapTypeName: 'Int32' } as Partial<DataField>);
+    expect(resolveControl(noDs)).toBe('mapInput');
+    expect(isNumericMapKey(noDs)).toBe(true);
+
+    const textKey = f({ name: 'DeptName', mapField: 'DeptCode' } as Partial<DataField>);
+    expect(resolveControl(textKey)).toBe('readonly');
+    expect(isNumericMapKey(textKey)).toBe(false);
+  });
+
+  it('映射字段本身只读也要先按映射判定（否则下拉永远不出现）', () => {
+    const field = f({
+      name: 'RoleName',
+      readOnly: true,
+      mapField: 'RoleID',
+      mapTypeName: 'Int32',
+      dataSource: { '1': '管理员' },
+    } as Partial<DataField>);
+    expect(resolveControl(field)).toBe('mapSelect');
+  });
+
+  it('映射字段配 lovCode → lov（大数据量关联表走远程值集）', () => {
+    const field = f({ name: 'RoleName', mapField: 'RoleID', lovCode: 'Role' } as Partial<DataField>);
+    expect(resolveControl(field)).toBe('lov');
+  });
+
+  it('ItemType=TimeSpan → timeSpan 时长控件（大小写与格式后缀兼容）', () => {
+    expect(resolveControl(f({ name: 'OnlineTime', typeName: 'Int32', itemType: 'TimeSpan' }))).toBe('timeSpan');
+    expect(
+      resolveControl(f({ name: 'OnlineTime', typeName: 'Int32', itemType: "TimeSpan:d'.'hh':'mm':'ss" })),
+    ).toBe('timeSpan');
+  });
+
+  it('MVC FormField.Type 同义 ItemType：select/radio/checkbox/files/gmk', () => {
+    expect(resolveControl(f({ name: 'Kind', typeName: 'Int32', itemType: 'select', dataSource: { '1': 'a' } }))).toBe('lov');
+    expect(resolveControl(f({ name: 'Kind', typeName: 'Int32', itemType: 'radio', dataSource: { '1': 'a' } }))).toBe('lov');
+    expect(
+      resolveControl(f({ name: 'Tags', typeName: 'String', itemType: 'checkbox', dataSource: { '1': 'a' } })),
+    ).toBe('lovMulti');
+    expect(resolveControl(f({ name: 'Files', typeName: 'String', itemType: 'files' }))).toBe('upload');
+    expect(resolveControl(f({ name: 'Size', typeName: 'Int64', itemType: 'GMK' }))).toBe('inputNumber');
+  });
+
+  it('编辑回填按关联键取值（RoleName→RoleID）', () => {
+    const fields = [
+      f({ name: 'Name' }),
+      f({ name: 'RoleName', mapField: 'RoleID', mapTypeName: 'Int32' } as Partial<DataField>),
+    ];
+    const values = mapDataToFormValues({ name: 'stone', roleID: 3, roleName: '管理员' }, fields);
+    expect(values).toEqual({ Name: 'stone', RoleID: 3 });
+  });
+
+  it('提交模型剔除映射字段的展示名，保留关联键', () => {
+    const fields = [f({ name: 'RoleName', mapField: 'RoleID' } as Partial<DataField>)];
+    const out = serializeSubmitModel({ RoleID: 3, RoleName: '管理员' }, fields);
+    expect(out).toEqual({ RoleID: 3 });
   });
 });
