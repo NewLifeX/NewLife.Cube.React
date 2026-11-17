@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
     <AssemblyTitle>Cube React Skin</AssemblyTitle>
     <Description>React front-end skin for NewLife.Cube, built with React 19 + Ant Design 6, providing an out-of-the-box admin console. Supports dynamic menus, metadata-driven lists and forms, CRUD, OAuth sign-in and runtime localization.</Description>
     <Company>新生命开发团队</Company>
