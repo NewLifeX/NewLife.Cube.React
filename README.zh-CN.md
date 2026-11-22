@@ -28,7 +28,7 @@
 - **单一主题 × 明暗**：antd token 驱动的原生观感，明暗切换一键完成
 - **AI 智能助手**：SSE 流式对话 + 快捷指令 + 智能填表 + 系统诊断，内置 mermaid 渲染
 - **多语言本地化**：11 种全量翻译界面语言（后端清单 ∩ 前端全量语言；后端语言清单 32 种，其余 21 种统一回退英文；与 NewLife.Core/Cube 同链路，需 NewLife.Cube ≥ 6.15.2026.1022），支持跟随系统与强制语言，服务端菜单、字段元数据与运行时消息随语言切换重新拉取
-- **测试完备**：单测 479 个 + E2E 126 个全过，Playwright 登录会话复用
+- **测试完备**：单测 473 个 + E2E 133 个全过，Playwright 登录会话复用
 
 ## 生态版图
 
@@ -82,7 +82,7 @@ NewLife 生态按依赖分层，各项目独立版本、独立发版。下面的
 
 ## 文档索引
 
-- 📋 [需求文档](Doc/需求文档.md) — 愿景、核心目标、功能需求、暂缓/不做什么
+- 📋 [需求文档](Doc/需求文档.md) — 愿景、核心目标、功能需求、不做什么
 - ✅ [功能清单](Doc/功能清单.md) — 实现/测试/注释三维状态追踪
 - 🏗️ [架构设计](Doc/架构设计.md) — .NET 皮肤集成、公共包策略、前端架构
 - 🖥️ [前端工程说明](NewLife.Cube.React/web/README.md) — web 目录开发/构建/测试指南
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # 输出 ../wwwroot（供 .NET 嵌入）
 pnpm type-check   # tsc 类型检查
-pnpm test:unit    # Vitest 单测（479 个）
-pnpm test:e2e     # Playwright E2E（126 个；默认 5050，可 $env:E2E_BASE_URL 覆盖）
+pnpm test:unit    # Vitest 单测（473 个）
+pnpm test:e2e     # Playwright E2E（133 个；默认 5050，可 $env:E2E_BASE_URL 覆盖）
 
 # .NET 构建（嵌入 wwwroot → DLL）
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## 测试
 
-- **单元测试**：Vitest + React Testing Library + jsdom，479 个用例全过
-- **E2E 测试**：Playwright 126 个用例（登录/注册/激活/忘记密码/安全中心/列表增删改/导入导出/布局/上传/AI），登录会话复用
+- **单元测试**：Vitest + React Testing Library + jsdom，473 个用例全过
+- **E2E 测试**：Playwright 133 个用例（登录/注册/激活/忘记密码/安全中心/列表增删改/导入导出/布局/上传/AI），登录会话复用
 - **.NET 集成**：CubeDemo + `UseReact` 全流程端到端（登录→菜单→CRUD→导出→刷新不 404）
 
 ## 发布

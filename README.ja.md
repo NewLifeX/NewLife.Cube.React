@@ -28,7 +28,7 @@ Cube（NewLife.Cube）第3世代 WebAPI フロントエンドの **React スキ�
 - **単一テーマ × ライト／ダーク**：antd トークンによるネイティブな見た目、ライト／ダーク切り替えはワンクリック
 - **AI アシスタント**：SSE ストリーミング対話 + クイックコマンド + スマート入力 + システム診断、mermaid レンダリング内蔵
 - **多言語ローカライズ**：11言語の完全翻訳 UI（バックエンド一覧 ∩ フロントエンド完全対応言語、リソースは32ロケール。NewLife.Core/Cube と同じ経路、NewLife.Cube ≥ 6.15.2026.1022 が必要）。システム追従と強制言語に対応し、言語切り替え時にサーバーメニュー、フィールドメタデータ、実行時メッセージを再取得
-- **テスト充実**：単体テスト479件 + E2E 126件がすべて成功、Playwright のログインセッションを再利用
+- **テスト充実**：単体テスト473件 + E2E 133件がすべて成功、Playwright のログインセッションを再利用
 
 ## エコシステムマップ
 
@@ -82,7 +82,7 @@ NewLife は、独立したバージョン管理を行うオープンソースプ
 
 ## ドキュメント
 
-- 📋 [要件定義](Doc/需求文档.md) — ビジョン、中核目標、機能要件、保留項目／非対象
+- 📋 [要件定義](Doc/需求文档.md) — ビジョン、中核目標、機能要件、非対象
 - ✅ [機能一覧](Doc/功能清单.md) — 実装／テスト／コメントの3次元ステータス追跡
 - 🏗️ [アーキテクチャ設計](Doc/架构设计.md) — .NET スキン統合、共有パッケージ戦略、フロントエンド構成
 - 🖥️ [フロントエンドガイド](NewLife.Cube.React/web/README.md) — web ディレクトリの開発／ビルド／テストガイド
@@ -110,8 +110,8 @@ pnpm dev
 cd NewLife.Cube.React/web
 pnpm build        # ../wwwroot に出力（.NET への埋め込み用）
 pnpm type-check   # tsc 型チェック
-pnpm test:unit    # Vitest 単体テスト（479件）
-pnpm test:e2e     # Playwright E2E（126件、既定 5050、$env:E2E_BASE_URL で上書き可）
+pnpm test:unit    # Vitest 単体テスト（473件）
+pnpm test:e2e     # Playwright E2E（133件、既定 5050、$env:E2E_BASE_URL で上書き可）
 
 # .NET ビルド（wwwroot を DLL に埋め込み）
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## テスト
 
-- **単体テスト**：Vitest + React Testing Library + jsdom、479件すべて成功
-- **E2E テスト**：Playwright 126件（ログイン／登録／アクティベーション／パスワード忘れ／セキュリティセンター／リスト CRUD／インポート・エクスポート／レイアウト／アップロード／AI）、ログインセッションを再利用
+- **単体テスト**：Vitest + React Testing Library + jsdom、473件すべて成功
+- **E2E テスト**：Playwright 133件（ログイン／登録／アクティベーション／パスワード忘れ／セキュリティセンター／リスト CRUD／インポート・エクスポート／レイアウト／アップロード／AI）、ログインセッションを再利用
 - **.NET 統合**：CubeDemo + `UseReact` の全フロー（ログイン→メニュー→CRUD→エクスポート→更新しても404にならない）
 
 ## リリース

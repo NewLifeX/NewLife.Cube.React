@@ -28,7 +28,7 @@ Adicione referências a `NewLife.Cube` e `NewLife.Cube.React`, execute `dotnet r
 - **Tema único × claro/escuro**: aparência nativa orientada por tokens do antd, alternância claro/escuro com um clique
 - **Assistente de IA**: chat em streaming SSE + comandos rápidos + preenchimento inteligente de formulários + diagnóstico do sistema, com renderização mermaid integrada
 - **Localização multilíngue**: 11 idiomas de interface totalmente traduzidos (lista do backend ∩ idiomas completos do front-end; o backend expõe 32 idiomas e os outros 21 voltam ao inglês; mesma cadeia do NewLife.Core/Cube, requer NewLife.Cube ≥ 6.15.2026.1022), com idioma do sistema ou forçado; menus, metadados de campos e mensagens de execução do servidor são recarregados ao trocar de idioma
-- **Bem testado**: 479 testes unitários + 126 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
+- **Bem testado**: 473 testes unitários + 133 testes E2E, todos aprovados, com reutilização de sessão de login no Playwright
 
 ## Mapa do ecossistema
 
@@ -82,7 +82,7 @@ NewLife é um ecossistema em camadas de projetos open source versionados de form
 
 ## Documentação
 
-- 📋 [Requisitos](Doc/需求文档.md) — visão, objetivos principais, requisitos funcionais, itens adiados e não objetivos
+- 📋 [Requisitos](Doc/需求文档.md) — visão, objetivos principais, requisitos funcionais e não objetivos
 - ✅ [Lista de funcionalidades](Doc/功能清单.md) — acompanhamento tridimensional de implementação/testes/comentários
 - 🏗️ [Arquitetura](Doc/架构设计.md) — integração do skin .NET, estratégia de pacotes compartilhados, arquitetura front-end
 - 🖥️ [Guia do front-end](NewLife.Cube.React/web/README.md) — guia de desenvolvimento/build/testes do diretório web
@@ -110,8 +110,8 @@ Abra <http://localhost:5188> no navegador para ver a página de login; após ent
 cd NewLife.Cube.React/web
 pnpm build        # gera ../wwwroot (para incorporação no .NET)
 pnpm type-check   # verificação de tipos com tsc
-pnpm test:unit    # testes unitários Vitest (479)
-pnpm test:e2e     # Playwright E2E (126; padrão 5050, substitua com $env:E2E_BASE_URL)
+pnpm test:unit    # testes unitários Vitest (473)
+pnpm test:e2e     # Playwright E2E (133; padrão 5050, substitua com $env:E2E_BASE_URL)
 
 # Build .NET (incorpora wwwroot na DLL)
 dotnet build 魔方React.slnx -c Release
@@ -121,8 +121,8 @@ dotnet build 魔方React.slnx -c Release
 
 ## Testes
 
-- **Testes unitários**: Vitest + React Testing Library + jsdom, 479 casos aprovados
-- **Testes E2E**: 126 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
+- **Testes unitários**: Vitest + React Testing Library + jsdom, 473 casos aprovados
+- **Testes E2E**: 133 casos Playwright (login/cadastro/ativação/esqueci a senha/central de segurança/CRUD de lista/importação-exportação/layout/upload/IA), com reutilização de sessão de login
 - **Integração .NET**: fluxo ponta a ponta com CubeDemo + `UseReact` (login → menus → CRUD → exportação → atualização sem 404)
 
 ## Publicação

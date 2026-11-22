@@ -80,7 +80,7 @@ pnpm lint
 # 单元测试（Vitest）
 pnpm test:unit
 
-# E2E 测试（Playwright；默认 5050，可用 $env:E2E_BASE_URL="http://localhost:7081" 覆盖指向一体站点）
+# E2E 测试（Playwright；默认 5050，可用 $env:E2E_BASE_URL 覆盖指向其它站点）
 pnpm exec playwright install chromium   # 首次运行需下载浏览器
 pnpm test:e2e
 ```
