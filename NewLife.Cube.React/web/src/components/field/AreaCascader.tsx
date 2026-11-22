@@ -41,6 +41,8 @@ function AreaCascaderDropdown({
   const [options, setOptions] = useState<AreaOption[]>([]);
   const [path, setPath] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  // 省级加载重试序号：首屏失败（/Cube/* 瞬时 401、网络异常）后，展开面板时自增触发重新加载
+  const [reloadTicket, setReloadTicket] = useState(0);
 
   // 初始加载省级选项
   useEffect(() => {
@@ -58,7 +60,7 @@ function AreaCascaderDropdown({
     return () => {
       cancelled = true;
     };
-  }, [maxLevel]);
+  }, [maxLevel, reloadTicket]);
 
   // 受控值 → 解析父级路径回显（表单编辑）
   useEffect(() => {
@@ -108,12 +110,18 @@ function AreaCascaderDropdown({
     onChange?.(typeof last === 'number' ? last : undefined);
   };
 
+  /** 展开时若省级选项为空（首屏加载失败或瞬时 401），自动重试，避免永久空白 */
+  const handleOpenChange = (open: boolean) => {
+    if (open && !loading && options.length === 0) setReloadTicket((v) => v + 1);
+  };
+
   return (
     <Cascader
       options={options}
       value={path}
       loadData={loadData}
       onChange={handleChange}
+      onOpenChange={handleOpenChange}
       fieldNames={{ label: 'name', value: 'id', children: 'children' }}
       changeOnSelect
       allowClear={allowClear}

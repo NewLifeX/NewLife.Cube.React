@@ -119,6 +119,30 @@ describe('AreaCascader 组件', () => {
     });
   });
 
+  it('首屏加载失败后展开面板自动重试（FIX-5 瞬时 401 兜底）', async () => {
+    mockGet.mockReset();
+    let attempt = 0;
+    mockGet.mockImplementation(async (url: unknown) => {
+      if (url === '/Cube/AreaChilds') {
+        attempt += 1;
+        // 首屏：getAreaList 内建一次重试，两次都失败 → 选项为空
+        if (attempt <= 2) throw new Error('network');
+        return { data: { data: provinces } };
+      }
+      return { data: { data: [] } };
+    });
+
+    render(<AreaCascader maxLevel={3} />);
+    await waitFor(() => expect(attempt).toBe(2), { timeout: 3000 });
+
+    // 展开面板触发重新加载，省份恢复可选
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    await waitFor(() => {
+      expect(screen.getByTitle('广东省')).toBeInTheDocument();
+    });
+    expect(attempt).toBe(3);
+  });
+
   it('changeOnSelect 选省触发 onChange（值=省编号）', async () => {
     const onChange = vi.fn();
     render(<AreaCascader maxLevel={3} onChange={onChange} />);
