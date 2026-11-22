@@ -184,9 +184,19 @@ test.describe('通用列表页（/Admin/User）', () => {
   });
 
   test('删除新增用户', async ({ page }) => {
-    // 按关键字 q 一次列出本批次创建的用户（关键字在 URL 参数中透传给后端）
-    await gotoUserList(page, PREFIX);
-    const rows = page.locator(ROW, { hasText: PREFIX });
+    // 自建数据再删除：不依赖前序用例创建的用户——Playwright 重试会新建 worker，
+    // 模块级 PREFIX 随 Date.now() 变化，按旧前缀搜索会找不到数据（2026-11-22 实测）
+    await page.goto('/Admin/User');
+    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+    const name = `${PREFIX}-del`;
+    await page.getByRole('button', { name: /新增/ }).click();
+    await page.waitForSelector('.ant-modal:not([style*="display: none"])', { timeout: 15000 });
+    await page.locator('.ant-modal input').first().fill(name);
+    await page.getByRole('button', { name: /保\s*存/ }).click();
+    await expect(page.locator('.ant-modal:not([style*="display: none"])')).toHaveCount(0, { timeout: 8000 });
+
+    await gotoUserList(page, name);
+    const rows = page.locator(ROW, { hasText: name });
     const before = await rows.count();
     expect(before).toBeGreaterThan(0);
     await rows.first().getByRole('button', { name: '删除' }).click();

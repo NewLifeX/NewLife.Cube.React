@@ -53,22 +53,27 @@ test.describe('部门列表页（/Admin/Department）', () => {
     const rowsBefore = await page.locator(ROW).count();
     expect(rowsBefore).toBeGreaterThan(0);
 
-    // 监听列表请求，断言提交了 ParentId=1（总公司；Cube 1122 内置实体统一 Id 命名，兼容旧 ParentID）
-    let listReq: string | null = null;
-    const onReq = (req: { url: () => string; method: () => string }) => {
-      if (req.url().includes('/api/Admin/Department') && req.method() === 'GET') listReq = req.url();
-    };
-    page.on('request', onReq as never);
-
+    // 选父级；下拉保持展开，点「搜索」的第一次点击可能被「点外关闭」吞掉（并发下偶发），先 Esc 收起
     await page.locator('.cube-search-item', { hasText: '父级' }).locator('.ant-select').click();
     await page.getByTitle('总公司', { exact: true }).first().click();
-    await page.getByRole('button', { name: /搜\s*索/ }).click();
-    await page.waitForTimeout(1200);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.ant-select-dropdown:visible')).toHaveCount(0, { timeout: 5000 });
 
+    // 精确等待带 ParentId 的列表请求，避免「最后一次 GET」被 meta/其它请求覆盖
+    const [listReq] = await Promise.all([
+      page.waitForRequest(
+        (r) =>
+          r.url().includes('/api/Admin/Department?') &&
+          r.method() === 'GET' &&
+          /[?&]ParentId=1(&|$)/i.test(r.url()),
+        { timeout: 15000 },
+      ),
+      page.getByRole('button', { name: /搜\s*索/ }).click(),
+    ]);
+    expect(listReq.url(), '搜索请求应携带 ParentId=1').toMatch(/[?&]ParentId=1/i);
+
+    await expect.poll(async () => page.locator(ROW).count(), { timeout: 10000 }).toBeLessThan(rowsBefore);
     const rows = await page.locator(ROW).count();
     expect(rows).toBeGreaterThan(0);
-    expect(rows).toBeLessThan(rowsBefore);
-    expect(listReq, '搜索请求应携带 ParentId=1').toMatch(/[?&]ParentID=1/i);
-    page.off('request', onReq as never);
   });
 });
