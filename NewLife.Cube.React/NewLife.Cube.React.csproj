@@ -97,9 +97,11 @@
   <ItemGroup>
     <!-- 多语言基线：Cube 6.15.2026.1022 起内置请求级本地化（UseCubeLocalization），界面元数据按请求语言翻译 -->
     <!-- 6.16.2026.1030 起提供 ICubeSkin/UseCubeSkin，多皮肤包共存时按设置切换 -->
-    <PackageReference Include="NewLife.Cube" Version="6.16.2026.1105-beta0802" />
+    <PackageReference Include="NewLife.Cube" Version="6.16.2026.1122-beta1026" />
     <!-- 直接引用 Core：导入 build/NewLife.Core.props，使本包 Locales/*.yml 自动编译进词表 -->
     <PackageReference Include="NewLife.Core" Version="12.0.2026.1121-beta0924" />
+    <!-- Cube 6.16.2026.1122 起内置实体统一 Id 命名（Roles/Menus/Users 等），与 XCode 12.3.2026.1120+ 的 I*Id 契约对齐 -->
+    <PackageReference Include="NewLife.XCode" Version="12.3.2026.1122-beta1034" />
   </ItemGroup>
 
 </Project>
