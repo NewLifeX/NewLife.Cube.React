@@ -711,9 +711,8 @@ function isSameFieldValue(a: unknown, b: unknown): boolean {
 /**
  * 编辑提交只保留变更字段（后端 PUT 为部分更新）
  *
- * 旧版提交整表字段，遇到实体同时存在 RoleId/RoleID 大小写别名时，
- * Cube 1122 CopySubmitted 的 IgnoreCase 反射取值会抛 AmbiguousMatchException
- * （用户编辑保存返回 500）。按后端部分更新契约只提交变更字段即可绕开，同时减少无效覆盖。
+ * 只提交变更字段可减少无效覆盖，并避免请求体包含同义大小写别名（如 RoleId/RoleID）时
+ * 后端反射取值产生歧义（用户编辑保存返回 500）。
  *
  * 必填字段始终保留：ASP.NET [ApiController] 会把非空引用类型属性隐式推断为必填，
  * meta 未必带 required 标记（如 User.Name），漏传会 400。

@@ -7,7 +7,6 @@
  * - 统一错误处理：字段级错误 / 业务错误 / 401 未授权
  */
 import { createCubeApi, clearPageMetaCache, type CubeApi, type TokenStorage } from '@newlifex/cube';
-import { wrapPageActions } from './pageActions';
 import { getConfig } from '@/configure';
 import { getCurrentLanguage } from '@/i18n';
 import { getMessage } from '@/utils/antdApp';
@@ -65,8 +64,8 @@ let fieldErrorShown = false;
 
 /** 允许 401 软失败的辅助接口前缀（不打断会话，由调用方降级/重试）
  *
- * `/Cube/*` 为服务端点（菜单 / 地区 / LOV / 配置 / 头像）：实测并发下后端会瞬时返回
- * code=401（同一时刻 `/Auth/Info` 正常），属于权限缓存刷新窗口问题（已登记 FIX-5）。
+ * `/Cube/*` 为服务端点（菜单 / 地区 / LOV / 配置 / 头像）：并发下后端会瞬时返回
+ * code=401（同一时刻 `/Auth/Info` 正常），属于权限缓存刷新窗口问题。
  * 这些接口失败只影响局部功能，不应把用户踢下线；真正的会话失效会由实体接口 401 兜住。
  */
 const SOFT_401_PREFIXES = ['/Cube/'];
@@ -108,7 +107,7 @@ export const api: CubeApi = createCubeApi({
     // 记录触发登录跳转的请求（HTTP 401 或业务 code=401），便于排查共享会话被何处打断
     console.warn(`[cube] unauthorized: ${url ?? '-'}`);
     // 辅助接口的偶发 401 不打断会话：菜单失败只影响导航，不应把用户踢下线。
-    // 实测并发下 /Auth/Info 正常而 /Cube/MenuTree 返回 code=401（后端瞬时问题，已登记 FIX-5）。
+    // 并发下 /Auth/Info 正常而 /Cube/MenuTree 返回 code=401，属后端权限缓存刷新窗口的瞬时问题。
     if (url && SOFT_401_PREFIXES.some((p) => url.startsWith(p)) && lastValidToken) {
       tokenStorage.setToken(lastValidToken);
       return;
@@ -121,8 +120,5 @@ export const api: CubeApi = createCubeApi({
     }
   },
 });
-
-// 兼容层：补前导斜杠，规避上游 resolveRequestUrl 拼出 /apiAdmin/...（见 pageActions.ts）
-wrapPageActions(api);
 
 export default api;
