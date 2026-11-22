@@ -7,7 +7,14 @@
 import { useEffect, useMemo } from 'react';
 import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayout, serializeSubmitModel } from '@/utils/fieldControl';
+import {
+  groupByCategory,
+  findPresetPatch,
+  applyPresetDefaults,
+  mapDataToFormValues,
+  resolveFormLayout,
+  serializeSubmitModel,
+} from '@/utils/fieldControl';
 import { t } from '@/i18n';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
 import { getValueByKey, setValueByKey } from '@/utils/url';
@@ -76,13 +83,18 @@ export default function FormDialog({
       // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
       const values = mapDataToFormValues(row, fields.map((f) => toFieldMeta(f.field)));
       form.setFieldsValue(values);
+    } else if (mode === 'add') {
+      // 新增表单初值：preset.form.patch[字段].defaultValue
+      const defaults: Record<string, unknown> = {};
+      applyPresetDefaults(defaults, metas, formPreset?.patch);
+      if (Object.keys(defaults).length) form.setFieldsValue(defaults);
     }
-  }, [open, mode, row, form, fields]);
+  }, [open, mode, row, form, fields, metas, formPreset]);
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const model = serializeSubmitModel(values, metas);
+      const model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, formPreset?.patch);
       // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键；
       // 从行数据按主键字段名显式合并到 body，api-core 据此拼出 PUT {type}/{id}
       if (mode === 'edit' && row) {

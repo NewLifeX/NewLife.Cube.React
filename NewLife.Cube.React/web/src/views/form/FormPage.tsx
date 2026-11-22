@@ -11,7 +11,14 @@ import { App, Button, Card, Form, Row, Space, Spin, Tabs } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FormFieldItem from './FormFieldItem';
-import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayout, serializeSubmitModel } from '@/utils/fieldControl';
+import {
+  groupByCategory,
+  findPresetPatch,
+  applyPresetDefaults,
+  mapDataToFormValues,
+  resolveFormLayout,
+  serializeSubmitModel,
+} from '@/utils/fieldControl';
 import { t } from '@/i18n';
 import { routeToApiPrefix, getValueByKey, setValueByKey } from '@/utils/url';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
@@ -96,10 +103,18 @@ export default function FormPage({ title }: FormPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, isEdit, params.get('id')]);
 
+  // 新增模式：字段元数据就绪后应用 preset 默认值作为初值
+  useEffect(() => {
+    if (isEdit || !metas.length) return;
+    const defaults: Record<string, unknown> = {};
+    applyPresetDefaults(defaults, metas, pagePreset?.form?.patch);
+    if (Object.keys(defaults).length) form.setFieldsValue(defaults);
+  }, [isEdit, metas, pagePreset, form]);
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const model = serializeSubmitModel(values, metas);
+      const model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, pagePreset?.form?.patch);
       // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键；
       // 从路由 ?id= 显式合并到 body，api-core 据此拼出 PUT {type}/{id}（后端以路径主键为准）
       if (isEdit) {

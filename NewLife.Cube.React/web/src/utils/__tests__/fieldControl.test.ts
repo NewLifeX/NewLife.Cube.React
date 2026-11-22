@@ -20,6 +20,8 @@ import {
   mapUrlParamsToSearchValues,
   resolveFormLayout,
   findPresetPatch,
+  applyPresetDefaults,
+  type FieldPresetPatchExt,
   resolveUploadAccept,
   isAttachmentItemType,
   mapValueKey,
@@ -561,6 +563,26 @@ describe('findPresetPatch', () => {
   it('未命中或无补丁时返回 undefined', () => {
     expect(findPresetPatch(patch, 'Name')).toBeUndefined();
     expect(findPresetPatch(undefined, 'Remark')).toBeUndefined();
+  });
+});
+
+describe('applyPresetDefaults', () => {
+  const fields = [f({ name: 'Logins', typeName: 'Int32' }), f({ name: 'Remark' })];
+  const patch: Record<string, FieldPresetPatchExt> = { Logins: { defaultValue: 0 }, Remark: { defaultValue: '默认备注' } };
+
+  it('新增表单初值：空模型写入默认值', () => {
+    expect(applyPresetDefaults({}, fields, patch)).toEqual({ Logins: 0, Remark: '默认备注' });
+  });
+
+  it('提交回填：只补留空字段，已有值不覆盖', () => {
+    const out = applyPresetDefaults({ Logins: '', Remark: '手写' }, fields, patch);
+    expect(out.Logins).toBe(0);
+    expect(out.Remark).toBe('手写');
+  });
+
+  it('无默认值或未配置补丁时原样返回', () => {
+    expect(applyPresetDefaults({ Logins: 5 }, fields, undefined)).toEqual({ Logins: 5 });
+    expect(applyPresetDefaults({}, [f({ name: 'Name' })], patch)).toEqual({});
   });
 });
 

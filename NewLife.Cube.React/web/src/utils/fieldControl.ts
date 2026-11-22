@@ -15,7 +15,7 @@
 import type { FieldPresetPatch, PagePreset, WidgetType } from '@newlifex/cube';
 import type { FieldMeta, ControlType, SearchControlType, ListControlType } from '@/types/field';
 import { t } from '@/i18n';
-import { getValueByKey } from '@/utils/url';
+import { getValueByKey, setValueByKey } from '@/utils/url';
 
 /** 数值类型集合 */
 const NUMERIC_TYPES: ReadonlySet<string> = new Set([
@@ -544,6 +544,12 @@ export function resolveFormLayout(fields: FieldMeta[], form?: PagePreset['form']
   return { mode, columns: form?.columns ?? 2 };
 }
 
+/** 字段补丁（共享包类型 + 皮肤扩展字段） */
+export type FieldPresetPatchExt = FieldPresetPatch & {
+  /** 默认值。新增表单初值，留空/空串提交时按此值回填 */
+  defaultValue?: unknown;
+};
+
 /**
  * 按字段名查 preset 补丁（大小写不敏感）
  *
@@ -554,10 +560,34 @@ export function resolveFormLayout(fields: FieldMeta[], form?: PagePreset['form']
 export function findPresetPatch(
   patch: Record<string, FieldPresetPatch> | undefined,
   name: string,
-): FieldPresetPatch | undefined {
+): FieldPresetPatchExt | undefined {
   if (!patch) return undefined;
   const key = Object.keys(patch).find((k) => k.toLowerCase() === name.toLowerCase());
-  return key ? patch[key] : undefined;
+  return key ? (patch[key] as FieldPresetPatchExt) : undefined;
+}
+
+/**
+ * 应用字段默认值：新增表单作为初值，提交时留空（undefined/null/空串）按默认值回填
+ *
+ * 用于把后端“非空数值列”（如 Int32 的 Logins）在表单上呈现为可留空、留空即取默认值。
+ *
+ * @param model 表单模型
+ * @param fields 表单字段元数据
+ * @param patch preset.form.patch
+ * @returns 同一个模型对象（便于链式调用）
+ */
+export function applyPresetDefaults(
+  model: Record<string, unknown>,
+  fields: FieldMeta[],
+  patch?: Record<string, FieldPresetPatch> | null,
+): Record<string, unknown> {
+  for (const field of fields) {
+    const dv = findPresetPatch(patch ?? undefined, field.name)?.defaultValue;
+    if (dv === undefined || dv === null || dv === '') continue;
+    const cur = getValueByKey(model, field.name);
+    if (cur === undefined || cur === null || cur === '') setValueByKey(model, field.name, dv);
+  }
+  return model;
 }
 
 /**
