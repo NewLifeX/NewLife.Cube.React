@@ -18,14 +18,14 @@ export default defineConfig(({ mode }) => {
       outDir: '../wwwroot',
       emptyOutDir: true,
       // 管理台单页应用的主包约 1.1 MB（gzip 约 340 KB），依赖已按域拆分；
-      // 产物整体嵌入 DLL 由本机静态服务提供，不再追求更细的首屏切片
-      chunkSizeWarningLimit: 1200,
+      // 产物整体嵌入 DLL 由本机静态服务提供，不再追求更细的首屏切片。
+      // antd/echarts 单个域包约 1.1~1.4 MB，阈值放宽到 1400 KB 以避免无意义告警
+      chunkSizeWarningLimit: 1400,
       // 按依赖域拆包，避免单个 JS 文件超过 500 KB 触发构建警告
       rolldownOptions: {
         output: {
           codeSplitting: {
-            // 单个分包上限 400 KB，超出后由打包器继续拆分
-            maxSize: 400000,
+            // 不设置 maxSize：强制拆分 React/antd 会打乱模块初始化顺序（antd 读取未初始化的 React）
             groups: [
               { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/, priority: 10 },
               { name: 'antd', test: /node_modules[\\/](antd|@ant-design|@rc-component|rc-[a-z-]+)[\\/]/, priority: 10 },

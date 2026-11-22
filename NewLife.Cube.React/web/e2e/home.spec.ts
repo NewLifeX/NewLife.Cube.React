@@ -70,14 +70,12 @@ test.describe('首页（/）', () => {
 
   test('快捷入口可点击进入实体页', async ({ page }) => {
     await page.goto('/');
-    const links = page.locator('.cube-home-quick-link');
-    await expect(links.first()).toBeVisible({ timeout: 10000 });
-    const n = await links.count();
-    if (n > 0) {
-      await links.first().click();
-      // 进入实体页后应渲染列表（非 404）
-      await expect(page.locator('.ant-card, h2').first()).toBeVisible({ timeout: 10000 });
-    }
+    // 选稳定的「用户」入口：快捷入口数据来自后端菜单，演示库可能保留已下线页面（如应用插件）的菜单行
+    const link = page.locator('.cube-home-quick-link').filter({ hasText: /^用户$/ }).first();
+    await expect(link).toBeVisible({ timeout: 10000 });
+    await link.click();
+    // 进入实体页后应渲染列表（非 404）
+    await expect(page.locator('.ant-card, h2').first()).toBeVisible({ timeout: 10000 });
   });
 });
 

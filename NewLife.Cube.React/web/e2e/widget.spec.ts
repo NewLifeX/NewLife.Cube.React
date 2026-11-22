@@ -43,9 +43,13 @@ test.describe('工作台卡片（卡片三能力）', () => {
       .click();
   }
 
-  /** 等待工作台加载完成（内容部件出现） */
+  /** 等待工作台加载完成（内容部件出现且真实 KPI 替换降级 KPI） */
   async function waitHome(page: import('@playwright/test').Page) {
     await expect(page.locator('.cube-home-grid .cube-home-widget').first()).toBeVisible({ timeout: 10000 });
+    // 降级 KPI 只有「在线状态/我的角色」，隐藏后无法在恢复面板找回；必须等 Dashboard 真实 KPI 到达
+    await expect
+      .poll(async () => page.locator('.cube-home-kpi-card .cube-home-kpi-label').allInnerTexts(), { timeout: 15000 })
+      .not.toContain('在线状态');
   }
 
   test('隐藏内容卡片后消失，恢复后重现', async ({ page }) => {
