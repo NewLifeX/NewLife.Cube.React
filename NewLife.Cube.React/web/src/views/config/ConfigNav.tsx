@@ -5,8 +5,8 @@
  * 短信/邮件/OAuth/访问规则）在左侧菜单中全部隐藏，避免左侧菜单过多。
  * 进入任一配置页后，通过本组件在页面顶部一字排开切换各配置页。
  *
- * - 隐藏配置页不在菜单树中（后端 MenuTree 过滤 Visible=false），
- *   由 findConfigCenter 按静态清单匹配，供路由/标题/面包屑复用。
+ * - 隐藏配置页在菜单树中标记 Visible=false，侧栏不渲染但参与菜单搜索；
+ *   ConfigNav 仍由 findConfigCenter 按静态清单匹配，供路由/标题/面包屑复用。
  */
 import { useMemo } from 'react';
 import { Button } from 'antd';

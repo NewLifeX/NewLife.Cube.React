@@ -295,6 +295,19 @@ select {
   width: min(320px, 100vw - 32px);
 }
 
+/* 菜单搜索结果：标题 + 层级路径两行，路径弱化 */
+.cube-navbar-search-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.cube-navbar-search-path {
+  color: var(--cube-text-desc);
+  font-size: 12px;
+}
+
 /* 聚焦清除图标（FocusClearInput）：与 antd 内置清除图标一致，悬停加深 */
 .cube-input-clear {
   font-size: 12px;

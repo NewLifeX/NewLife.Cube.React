@@ -46,7 +46,7 @@ export const defaultConfig: CubeConfig = {
   },
   menu: {
     idField: 'id',
-    parentField: 'parentID',
+    parentField: 'parentId',
     nameField: 'name',
     pathField: 'url',
     titleField: 'displayName',

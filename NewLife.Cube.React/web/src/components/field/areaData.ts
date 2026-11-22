@@ -21,6 +21,8 @@ export interface AreaNode {
   fullName?: string;
   level?: number;
   parentId?: number;
+  /** 魔方内置实体统一 Id 命名后的 camelCase 父级键（旧版为 parentID） */
+  ParentId?: number;
   /** 大区（华北/华东/华中/华南/西南/西北/东北），省级返回 */
   bigArea?: string;
   BigArea?: string;

@@ -16,6 +16,10 @@ export interface FlatMenuItem {
   icon?: string;
   parentId?: string | number | null;
   visible?: boolean;
+  /** 拼音全拼（后端按库中源文显示名计算，供菜单搜索） */
+  pinYin?: string;
+  /** 拼音首字母（后端按库中源文显示名计算，供菜单搜索） */
+  initials?: string;
   children?: FlatMenuItem[];
 }
 
@@ -31,6 +35,8 @@ export function flattenMenu(tree: MenuItem[], parentId: string | number | null =
       icon: item.icon,
       parentId,
       visible: item.visible,
+      pinYin: item.pinYin,
+      initials: item.initials,
     };
     result.push(flat);
     if (item.children?.length) {
