@@ -36,7 +36,7 @@ async function acquire(): Promise<void> {
       } catch {
         // 另一 worker 刚释放，直接重试
       }
-      if (Date.now() - start > TIMEOUT_MS) throw new Error(`等待账号状态锁超时：${LOCK_DIR}`);
+      if (Date.now() - start > TIMEOUT_MS) throw new Error(`等待账号状态锁超时：${LOCK_DIR}`, { cause: e });
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
@@ -55,10 +55,10 @@ async function release(): Promise<void> {
 export const test = base.extend<{ accountStateLock: void }>({
   accountStateLock: [
     // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
+    async ({}, runFixture) => {
       await acquire();
       try {
-        await use();
+        await runFixture();
       } finally {
         await release();
       }

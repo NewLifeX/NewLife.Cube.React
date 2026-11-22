@@ -6,8 +6,6 @@
  * - parse 校验 + render 渲染 SVG，失败回退源码展示
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { t } from '@/i18n';
 
 /** 修复 LLM 生成的 `&amp;` HTML 实体 */

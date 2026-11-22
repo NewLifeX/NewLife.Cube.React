@@ -11,7 +11,7 @@
  * - 日期/日期时间范围 → formData[field] = [start, end]
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, DatePicker, Input, InputNumber, Select, Space, Switch, TimePicker } from 'antd';
+import { Button, DatePicker, InputNumber, Select, Space, TimePicker } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import LovSelect from '@/components/field/LovSelect';
@@ -315,7 +315,7 @@ export default function SearchBar({ fields, onSearch, onReset, initialValues, ex
       return () => ro.disconnect();
     }
     return undefined;
-  }, [fields]);
+  }, [cells]);
 
   const setValue = (key: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [key]: value }));

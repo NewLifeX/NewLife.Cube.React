@@ -44,5 +44,5 @@ export function useAiFillForm(form: FormInstance, enabled = true) {
 
     window.addEventListener('cube:ai-fill-form', onFill);
     return () => window.removeEventListener('cube:ai-fill-form', onFill);
-  }, [form, enabled]);
+  }, [form, enabled, message]);
 }

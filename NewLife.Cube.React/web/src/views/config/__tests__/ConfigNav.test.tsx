@@ -9,8 +9,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ConfigNav, {
-  CONFIG_NAV,
-  MORE_NAV,
   ALL_CONFIG_NAV,
   findConfigCenter,
   isConfigCenterPath,

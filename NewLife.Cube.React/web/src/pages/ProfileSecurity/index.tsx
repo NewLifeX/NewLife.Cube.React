@@ -109,7 +109,7 @@ export default function ProfileSecurityPage() {
     const values = await form.validateFields();
     setSubmitting(true);
     try {
-      const res = await api.user.verifyContact({
+      await api.user.verifyContact({
         channel: panel === 'mail' ? 'Mail' : 'Sms',
         account: values.account,
         code: values.code,

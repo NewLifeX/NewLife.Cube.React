@@ -8,7 +8,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AreaCascader, { buildAreaTree } from '../AreaCascader';
-import { api } from '@/api';
 
 const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
 const { mockAreaStyle } = vi.hoisted(() => ({ mockAreaStyle: { current: 'cascader' } }));

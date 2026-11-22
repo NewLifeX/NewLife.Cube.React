@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
 
   useEffect(() => {
     if (error) message.error(error);
-  }, [error]);
+  }, [error, message]);
 
   const handleSendCode = async () => {
     const values = await form.validateFields(['account']);

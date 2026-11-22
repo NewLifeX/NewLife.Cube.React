@@ -8,7 +8,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { createEditor, createToolbar } from '@wangeditor/editor';
-import type { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor';
+import type { IDomEditor, IEditorConfig } from '@wangeditor/editor';
 import '@wangeditor/editor/dist/css/style.css';
 
 export interface WangEditorProps {
@@ -59,7 +59,6 @@ export default function WangEditor({ value, onChange, placeholder, disabled }: W
     if (editor && value != null && editor.getHtml() !== value) {
       editor.setHtml(value || '<p><br></p>');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   // 禁用态

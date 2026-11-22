@@ -200,7 +200,7 @@ export function resolveUploadAccept(field: FieldMeta): string | undefined {
 function itemTypeBase(field: FieldMeta): string {
   const itemType = normalizeItemType(field);
   if (/^decimal\(/.test(itemType)) return 'decimal';
-  const index = itemType.search(/[:\-]/);
+  const index = itemType.search(/[:-]/);
   return index > 0 ? itemType.slice(0, index) : itemType;
 }
 
@@ -394,7 +394,8 @@ export function resolveListControl(field: FieldMeta): ListControlType {
   // ItemType 优先（含 `-` 后缀：image-png / file-zip 已在基名归一）
   switch (itemType) {
     case 'image':
-    // 头像与图片别名（Vue 皮肤 avatar / attachment）
+    // 头像与图片别名（Vue 皮肤 avatar / attachment）；有意贯穿到 avatar 分支
+    // falls through
     case 'avatar':
       return 'image';
     case 'file':

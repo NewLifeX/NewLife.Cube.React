@@ -15,7 +15,6 @@ import {
   ClockCircleOutlined,
   DragOutlined,
   EyeInvisibleOutlined,
-  EyeOutlined,
   FileTextOutlined,
   LineChartOutlined,
   MoreOutlined,
@@ -31,7 +30,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   appendMonitorPoint,
   createWidgetLayoutLoader,
-  MAX_MONITOR_POINTS,
   MONITOR_POLL_INTERVAL,
   normalizeCols,
   normalizeKpiColor,

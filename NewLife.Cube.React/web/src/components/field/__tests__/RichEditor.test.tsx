@@ -22,7 +22,7 @@ const h = vi.hoisted(() => {
     editor,
     toolbar,
     createEditor: vi.fn(
-      (opt?: {
+      (_opt?: {
         html?: string;
         selector?: unknown;
         config?: { placeholder?: string; onChange?: (editor: { getHtml(): string }) => void };

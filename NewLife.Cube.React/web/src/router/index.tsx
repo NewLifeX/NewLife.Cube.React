@@ -14,7 +14,6 @@ import ForgotPasswordPage from '@/pages/ForgotPassword';
 import ProfileSecurityPage from '@/pages/ProfileSecurity';
 import ProfilePage from '@/pages/Profile';
 import HomePage from '@/pages/Home';
-import NotFoundPage from '@/pages/NotFound';
 import UnauthorizedPage from '@/pages/Unauthorized';
 import LoadingPage from '@/pages/Loading';
 import DefaultEntityPage from '@/pages/DefaultEntity';

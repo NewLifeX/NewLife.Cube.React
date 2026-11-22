@@ -113,7 +113,6 @@ export default function LovSelectTable({
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
   const vf = meta?.valueField ?? 'id';
-  const lf = meta?.labelField ?? 'name';
   const searchFields = meta?.searchFields ?? [];
 
   // 入口展示：当前值 → 标签文本（本地缓存 / 原值兜底）

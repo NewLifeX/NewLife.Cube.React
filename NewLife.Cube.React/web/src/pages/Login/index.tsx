@@ -16,7 +16,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { api } from '@/api';
 import { useUserStore } from '@/stores/user';
-import { useMenuStore } from '@/stores/menu';
 import { getConfig } from '@/configure';
 import { t } from '@/i18n';
 import { useLoginConfig, useCaptcha } from '@/hooks/useLoginConfig';

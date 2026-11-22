@@ -22,9 +22,7 @@ import {
   parseDecimalScale,
 } from '@/utils/numberFormat';
 import { buildTreeRows } from '../utils/treeData';
-import { resolveIcon } from '@/utils/icon';
 import LovCell from '@/components/field/LovCell';
-import type { ListControlType } from '@/types/field';
 import { t } from '@/i18n';
 
 export interface TableContentProps {

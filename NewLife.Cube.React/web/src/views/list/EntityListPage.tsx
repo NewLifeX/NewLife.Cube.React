@@ -276,7 +276,6 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       ...base,
       ...(ext({ type, query: searchParams, selectedKeys, reload: () => void refresh(), row }) ?? []),
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRole, extension, type, searchParams, selectedKeys, refresh]);
 
   const handleRestoreRow = (row: Record<string, unknown>) => {

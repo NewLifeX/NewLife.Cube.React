@@ -21,7 +21,6 @@ export default function SiderMenu() {
     const path = location.pathname;
     const hit = menus.find((m) => path.toLowerCase() === (m.url ?? '').toLowerCase());
     return hit ? [hit.url] : [];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, menus]);
 
   // 路由变化时更新激活菜单

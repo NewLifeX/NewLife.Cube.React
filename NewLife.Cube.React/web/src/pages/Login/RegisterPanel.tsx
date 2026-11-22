@@ -62,7 +62,7 @@ export default function RegisterPanel({ config, onBack }: RegisterPanelProps) {
 
   useEffect(() => {
     if (error) message.error(error);
-  }, [error]);
+  }, [error, message]);
 
   const canPassword = register?.password !== false;
   const canSms = !!register?.sms;
@@ -81,7 +81,7 @@ export default function RegisterPanel({ config, onBack }: RegisterPanelProps) {
   const handleSubmit = async () => {
     const values = await form.validateFields();
     const payload = { ...values, confirmPassword: undefined };
-    let ok = false;
+    let ok: boolean;
     if (category === 'mobile') ok = await useRegisterStore.getState().registerByPhone(payload);
     else if (category === 'mail') ok = await useRegisterStore.getState().registerByEmail(payload);
     else ok = await useRegisterStore.getState().registerByPassword(payload);

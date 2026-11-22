@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { App, Input, Space, Tooltip } from 'antd';
-import { CheckOutlined, FormatPainterOutlined } from '@ant-design/icons';
+import { CheckOutlined } from '@ant-design/icons';
 
 export interface JsonEditorProps {
   value?: string;

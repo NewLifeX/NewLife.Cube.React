@@ -172,7 +172,6 @@ export default function AiAssistant() {
     const rid = id || (m ? Number(m[1]) : 0);
     setRecordId(rid);
     setIsEdit(rid > 0 || /\/+(edit|detail)$/i.test(location.pathname));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search, open]);
 
   // 目标页面标识：/Admin/User → area=Admin, controller=User

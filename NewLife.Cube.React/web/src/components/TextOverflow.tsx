@@ -6,10 +6,9 @@ import { Tooltip, Typography } from 'antd';
 export interface TextOverflowProps {
   text?: string;
   maxWidth?: number | string;
-  lines?: number;
 }
 
-export default function TextOverflow({ text, maxWidth, lines = 1 }: TextOverflowProps) {
+export default function TextOverflow({ text, maxWidth }: TextOverflowProps) {
   if (!text) return <span>-</span>;
   return (
     <Tooltip title={text}>

@@ -9,7 +9,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AreaTabsPicker from '../AreaTabsPicker';
-import { api } from '@/api';
 
 const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
 

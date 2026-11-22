@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest';
 import {
   toPascalCase,
   toCamelCase,
-  toPascalAndCamel,
   routeToApiPrefix,
   getValueByKey,
   setValueByKey,

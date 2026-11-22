@@ -13,9 +13,7 @@ import AreaTabsPicker from './AreaTabsPicker';
 import { placeholders, fetchAreaPath, fetchChildren, buildAreaTree, type AreaOption } from './areaData';
 
 // 兼容既有导入（组件测试等）：数据层工具函数与类型
-// eslint-disable-next-line no-unused-vars
 export { buildAreaTree } from './areaData';
-// eslint-disable-next-line no-unused-vars
 export type { AreaNode, AreaOption } from './areaData';
 
 export interface AreaCascaderProps {

@@ -78,7 +78,7 @@ export default function DbPage({ type }: DbPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [type]);
+  }, [type, message]);
 
   useEffect(() => {
     void load();

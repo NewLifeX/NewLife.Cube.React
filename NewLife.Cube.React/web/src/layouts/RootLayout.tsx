@@ -24,7 +24,6 @@ export default function RootLayout({ children }: { children?: ReactNode }) {
   const useMainLayout = meta.layout !== false;
 
   const userInfo = useUserStore((s) => s.userInfo);
-  const menus = useUserStore((s) => s.menus);
   const setFlatMenus = useMenuStore((s) => s.setFlatMenus);
   const isLoggedIn = useIsLoggedIn();
 

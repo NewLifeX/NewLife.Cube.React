@@ -1,7 +1,7 @@
 /**
  * 列表分页 + 统计行
  */
-import { Pagination, Space } from 'antd';
+import { Pagination } from 'antd';
 import { t } from '@/i18n';
 
 export interface ListPaginationProps {

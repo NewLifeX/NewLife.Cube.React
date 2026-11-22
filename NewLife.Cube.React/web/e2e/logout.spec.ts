@@ -6,7 +6,7 @@
  *
  * 覆盖：登录 → 用户菜单 → 退出登录 → 跳回登录页。
  */
-import { expect, test } from '@playwright/test';
+import { test } from '@playwright/test';
 import { ALT_PASS, ALT_USER } from './utils/env';
 
 test('退出登录跳转登录页', async ({ browser }) => {

@@ -107,7 +107,7 @@ export default function ConfigPage({ type }: ConfigPageProps) {
     } finally {
       setSaving(false);
     }
-  }, [form, fields, type]);
+  }, [form, fields, type, message]);
 
   if (error) {
     return (

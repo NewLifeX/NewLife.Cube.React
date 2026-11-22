@@ -4,7 +4,7 @@
  * 依据 FieldMapping 渲染 FieldControl，提交时 serializeSubmitModel 序列化。
  * 编辑模式自动回填行数据（mapDataToFormValues 按字段名大小写不敏感匹配，布尔串转布尔、多选转数组）。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { App, Form, Modal, Row, Tabs } from 'antd';
 import FormFieldItem from './FormFieldItem';
 import { groupByCategory, findPresetPatch, mapDataToFormValues, resolveFormLayout, serializeSubmitModel } from '@/utils/fieldControl';
@@ -45,7 +45,6 @@ export default function FormDialog({
   const [form] = Form.useForm();
   // AI 填表：弹窗打开时监听 AiAssistant 派发的 cube:ai-fill-form 事件
   useAiFillForm(form, open);
-  const [detail, setDetail] = useState<Record<string, unknown>>({});
 
   // 表单字段元数据（过滤主键与只读字段；编辑时主键已通过 setFieldsValue(row) 保留在表单中）
   const metas = useMemo(
@@ -73,12 +72,10 @@ export default function FormDialog({
   useEffect(() => {
     if (!open) return;
     form.resetFields();
-    setDetail({});
     if (mode === 'edit' && row) {
       // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
       const values = mapDataToFormValues(row, fields.map((f) => toFieldMeta(f.field)));
       form.setFieldsValue(values);
-      setDetail(values);
     }
   }, [open, mode, row, form, fields]);
 
