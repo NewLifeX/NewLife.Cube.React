@@ -206,6 +206,18 @@ test.describe('通用列表页（/Admin/User）', () => {
     await expect(rows).toHaveCount(before - 1, { timeout: 10000 });
   });
 
+  test('工具栏刷新重新拉取列表', async ({ page }) => {
+    await page.goto('/Admin/User');
+    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+
+    const request = page.waitForRequest(
+      (r) => r.url().includes('/api/Admin/User?') && r.method() === 'GET',
+      { timeout: 15000 },
+    );
+    await page.getByRole('button', { name: '刷新' }).click();
+    expect((await request).url()).toContain('/api/Admin/User?');
+  });
+
   test('空状态（不存在的实体 → 404）', async ({ page }) => {
     await page.goto('/NoSuchEntity/XYZ');
     await expect(page.getByText('404').first()).toBeVisible({ timeout: 8000 });

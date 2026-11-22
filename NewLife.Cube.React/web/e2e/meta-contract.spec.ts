@@ -101,4 +101,71 @@ test.describe('meta 自描述契约（TST-10）', () => {
     // custom 按钮未注册渲染器 → 不渲染（降级忽略，不报错）
     await expect(page.getByText('未注册按钮')).toHaveCount(0);
   });
+
+  test('工具栏 request 按钮：响应 data.refresh 触发列表刷新', async ({ page }) => {
+    await page.route('**/api/Admin/User/meta*', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.data = body.data ?? {};
+      body.data.toolbar = [
+        {
+          name: 'refreshAfter',
+          kind: 'request',
+          displayName: '执行并刷新',
+          action: 'DoRefresh',
+          method: 'POST',
+        },
+      ];
+      await route.fulfill({ response, json: body });
+    });
+    await page.route('**/api/Admin/User/DoRefresh*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 0, message: '已执行', data: { refresh: true } }),
+      }),
+    );
+
+    await page.goto('/Admin/User');
+    await page.waitForSelector(ROW, { timeout: 20000 });
+
+    const refreshed = page.waitForRequest(
+      (r) => r.url().includes('/api/Admin/User?') && r.method() === 'GET',
+      { timeout: 15000 },
+    );
+    await page.getByRole('button', { name: '执行并刷新' }).click();
+    await expect(page.locator('.ant-message').getByText('已执行')).toBeVisible({ timeout: 8000 });
+    expect((await refreshed).url()).toContain('/api/Admin/User?');
+  });
+
+  test('页面能力开关：enableToolbar=false 隐藏工具栏', async ({ page }) => {
+    await page.route('**/api/Admin/User/meta*', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.data = body.data ?? {};
+      body.data.setting = { ...(body.data.setting ?? {}), enableToolbar: false };
+      await route.fulfill({ response, json: body });
+    });
+
+    await page.goto('/Admin/User');
+    await page.waitForSelector(ROW, { timeout: 20000 });
+    await expect(page.locator('.cube-toolbar')).toHaveCount(0);
+  });
+
+  test('页面能力开关：orderByKey=true 时首查按主键排序', async ({ page }) => {
+    await page.route('**/api/Admin/User/meta*', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.data = body.data ?? {};
+      body.data.setting = { ...(body.data.setting ?? {}), orderByKey: true };
+      await route.fulfill({ response, json: body });
+    });
+
+    const firstList = page.waitForRequest(
+      (r) => r.url().includes('/api/Admin/User?') && r.method() === 'GET' && /[?&]sort=/i.test(r.url()),
+      { timeout: 20000 },
+    );
+    await page.goto('/Admin/User');
+    expect((await firstList).url()).toMatch(/[?&]sort=(Id|id)(&|$)/i);
+  });
 });
