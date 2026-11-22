@@ -81,7 +81,7 @@ public class TestFieldController : EntityController<测试字段, 测试字段Mo
         SearchFields = new[] { "name:角色名:input:BODY:false" }
     )]
     [HttpGet]
-    public Object RoleList(Int32 pageIndex = 1, Int32 pageSize = 10, String name = null)
+    public Object RoleList(Int32 pageIndex = 1, Int32 pageSize = 10, String? name = null)
     {
         // 真实角色（来自 Membership）
         var real = Role.FindAll().Select(r => new Dictionary<String, Object>
@@ -105,7 +105,7 @@ public class TestFieldController : EntityController<测试字段, 测试字段Mo
         if (!name.IsNullOrEmpty())
         {
             var kw = name.Trim();
-            list = list.Where(d => d["name"].ToString().Contains(kw, StringComparison.OrdinalIgnoreCase)).ToList();
+            list = list.Where(d => (d["name"]?.ToString() ?? "").Contains(kw, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         var total = list.Count;

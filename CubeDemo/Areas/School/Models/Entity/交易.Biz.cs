@@ -26,7 +26,7 @@ using XCode.Shards;
 
 namespace NewLife.School.Entity;
 
-public partial class Trade : Entity<Trade>, ITenantSource
+public partial class Trade : Entity<Trade>, ITenantScope
 {
     #region 对象操作
     static Trade()

@@ -16,12 +16,12 @@ namespace CubeDemo.Areas.School.Controllers;
 [Menu(0, true, Mode = MenuModes.Admin | MenuModes.Tenant)]
 public class ClassController : EntityController<Class, ClassModel>
 {
-    private readonly ITracer _tracer;
+    private readonly ITracer? _tracer;
 
     static ClassController()
     {
         {
-            var df = ListFields.AddListField("test", null, "ID");
+            var df = ListFields.AddListField("test", afterName: "ID");
             df.DisplayName = "AJAX操作请求";
             df.Url = "/School/Class/Hello";
             df.DataAction = "action";
@@ -29,14 +29,14 @@ public class ClassController : EntityController<Class, ClassModel>
         }
 
         {
-            var df = ListFields.AddListField("test1", null, "ID");
+            var df = ListFields.AddListField("test1", afterName: "ID");
             df.DisplayName = "当前页打开";
             df.Url = "/School/Class";
             df.Target = "_self";
         }
 
         {
-            var df = ListFields.AddListField("test1", null, "ID");
+            var df = ListFields.AddListField("test1", afterName: "ID");
             df.DisplayName = "浏览器多标签页打开";
             df.Url = "/School/Student";
             df.Target = "_blank";
@@ -53,7 +53,7 @@ public class ClassController : EntityController<Class, ClassModel>
 
     public IActionResult Hello()
     {
-        return Json(0, null, new
+        return Json(0, "", new
         {
             code = "200",
             data = "ok"

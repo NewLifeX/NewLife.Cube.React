@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome:http://EditorConfig.org
+# EditorConfig is awesome:http://EditorConfig.org
 # https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 
 # top-most EditorConfig file
@@ -110,3 +110,13 @@ csharp_new_line_between_query_expression_clauses = true
 
 [*.md]
 trim_trailing_whitespace = false
+# XCode 生成的实体类与模型类不含可空注解，可空警告统一在生成目录关闭
+[CubeDemo/Areas/**/*.cs]
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8604.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CS8765.severity = none
+dotnet_diagnostic.CS8767.severity = none

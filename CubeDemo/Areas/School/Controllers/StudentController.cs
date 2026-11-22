@@ -20,7 +20,7 @@ public class StudentController : EntityController<Student, StudentModel>
         //FormFields
 
         {
-            var df = ListFields.AddListField("test", null, "Enable");
+            var df = ListFields.AddListField("test", afterName: "Enable");
             df.DisplayName = "新生命团队";
             df.Url = "https://newlifex.com?studentId={Id}&name={Name}&st={page:st}&{page:$BaseUrl(name,st , id)}";
             df.Target = "_blank";
@@ -38,12 +38,12 @@ public class StudentController : EntityController<Student, StudentModel>
         //return Student.Search(null,p);
 
         var tips = p["tips"];
-        XTrace.WriteLine("tips: {0}", tips);
+        XTrace.WriteLine("tips: {0}", tips ?? "");
 
         if (Request.Method == "POST")
         {
             var tips2 = Request.Form["tips"];
-            XTrace.WriteLine("tips2: {0}", tips2);
+            XTrace.WriteLine("tips2: {0}", tips2.ToString());
         }
 
         //PageSetting.EnableToolbar = false;

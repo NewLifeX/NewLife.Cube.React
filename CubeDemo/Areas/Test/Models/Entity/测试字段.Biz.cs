@@ -17,10 +17,10 @@ public partial class 测试字段 : Entity<测试字段>
     #region 对象操作
     static 测试字段()
     {
-        // 过滤器 UserModule、TimeModule、IPModule
-        Meta.Modules.Add<UserModule>();
-        Meta.Modules.Add<TimeModule>();
-        Meta.Modules.Add<IPModule>();
+        // 拦截器 UserInterceptor、TimeInterceptor、IPInterceptor
+        Meta.Interceptors.Add<UserInterceptor>();
+        Meta.Interceptors.Add<TimeInterceptor>();
+        Meta.Interceptors.Add<IPInterceptor>();
     }
 
     /// <summary>验证并修补数据，通过抛出异常的方式提示验证失败。</summary>
@@ -56,7 +56,7 @@ public partial class 测试字段 : Entity<测试字段>
     /// <param name="key">关键字</param>
     /// <param name="page">分页参数信息。可携带统计和数据权限扩展查询等信息</param>
     /// <returns>实体列表</returns>
-    public static IList<测试字段> Search(String key, PageParameter page)
+    public static new IList<测试字段> Search(String key, PageParameter page)
     {
         var exp = new WhereExpression();
 
