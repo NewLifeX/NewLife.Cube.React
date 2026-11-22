@@ -17,6 +17,27 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode === 'development',
       outDir: '../wwwroot',
       emptyOutDir: true,
+      // 管理台单页应用的主包约 1.1 MB（gzip 约 340 KB），依赖已按域拆分；
+      // 产物整体嵌入 DLL 由本机静态服务提供，不再追求更细的首屏切片
+      chunkSizeWarningLimit: 1200,
+      // 按依赖域拆包，避免单个 JS 文件超过 500 KB 触发构建警告
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            // 单个分包上限 400 KB，超出后由打包器继续拆分
+            maxSize: 400000,
+            groups: [
+              { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/, priority: 10 },
+              { name: 'antd', test: /node_modules[\\/](antd|@ant-design|@rc-component|rc-[a-z-]+)[\\/]/, priority: 10 },
+              { name: 'echarts', test: /node_modules[\\/](echarts|zrender)[\\/]/, priority: 10 },
+              { name: 'editor', test: /node_modules[\\/](@wangeditor|slate|dompurify|marked)[\\/]/, priority: 10 },
+              { name: 'i18n', test: /node_modules[\\/](i18next|react-i18next|dayjs|lodash)[\\/]/, priority: 10 },
+              { name: 'cube', test: /node_modules[\\/]@newlifex[\\/]/, priority: 10 },
+              { name: 'vendor', test: /node_modules[\\/]/, priority: 0 },
+            ],
+          },
+        },
+      },
     },
     server: {
       port: 5188,
