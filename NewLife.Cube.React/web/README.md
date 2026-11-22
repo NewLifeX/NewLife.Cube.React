@@ -10,14 +10,16 @@
 
 | 层 | 选型 |
 |----|------|
-| 构建 | Vite 6（产物输出 `../wwwroot`，由 .NET 项目嵌入程序集） |
+| 构建 | Vite 8（产物输出 `../wwwroot`，由 .NET 项目嵌入程序集） |
+| 语言 | TypeScript 6（typescript-eslint 8.73 尚不支持 TS 7，待其支持后再升级） |
 | UI | Ant Design 6 + @ant-design/icons（单一主题 × 明暗） |
 | 状态 | Zustand 5（登录态 / 菜单 / 多标签 / 主题） |
-| 路由 | react-router v6（静态路由 + catch-all `*` → 动态实体页） |
+| 路由 | react-router v7（静态路由 + catch-all `*` → 动态实体页） |
 | 数据 | axios（`@newlifex/cube` createCubeApi / createPageStore） |
-| 图表 | ECharts 5（懒加载） |
+| 图表 | ECharts 6（懒加载） |
 | AI | `marked` + `dompurify` + mermaid（CDN 懒加载） |
-| 测试 | Vitest 3 + RTL（单测）；Playwright 1.54（E2E） |
+| 测试 | Vitest 5 + RTL（单测）；Playwright 1.65（E2E） |
+| 质量 | ESLint 10 扁平配置（TypeScript + 经典 React Hooks 规则） |
 
 ---
 
@@ -71,10 +73,15 @@ pnpm build
 ## 测试
 
 ```bash
+# 类型检查 + Lint
+pnpm type-check
+pnpm lint
+
 # 单元测试（Vitest）
 pnpm test:unit
 
 # E2E 测试（Playwright；默认 5050，可用 $env:E2E_BASE_URL="http://localhost:7081" 覆盖指向一体站点）
+pnpm exec playwright install chromium   # 首次运行需下载浏览器
 pnpm test:e2e
 ```
 
