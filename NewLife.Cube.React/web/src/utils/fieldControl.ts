@@ -690,6 +690,70 @@ export function serializeSubmitModel(
   return out;
 }
 
+/** 值是否为空（空串/空数组/null 视为同一空值，避免回填 null 与表单空串被误判为修改） */
+function isEmptyFieldValue(v: unknown): boolean {
+  return v == null || v === '' || (Array.isArray(v) && v.length === 0);
+}
+
+/** 比较两个字段值是否等价（数组逐项、对象按 JSON、其余按字符串，兼容数字/布尔与表单字符串） */
+function isSameFieldValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (isEmptyFieldValue(a) && isEmptyFieldValue(b)) return true;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((x, i) => String(x) === String(b[i]));
+  }
+  if (a != null && b != null && typeof a === 'object' && typeof b === 'object') {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  return String(a) === String(b);
+}
+
+/**
+ * 编辑提交只保留变更字段（后端 PUT 为部分更新）
+ *
+ * 旧版提交整表字段，遇到实体同时存在 RoleId/RoleID 大小写别名时，
+ * Cube 1122 CopySubmitted 的 IgnoreCase 反射取值会抛 AmbiguousMatchException
+ * （用户编辑保存返回 500）。按后端部分更新契约只提交变更字段即可绕开，同时减少无效覆盖。
+ *
+ * 必填字段始终保留：ASP.NET [ApiController] 会把非空引用类型属性隐式推断为必填，
+ * meta 未必带 required 标记（如 User.Name），漏传会 400。
+ *
+ * @param model 当前提交模型（已 serializeSubmitModel / applyPresetDefaults）
+ * @param initial 编辑回填的初始模型（与 model 同口径）
+ * @param fields 表单字段元数据
+ * @returns 仅含变更字段与必填字段的提交对象
+ */
+export function pickChangedModel(
+  model: Record<string, unknown>,
+  initial: Record<string, unknown>,
+  fields: FieldMeta[],
+): Record<string, unknown> {
+  // 必填字段：显式 required，或非空引用类型（String 且未标记 nullable）——
+  // 对应 ASP.NET [ApiController] 的隐式必填推断，避免部分更新漏传导致 400
+  const keepNames = new Set(
+    fields
+      .filter(
+        (f) =>
+          f.required ||
+          (!f.primaryKey && !f.readOnly && f.typeName === 'String' && f.nullable !== true),
+      )
+      .map((f) => f.name.toLowerCase()),
+  );
+  const initialMap = new Map(Object.entries(initial).map(([k, v]) => [k.toLowerCase(), v]));
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(model)) {
+    const lk = k.toLowerCase();
+    if (keepNames.has(lk)) {
+      out[k] = v;
+    } else if (!initialMap.has(lk)) {
+      if (!isEmptyFieldValue(v)) out[k] = v;
+    } else if (!isSameFieldValue(v, initialMap.get(lk))) {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 /**
  * 多选值归一为 string[]（对齐 Vue 皮肤 toMultiArray）
  *

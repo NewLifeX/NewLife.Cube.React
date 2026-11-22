@@ -6,7 +6,7 @@
  * - 无 id → 新增模式
  * 提交 POST/PUT 后返回上一页。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { App, Button, Card, Form, Row, Space, Spin, Tabs } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,6 +16,7 @@ import {
   findPresetPatch,
   applyPresetDefaults,
   mapDataToFormValues,
+  pickChangedModel,
   resolveFormLayout,
   serializeSubmitModel,
 } from '@/utils/fieldControl';
@@ -51,6 +52,8 @@ export default function FormPage({ title }: FormPageProps) {
 
   const [detailLoading, setDetailLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // 编辑回填的原始详情，提交时用于计算变更字段（后端 PUT 为部分更新）
+  const detailRef = useRef<Record<string, unknown> | null>(null);
 
   const fields = isEdit && editFields.length ? editFields : addFields;
   // 过滤主键与只读字段（编辑时主键已随详情 setFieldsValue 保留）
@@ -86,6 +89,7 @@ export default function FormPage({ title }: FormPageProps) {
           try {
             const detail = await store.getState().getDetail<Record<string, unknown>>(id);
             if (!cancelled) {
+              detailRef.current = detail;
               // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
               form.setFieldsValue(mapDataToFormValues(detail, fields.map((f) => toFieldMeta(f.field))));
             }
@@ -114,7 +118,16 @@ export default function FormPage({ title }: FormPageProps) {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, pagePreset?.form?.patch);
+      let model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, pagePreset?.form?.patch);
+      // 编辑模式：只提交变更字段，避免整表覆盖与后端对大小写别名字段的反射歧义
+      if (isEdit && detailRef.current) {
+        const initialModel = applyPresetDefaults(
+          serializeSubmitModel(mapDataToFormValues(detailRef.current, metas), metas),
+          metas,
+          pagePreset?.form?.patch,
+        );
+        model = pickChangedModel(model, initialModel, metas);
+      }
       // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键；
       // 从路由 ?id= 显式合并到 body，api-core 据此拼出 PUT {type}/{id}（后端以路径主键为准）
       if (isEdit) {

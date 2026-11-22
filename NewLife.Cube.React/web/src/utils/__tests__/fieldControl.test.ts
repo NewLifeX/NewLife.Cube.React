@@ -14,6 +14,7 @@ import {
   resolveListControl,
   widgetToControl,
   serializeSubmitModel,
+  pickChangedModel,
   resolveNumberPrecision,
   isFullWidthControl,
   resolveAreaMaxLevel,
@@ -317,6 +318,67 @@ describe('serializeSubmitModel 提交序列化', () => {
     const fields = [{ name: 'RoleIds', multiple: true, typeName: 'String' }] as FieldMeta[];
     const out = serializeSubmitModel({ roleIds: ['1', '2'] }, fields);
     expect(out).toEqual({ roleIds: '1,2' });
+  });
+});
+
+describe('pickChangedModel 编辑只提交变更字段', () => {
+  const fields = [
+    { name: 'Name', typeName: 'String' },
+    { name: 'DisplayName', typeName: 'String', nullable: true },
+    { name: 'RoleId', typeName: 'Int32' },
+    { name: 'DepartmentId', typeName: 'Int32' },
+    { name: 'Enable', typeName: 'Boolean' },
+    { name: 'Remark', typeName: 'String', nullable: true },
+  ] as FieldMeta[];
+
+  it('未变更字段省略，变更字段保留', () => {
+    const initial = {
+      Name: 'stone',
+      DisplayName: '石头',
+      RoleId: 3,
+      DepartmentId: 8,
+      Enable: true,
+      Remark: null,
+    };
+    const model = { ...initial, DisplayName: '新昵称' };
+    expect(pickChangedModel(model, initial, fields)).toEqual({
+      Name: 'stone',
+      DisplayName: '新昵称',
+    });
+  });
+
+  it('非空引用类型 Name 始终保留（ApiController 隐式必填，meta 未必标 required）', () => {
+    const initial = { Name: 'stone', DisplayName: '石头' };
+    expect(pickChangedModel({ ...initial }, initial, fields)).toEqual({ Name: 'stone' });
+  });
+
+  it('空串与 null 视为未变更，显式清空仍提交', () => {
+    const initial = { Name: 'stone', Remark: null };
+    expect(pickChangedModel({ Name: 'stone', Remark: '' }, initial, fields)).toEqual({
+      Name: 'stone',
+    });
+    expect(pickChangedModel({ Name: 'stone', Remark: '' }, { ...initial, Remark: '旧备注' }, fields)).toEqual({
+      Name: 'stone',
+      Remark: '',
+    });
+  });
+
+  it('数字/字符串与数组按等价比较', () => {
+    const initial = { Name: 'stone', RoleId: 3, Enable: true };
+    expect(pickChangedModel({ Name: 'stone', RoleId: '3', Enable: 'true' }, initial, fields)).toEqual({
+      Name: 'stone',
+    });
+  });
+
+  it('初始缺失字段：空值省略，有值保留', () => {
+    const initial = { Name: 'stone' };
+    expect(pickChangedModel({ Name: 'stone', Remark: '' }, initial, fields)).toEqual({
+      Name: 'stone',
+    });
+    expect(pickChangedModel({ Name: 'stone', Remark: '补充' }, initial, fields)).toEqual({
+      Name: 'stone',
+      Remark: '补充',
+    });
   });
 });
 

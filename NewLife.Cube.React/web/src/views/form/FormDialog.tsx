@@ -12,6 +12,7 @@ import {
   findPresetPatch,
   applyPresetDefaults,
   mapDataToFormValues,
+  pickChangedModel,
   resolveFormLayout,
   serializeSubmitModel,
 } from '@/utils/fieldControl';
@@ -94,7 +95,18 @@ export default function FormDialog({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, formPreset?.patch);
+      let model = applyPresetDefaults(serializeSubmitModel(values, metas), metas, formPreset?.patch);
+      // 编辑模式：只提交变更字段，避免整表覆盖与后端对大小写别名字段的反射歧义
+      if (mode === 'edit' && row) {
+        // 初始模型与提交模型同口径：回填映射 → 序列化 → preset 默认值
+        const initialValues = mapDataToFormValues(row, metas);
+        const initialModel = applyPresetDefaults(
+          serializeSubmitModel(initialValues, metas),
+          metas,
+          formPreset?.patch,
+        );
+        model = pickChangedModel(model, initialModel, metas);
+      }
       // 编辑模式：主键字段未渲染为 Form.Item（metas 已过滤主键），validateFields 不一定返回主键；
       // 从行数据按主键字段名显式合并到 body，api-core 据此拼出 PUT {type}/{id}
       if (mode === 'edit' && row) {
