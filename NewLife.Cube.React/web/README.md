@@ -85,6 +85,9 @@ pnpm exec playwright install chromium   # 首次运行需下载浏览器
 pnpm test:e2e
 ```
 
+> **国内网络安装浏览器**：`playwright install` 会 307 跳转到 `storage.googleapis.com`，该域名不可达时会一直无输出。可从 npmmirror 下载对应版本（`package.json` 中 `@playwright/test` 版本对应的 Chrome for Testing，例如 1.65.1 → `159.0.8154.6`）：
+> `https://cdn.npmmirror.com/binaries/chrome-for-testing/<版本>/win64/chrome-headless-shell-win64.zip` 与 `chrome-win64.zip`，分别解压到 `%LOCALAPPDATA%\ms-playwright\chromium_headless_shell-1255\chrome-headless-shell-win64\` 和 `%LOCALAPPDATA%\ms-playwright\chromium-1255\chrome-win64\`，并在两个版本目录下各建一个空文件 `INSTALLATION_COMPLETE`。
+
 **E2E 运行前提**：先启动被测站点（`Bin/CubeDemo/ReactCubeDemo.exe --urls http://localhost:5050`），并提供一个**管理员账号**——通过 `$env:ADMIN_USER` / `$env:ADMIN_PASS` 传入，缺省为 `admin/admin`。演示库若是他人环境，请勿沿用内置账号，另建专用账号；账号名不要以 `e2e-` 开头（`list.spec` 的批量删除用例会按该前缀搜索并清理数据）。
 
 **副账号（强烈建议）**：魔方是单会话策略——同一账号再次登录会吊销旧令牌。凡会**重新登录**的用例（保存密码、SSO 回调、退出登录、权限 API 集成）使用副账号，避免共享登录态失效；配置 `$env:E2E_ALT_USER` / `$env:E2E_ALT_PASS`（缺省回退主账号）。
