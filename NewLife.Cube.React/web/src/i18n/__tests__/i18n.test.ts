@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import antdEnUS from 'antd/locale/en_US';
 import i18n, {
   applySiteLanguage,
@@ -83,10 +83,33 @@ describe('i18n', () => {
 
   it('浏览器语言不受支持时回退站点默认语言', () => {
     // jsdom 默认 navigator.language 为 en-US（受支持），先确保非显式态
+    localStorage.clear();
     expect(hasExplicitLanguage()).toBe(false);
     applySiteLanguage({ default: 'de-DE' });
     // 浏览器语言受支持时仍优先浏览器（Accept-Language 优先于租户/站点默认）
     expect(resolveLanguage()).toBe(normalizeLanguage(navigator.language));
+  });
+
+  it('站点 current 参与启动链并受租户白名单约束', async () => {
+    localStorage.clear();
+    applySiteLanguage({ current: 'ja-JP', default: 'en-US', options: [{ name: 'ja-JP' }, { name: 'en-US' }] });
+
+    await vi.waitFor(() => expect(getCurrentLanguage()).toBe('ja-JP'));
+  });
+
+  it('站点白名单排除本地选择时回退 current 并纠正存储', async () => {
+    localStorage.setItem('cube-language', 'de-DE');
+    applySiteLanguage({ current: 'en-US', options: [{ name: 'zh-CN' }, { name: 'en-US' }] });
+
+    await vi.waitFor(() => expect(getCurrentLanguage()).toBe('en-US'));
+    expect(localStorage.getItem('cube-language')).toBe('en-US');
+  });
+
+  it('站点锁定语言时忽略本地显式选择', async () => {
+    localStorage.setItem('cube-language', 'de-DE');
+    applySiteLanguage({ current: 'zh-CN', locked: true, options: [{ name: 'zh-CN' }, { name: 'de-DE' }] });
+
+    await vi.waitFor(() => expect(getCurrentLanguage()).toBe('zh-CN'));
   });
 
   it('站点语言锁定标记可读', () => {

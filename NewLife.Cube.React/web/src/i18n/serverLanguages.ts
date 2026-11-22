@@ -6,7 +6,13 @@
  * 不再硬编码语言列表。接口不可用时回退前端内置清单。
  */
 import { getConfig } from '@/configure';
-import { fullyTranslatedLanguages, getCurrentLanguage, supportedLanguages } from './index';
+import {
+  fullyTranslatedLanguages,
+  getCurrentLanguage,
+  supportedLanguages,
+  tryNormalizeLanguage,
+  type CubeLocale,
+} from './index';
 
 /** 语言选项 */
 export interface ServerLanguageOption {
@@ -34,22 +40,33 @@ export interface ServerLanguageInfo {
 export const LANGUAGE_ENDPOINT = '/api/Admin/React/Languages';
 
 /**
- * 可选语言 = 后端支持语言 ∩ 前端全量翻译语言
+ * 可选语言 = 后端支持语言 ∩ 前端全量翻译语言 ∩ 站点/租户白名单
  *
  * - 后端清单存在时：按后端顺序与显示名取交集（后端运行时新增、前端未翻译的语言不出现）
  * - 后端清单不可用时：回退前端全量翻译语言
+ * - 站点白名单只做收窄；与前端词表无交集时忽略白名单，避免下拉没有任何可选项
  * @param serverLanguages 后端返回的语言清单
+ * @param siteOptions 站点/租户允许的语言（/Cube/Site 的 language.options）
  * @returns 可提供给用户选择的语言
  */
 export function resolveSelectableLanguages(
   serverLanguages?: ServerLanguageOption[] | null,
+  siteOptions?: ReadonlyArray<{ name?: string | null }> | null,
 ): ServerLanguageOption[] {
   const supported = new Set<string>(fullyTranslatedLanguages);
+  const siteAllowed = new Set<string>(
+    (siteOptions ?? [])
+      .map((item) => tryNormalizeLanguage(item?.name ?? ''))
+      .filter((item): item is CubeLocale => !!item),
+  );
+  const restrictBySite =
+    siteAllowed.size > 0 && fullyTranslatedLanguages.some((item) => siteAllowed.has(item));
+  const isAllowed = (value: string) => supported.has(value) && (!restrictBySite || siteAllowed.has(value));
 
-  if (serverLanguages?.length) return serverLanguages.filter((item) => supported.has(item.value));
+  if (serverLanguages?.length) return serverLanguages.filter((item) => isAllowed(item.value));
 
   return supportedLanguages
-    .filter((item) => supported.has(item.value))
+    .filter((item) => isAllowed(item.value))
     .map((item) => ({ value: item.value, label: item.label, nativeName: item.label }));
 }
 

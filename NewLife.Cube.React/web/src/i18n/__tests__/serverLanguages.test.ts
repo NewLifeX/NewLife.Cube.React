@@ -47,4 +47,19 @@ describe('resolveSelectableLanguages', () => {
   it('后端清单为空时同样回退', () => {
     expect(resolveSelectableLanguages([])).toHaveLength(11);
   });
+
+  it('站点白名单收窄可选语言', () => {
+    const server = [option('zh-CN'), option('de-DE'), option('en-US')];
+
+    expect(resolveSelectableLanguages(server, [{ name: 'zh-CN' }, { name: 'en-US' }])).toEqual([
+      option('zh-CN'),
+      option('en-US'),
+    ]);
+  });
+
+  it('站点白名单与前端词表无交集时忽略白名单', () => {
+    const server = [option('zh-CN'), option('de-DE')];
+
+    expect(resolveSelectableLanguages(server, [{ name: 'it-IT' }])).toHaveLength(2);
+  });
 });

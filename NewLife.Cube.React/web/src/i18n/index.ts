@@ -104,6 +104,10 @@ export const LANGUAGE_STORAGE_KEY = 'cube-language';
 
 /** 站点/租户下发的默认语言（/Cube/Site 的 language.default，晚于启动到达） */
 let siteDefaultLanguage: CubeLocale | null = null;
+/** 站点/租户下发的当前语言（language.current，服务端按 ?lang/Accept-Language/租户默认解析） */
+let siteCurrentLanguage: CubeLocale | null = null;
+/** 站点/租户允许的语言（language.options）；为空表示不限制 */
+let siteLanguages: CubeLocale[] = [];
 /** 站点是否锁定语言（language.locked=true 时前端隐藏切换入口） */
 let languageLocked = false;
 
@@ -177,32 +181,72 @@ function readBrowserLanguage(): CubeLocale | null {
   return null;
 }
 
-/** 读取 URL、本地存储、浏览器语言或站点默认语言 */
+/** 读取 URL、本地存储、站点当前语言、浏览器语言或站点默认语言 */
 export function resolveLanguage(): CubeLocale {
-  const query = readQueryLanguage();
-  if (query) return normalizeLanguage(query);
+  const query = tryNormalizeLanguage(readQueryLanguage() ?? '');
+  if (isSiteLanguageAllowed(query)) return query;
 
-  const stored = readStoredLanguage();
-  if (stored) return normalizeLanguage(stored);
+  const stored = tryNormalizeLanguage(readStoredLanguage() ?? '');
+  if (isSiteLanguageAllowed(stored)) return stored;
 
-  return readBrowserLanguage() ?? siteDefaultLanguage ?? 'en-US';
+  if (isSiteLanguageAllowed(siteCurrentLanguage)) return siteCurrentLanguage;
+
+  const browser = readBrowserLanguage();
+  if (isSiteLanguageAllowed(browser)) return browser;
+
+  if (isSiteLanguageAllowed(siteDefaultLanguage)) return siteDefaultLanguage;
+
+  return siteLanguages[0] ?? 'en-US';
+}
+
+/** 语言是否在站点允许范围内 */
+function isSiteLanguageAllowed(language: CubeLocale | null): language is CubeLocale {
+  return !!language && (siteLanguages.length === 0 || siteLanguages.includes(language));
 }
 
 /**
  * 应用站点/租户下发的语言设置（`/Cube/Site` 的 `language`）
  *
- * 只记录默认语言与锁定标记；未显式选过语言时按新链路重新解析并切换，
- * 使「浏览器语言不受支持 → 站点默认」在首次加载后生效。
+ * 消费 current/options/locked：未显式选过语言时按「current → 浏览器 → default」解析；
+ * 本地选择不在租户白名单内时纠正；锁定语言时忽略本地选择，强制服务端解析值。
  *
  * @param info 站点语言设置（可空）
  */
-export function applySiteLanguage(info?: { default?: string | null; locked?: boolean } | null): void {
-  siteDefaultLanguage = info?.default ? tryNormalizeLanguage(info.default) : null;
+export function applySiteLanguage(
+  info?: {
+    current?: string | null;
+    default?: string | null;
+    locked?: boolean;
+    options?: ReadonlyArray<{ name?: string | null }> | null;
+  } | null,
+): void {
+  siteCurrentLanguage = tryNormalizeLanguage(info?.current ?? '');
+  siteDefaultLanguage = tryNormalizeLanguage(info?.default ?? '');
+  siteLanguages = (info?.options ?? [])
+    .map((item) => tryNormalizeLanguage(item?.name ?? ''))
+    .filter((item): item is CubeLocale => !!item);
   languageLocked = !!info?.locked;
 
-  if (hasExplicitLanguage()) return;
-  const resolved = resolveLanguage();
+  // 锁定语言时忽略本地/URL 选择，优先服务端 current，其次站点默认
+  const resolved = languageLocked
+    ? isSiteLanguageAllowed(siteCurrentLanguage)
+      ? siteCurrentLanguage
+      : isSiteLanguageAllowed(siteDefaultLanguage)
+        ? siteDefaultLanguage
+        : resolveLanguage()
+    : resolveLanguage();
+
   if (resolved !== getCurrentLanguage()) void i18n.changeLanguage(resolved);
+
+  // 本地显式选择被站点白名单排除时纠正存储，避免下次启动继续使用不可选语言
+  const stored = tryNormalizeLanguage(readStoredLanguage() ?? '');
+  if (!languageLocked && stored && siteLanguages.length > 0 && !siteLanguages.includes(stored)) {
+    try {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, resolved);
+    } catch {
+      // 忽略存储不可用
+    }
+  }
 }
 
 /** 站点是否锁定语言（锁定后隐藏语言切换入口） */

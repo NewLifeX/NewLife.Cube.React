@@ -28,6 +28,7 @@ export default function LanguageSwitch() {
   const server = useServerLanguageStore((state) => state.info);
   // 站点锁定语言（CubeSetting.LanguageLocked）：隐藏切换入口，避免用户改了又被服务端覆盖
   const siteLocked = useSiteStore((state) => !!state.config?.language?.locked);
+  const siteOptions = useSiteStore((state) => state.config?.language?.options);
   const locked = !!server?.forced || siteLocked || isLanguageLocked();
 
   useEffect(() => {
@@ -35,11 +36,11 @@ export default function LanguageSwitch() {
   }, []);
 
   const options = useMemo(() => {
-    // 可选语言 = 后端支持语言 ∩ 前端全量翻译语言（后端顺序与显示名优先）
-    const list = resolveSelectableLanguages(server?.languages);
+    // 可选语言 = 后端支持语言 ∩ 前端全量翻译语言 ∩ 站点/租户白名单（后端顺序与显示名优先）
+    const list = resolveSelectableLanguages(server?.languages, siteOptions);
 
     return [{ value: AUTO_KEY, label: server?.autoLabel || t('跟随系统') }, ...list];
-  }, [server, t]);
+  }, [server, siteOptions, t]);
 
   const current = getCurrentLanguage();
   const selected = server?.forced || (hasExplicitLanguage() ? current : AUTO_KEY);

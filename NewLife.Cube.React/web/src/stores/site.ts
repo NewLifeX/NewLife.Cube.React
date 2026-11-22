@@ -29,6 +29,27 @@ interface SiteState {
 
 let pending: Promise<SiteConfig | null> | null = null;
 
+/**
+ * 将站点品牌写入浏览器标题与图标
+ *
+ * 站点未配置名称/Logo 时保持默认，避免把空品牌写进页面。
+ * @param config 站点配置
+ */
+function applySiteBrand(config: SiteConfig | null) {
+  if (!config || typeof document === 'undefined') return;
+
+  if (config.name) document.title = config.name;
+  if (config.logo) {
+    let link = document.head.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = config.logo;
+  }
+}
+
 export const useSiteStore = create<SiteState>((set, get) => ({
   config: null,
   loadedTenant: undefined,
@@ -45,7 +66,9 @@ export const useSiteStore = create<SiteState>((set, get) => ({
       .then((res) => {
         const config = res.data ?? null;
         set({ config, loadedTenant: tenant, loading: false });
-        // 站点/租户默认语言与锁定标记：未显式选过语言时按浏览器 → 站点默认链路生效（FND-15）
+        // 站点/租户品牌：标题与 favicon 跟随 /Cube/Site
+        applySiteBrand(config);
+        // 站点/租户语言：current/options/locked 参与启动链与切换器白名单（FND-15）
         applySiteLanguage(config?.language);
         return config;
       })
