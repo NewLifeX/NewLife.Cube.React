@@ -53,7 +53,7 @@ test.describe('部门列表页（/Admin/Department）', () => {
     const rowsBefore = await page.locator(ROW).count();
     expect(rowsBefore).toBeGreaterThan(0);
 
-    // 监听列表请求，断言提交了 ParentID=1（总公司）
+    // 监听列表请求，断言提交了 ParentId=1（总公司；Cube 1122 内置实体统一 Id 命名，兼容旧 ParentID）
     let listReq: string | null = null;
     const onReq = (req: { url: () => string; method: () => string }) => {
       if (req.url().includes('/api/Admin/Department') && req.method() === 'GET') listReq = req.url();
@@ -68,7 +68,7 @@ test.describe('部门列表页（/Admin/Department）', () => {
     const rows = await page.locator(ROW).count();
     expect(rows).toBeGreaterThan(0);
     expect(rows).toBeLessThan(rowsBefore);
-    expect(listReq, '搜索请求应携带 ParentID=1').toContain('ParentID=1');
+    expect(listReq, '搜索请求应携带 ParentId=1').toMatch(/[?&]ParentID=1/i);
     page.off('request', onReq as never);
   });
 });

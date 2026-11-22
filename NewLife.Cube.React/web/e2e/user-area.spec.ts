@@ -86,16 +86,18 @@ test.describe('用户页省市区级联选择器（/Admin/User）', () => {
     await expect(areaItem.locator('.ant-cascader')).toBeVisible();
     await expect(areaItem.locator('.ant-input-number')).toHaveCount(0);
 
-    // 打开级联：省级选项加载（数据来自 /Cube/AreaChilds）
+    // 打开级联：省级选项加载（数据来自 /Cube/AreaChilds；并发高时首次加载可能较慢）
     await areaItem.locator('.ant-cascader').click();
     const menus = page.locator('.ant-cascader-dropdown:visible .ant-cascader-menu');
-    await expect(menus.first().locator('.ant-cascader-menu-item').first()).toBeVisible({ timeout: 8000 });
+    const provinceItems = menus.first().locator('.ant-cascader-menu-item');
+    await expect(provinceItems.first()).toBeVisible({ timeout: 15000 });
 
     // 选第一个省 → 第二级（市）出现
-    const provinceCount = await menus.first().locator('.ant-cascader-menu-item').count();
+    await expect.poll(async () => provinceItems.count(), { timeout: 15000 }).toBeGreaterThan(0);
+    const provinceCount = await provinceItems.count();
     expect(provinceCount).toBeGreaterThan(0);
-    await menus.first().locator('.ant-cascader-menu-item').first().click();
-    await expect(menus.nth(1).locator('.ant-cascader-menu-item').first()).toBeVisible({ timeout: 8000 });
+    await provinceItems.first().click();
+    await expect(menus.nth(1).locator('.ant-cascader-menu-item').first()).toBeVisible({ timeout: 15000 });
 
     // 选第一个市 → 回填选中（changeOnSelect 允许选中间级；antd6 级联基于 Select，选中区类名 .ant-select-content-has-value）
     await menus.nth(1).locator('.ant-cascader-menu-item').first().click();

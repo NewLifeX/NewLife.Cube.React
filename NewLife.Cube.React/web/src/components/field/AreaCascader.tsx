@@ -40,16 +40,21 @@ function AreaCascaderDropdown({
 }: AreaCascaderProps) {
   const [options, setOptions] = useState<AreaOption[]>([]);
   const [path, setPath] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // 初始加载省级选项
   useEffect(() => {
     let cancelled = false;
-    fetchChildren(0).then((opts) => {
-      if (cancelled) return;
-      // 仅一级时省级即叶子，不显示展开箭头
-      setOptions(opts.map((o) => ({ ...o, isLeaf: maxLevel <= 1 })));
-    });
+    setLoading(true);
+    fetchChildren(0)
+      .then((opts) => {
+        if (cancelled) return;
+        // 仅一级时省级即叶子，不显示展开箭头
+        setOptions(opts.map((o) => ({ ...o, isLeaf: maxLevel <= 1 })));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
