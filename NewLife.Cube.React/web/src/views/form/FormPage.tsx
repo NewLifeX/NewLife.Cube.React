@@ -90,8 +90,13 @@ export default function FormPage({ title }: FormPageProps) {
             const detail = await store.getState().getDetail<Record<string, unknown>>(id);
             if (!cancelled) {
               detailRef.current = detail;
-              // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填
-              form.setFieldsValue(mapDataToFormValues(detail, fields.map((f) => toFieldMeta(f.field))));
+              // 后端 camelCase 数据 → 表单字段名（PascalCase）大小写不敏感回填。
+              // 必须读 store 的最新字段：本回调闭包捕获的是 loadFields 之前的空数组
+              const state = store.getState();
+              const latestFields = isEdit && state.editFields.length ? state.editFields : state.addFields;
+              form.setFieldsValue(
+                mapDataToFormValues(detail, latestFields.map((f) => toFieldMeta(f.field))),
+              );
             }
           } catch {
             message.error(t('加载详情失败'));

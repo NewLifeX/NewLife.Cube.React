@@ -30,8 +30,12 @@ export default function DefaultEntityPage() {
   const flatMenus = useMenuStore((s) => s.flatMenus);
   const findMenu = useMenuStore((s) => s.findMenu);
 
+  // 表单类 URL（/Edit /Add /New /Detail 后缀）按去掉后缀的实体路径匹配菜单与探测，
+  // 否则 menu.path（/Admin/User）无法命中带后缀的路径，会误判 404
+  const basePath = useMemo(() => location.pathname.replace(/\/+(edit|add|new|detail)$/i, ''), [location.pathname]);
+  // flatMenus 是必要的重算触发源：findMenu 本身引用稳定，菜单异步就绪后需重新匹配
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const matched = useMemo(() => findMenu(location.pathname), [findMenu, flatMenus, location.pathname]);
+  const matched = useMemo(() => findMenu(basePath), [findMenu, flatMenus, basePath]);
   // 配置中心路径：配置控制器在左侧菜单隐藏，菜单树中不存在，需按静态清单特判
   const config = useMemo(() => findConfigCenter(location.pathname), [location.pathname]);
 
@@ -48,7 +52,7 @@ export default function DefaultEntityPage() {
     let cancelled = false;
     setProbe('idle');
     api.page
-      .getPage(routeToApiPrefix(location.pathname))
+      .getPage(routeToApiPrefix(basePath))
       .then((res) => {
         if (cancelled) return;
         // 配置页/ObjectController 的 meta 也只有 JSON，必须以是否含列表字段区分
@@ -60,7 +64,7 @@ export default function DefaultEntityPage() {
     return () => {
       cancelled = true;
     };
-  }, [matched, config, location.pathname]);
+  }, [matched, config, basePath, location.pathname]);
 
   if (!matched && !config) {
     // 探测中：加载占位
