@@ -5,14 +5,14 @@
  * 元数据渲染字段名 + 格式化值。详情接口失败时用列表行数据兜底。
  * 对应皮肤设计规范 §7.9：只读控制器或无可编辑权限时提供「查看」。
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Descriptions, Modal, Tabs, Tag } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Descriptions, Modal, Tabs } from 'antd';
 import { api } from '@/api';
 import { t } from '@/i18n';
-import LovCell from '@/components/field/LovCell';
 import { getValueByKey } from '@/utils/url';
-import { groupByCategory, hasCategory, resolveListControl } from '@/utils/fieldControl';
+import { groupByCategory, hasCategory } from '@/utils/fieldControl';
 import { toFieldMeta, type FieldMeta } from '@/types/field';
+import { formatDetailValue } from './detailValue';
 import type { FieldMapping } from '@newlifex/cube';
 
 export interface DetailDialogProps {
@@ -26,54 +26,6 @@ export interface DetailDialogProps {
   /** 回退行数据（详情接口失败时直接用列表行渲染） */
   row?: Record<string, unknown> | null;
   onClose: () => void;
-}
-
-/** 格式化日期：dateOnly 输出 yyyy-MM-dd，否则到时分秒 */
-function formatDateTime(v: unknown, dateOnly = false): string {
-  const s = String(v);
-  const d = new Date(s.includes('T') ? s : s.replace(' ', 'T'));
-  if (isNaN(d.getTime())) return s;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const base = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return dateOnly ? base : `${base} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-/** 按字段类型格式化详情值 */
-function formatValue(field: FieldMapping, value: unknown): ReactNode {
-  const meta = toFieldMeta(field.field);
-  const control = resolveListControl(meta);
-  if (value === null || value === undefined || value === '') return '-';
-
-  switch (control) {
-    case 'boolean':
-      return (
-        <Tag color={value === true || value === 'true' || value === 1 ? 'success' : 'default'}>
-          {value === true || value === 'true' || value === 1 ? t('是') : t('否')}
-        </Tag>
-      );
-    case 'date': {
-      const dateOnly = (meta.itemType || '').toLowerCase() === 'date';
-      return <span>{formatDateTime(value, dateOnly)}</span>;
-    }
-    case 'time':
-      return <span>{formatDateTime(value)}</span>;
-    case 'lov':
-      return <LovCell value={value} lovCode={meta.lovCode} dataSource={meta.dataSource} />;
-    case 'image':
-      return value ? <img src={String(value)} alt="" style={{ maxWidth: 120, maxHeight: 120, borderRadius: 8 }} /> : '-';
-    case 'file':
-      return value ? (
-        <a href={String(value)} target="_blank" rel="noreferrer">
-          {t('查看文件')}
-        </a>
-      ) : (
-        '-'
-      );
-    case 'html':
-      return <div dangerouslySetInnerHTML={{ __html: String(value) }} />;
-    default:
-      return <span style={{ wordBreak: 'break-all' }}>{String(value)}</span>;
-  }
 }
 
 export default function DetailDialog({ open, apiPrefix, id, fields, row, onClose }: DetailDialogProps) {
@@ -106,7 +58,6 @@ export default function DetailDialog({ open, apiPrefix, id, fields, row, onClose
 
   // 详情字段元数据（与 FieldMapping 按 name 一一对应）
   const metas = useMemo(() => fields.map((f) => toFieldMeta(f.field)), [fields]);
-  const mappingByName = useMemo(() => new Map(fields.map((f) => [f.field.name, f])), [fields]);
 
   // 分组：字段带 Category 才按分类 Tabs 分组，否则平铺（字段少的详情一屏展示）
   const groups = useMemo(() => {
@@ -121,14 +72,11 @@ export default function DetailDialog({ open, apiPrefix, id, fields, row, onClose
       bordered
       size="small"
       style={{ marginTop: 16 }}
-      items={list.map((meta) => {
-        const mapping = mappingByName.get(meta.name)!;
-        return {
-          key: meta.name,
-          label: meta.displayName || meta.name,
-          children: formatValue(mapping, getValueByKey(data, meta.name)),
-        };
-      })}
+      items={list.map((meta) => ({
+        key: meta.name,
+        label: meta.displayName || meta.name,
+        children: formatDetailValue(meta, getValueByKey(data, meta.name)),
+      }))}
     />
   );
 

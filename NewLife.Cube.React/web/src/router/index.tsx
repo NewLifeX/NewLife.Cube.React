@@ -13,6 +13,7 @@ import ActivatePage from '@/pages/Activate';
 import ForgotPasswordPage from '@/pages/ForgotPassword';
 import ProfileSecurityPage from '@/pages/ProfileSecurity';
 import ProfilePage from '@/pages/Profile';
+import UserDetailPage from '@/views/user/UserDetailPage';
 import HomePage from '@/pages/Home';
 import UnauthorizedPage from '@/pages/Unauthorized';
 import LoadingPage from '@/pages/Loading';
@@ -83,6 +84,12 @@ export const router = createBrowserRouter([
         path: 'loading',
         element: <LoadingPage />,
         handle: { title: t('加载中'), auth: false, layout: false, tab: false } as RouteMeta,
+      },
+      {
+        // 用户详情是静态路由（M3 自定义页），比 catch-all 更具体；编辑仍走 /Admin/User/Edit?id=
+        path: 'Admin/User/Detail/:id',
+        element: <UserDetailPage />,
+        handle: { title: t('用户详情'), auth: true, tab: true } as RouteMeta,
       },
       {
         path: '*',
