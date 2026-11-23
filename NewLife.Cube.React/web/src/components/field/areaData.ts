@@ -8,21 +8,23 @@
 import { api } from '@/api';
 import { t } from '@/i18n';
 
-/** 后端地区节点（camelCase；兼容 PascalCase） */
+/** 后端地区节点（camelCase；兼容旧版 PascalCase/ID 命名） */
 export interface AreaNode {
-  ID: number;
-  Name: string;
-  FullName?: string;
-  Level?: number;
-  ParentID?: number;
-  /** 后端 camelCase 序列化字段（与 PascalCase 二选一） */
+  /** 后端 camelCase 序列化字段 */
   id?: number;
   name?: string;
   fullName?: string;
   level?: number;
   parentId?: number;
-  /** 魔方内置实体统一 Id 命名后的 camelCase 父级键（旧版为 parentID） */
+  /** 新版 PascalCase 字段（Id/AbbId 命名） */
+  Id?: number;
+  Name?: string;
+  FullName?: string;
+  Level?: number;
   ParentId?: number;
+  /** 旧版字段名，仅兼容历史服务端 */
+  ID?: number;
+  ParentID?: number;
   /** 大区（华北/华东/华中/华南/西南/西北/东北），省级返回 */
   bigArea?: string;
   BigArea?: string;
@@ -44,12 +46,12 @@ export const placeholders = () => [t('请选择省'), t('请选择省/市'), t('
 /** tab 名称（对齐 MVC city-picker tab 栏） */
 export const tabNames = () => [t('省份'), t('城市'), t('区县'), t('乡镇街道')];
 
-/** 兼容后端 camelCase / PascalCase 字段取值 */
+/** 兼容后端 camelCase / PascalCase 字段取值（新命名 Id，旧版 ID） */
 export function nodeId(n: AreaNode): number {
-  return n.id ?? n.ID;
+  return n.id ?? n.Id ?? n.ID ?? 0;
 }
 export function nodeName(n: AreaNode): string {
-  return n.name ?? n.Name;
+  return n.name ?? n.Name ?? '';
 }
 function nodeBigArea(n: AreaNode): string {
   return n.bigArea ?? n.BigArea ?? '';

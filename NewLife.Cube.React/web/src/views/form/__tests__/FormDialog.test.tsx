@@ -112,7 +112,7 @@ describe('FormDialog 表单弹窗', () => {
       <FormDialog
         open
         mode="edit"
-        fields={[mapping('ID', { primaryKey: true }), mapping('Name')]}
+        fields={[mapping('Id', { primaryKey: true }), mapping('Name')]}
         row={{ id: 7, name: 'Stone' }}
         onSubmit={async (data) => {
           submitted = data;
@@ -122,7 +122,7 @@ describe('FormDialog 表单弹窗', () => {
     fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '新名' } });
     fireEvent.click(screen.getByRole('button', { name: /保\s*存/ }));
     await waitFor(() => {
-      expect(submitted).toEqual({ Name: '新名', ID: 7 });
+      expect(submitted).toEqual({ Name: '新名', Id: 7 });
     });
     // 显式卸载，清理 Modal 内部延迟计时器（避免全量跑时 unhandled error）
     unmount();

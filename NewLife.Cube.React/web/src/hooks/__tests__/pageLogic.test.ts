@@ -13,7 +13,7 @@ function makeMeta(overrides: Record<string, unknown> = {}) {
   return {
     code: 0,
     data: {
-      entity: { name: 'Demo', displayName: '演示', primaryKey: 'ID' },
+      entity: { name: 'Demo', displayName: '演示', primaryKey: 'Id' },
       setting: {
         enableAdd: true,
         menuId: 12,
@@ -43,7 +43,7 @@ describe('PageLogic.loadFields 元数据装配', () => {
     await logic.loadFields('/Demo/Test');
 
     const state = logic.getState();
-    expect(state.pkField).toBe('ID');
+    expect(state.pkField).toBe('Id');
     expect(state.entity?.displayName).toBe('演示');
     expect(state.toolbar).toHaveLength(1);
     expect(state.toolbar[0].kind).toBe('request');
@@ -58,7 +58,7 @@ describe('PageLogic.loadFields 元数据装配', () => {
 
     await logic.loadFields('/Demo/Test');
 
-    expect(logic.getState().pkField).toBe('ID');
+    expect(logic.getState().pkField).toBe('Id');
   });
 });
 

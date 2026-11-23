@@ -340,7 +340,7 @@ export default function SearchBar({ fields, onSearch, onReset, initialValues, ex
       if (Array.isArray(v)) {
         const nonNull = (v as unknown[]).filter((x) => x !== null && x !== undefined);
         if (!nonNull.length) continue;
-        // lovMulti 多选（角色/部门等）：逗号分隔字符串，如 roleID=1,2；范围类保持数组
+        // lovMulti 多选（角色/部门等）：逗号分隔字符串，如 roleId=1,2；范围类保持数组
         const control = resolveSearchControl(toFieldMeta(c.fm.field));
         params[name] = control === 'lovMulti' ? nonNull.join(',') : nonNull;
         continue;

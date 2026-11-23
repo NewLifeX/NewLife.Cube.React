@@ -49,7 +49,7 @@ test.describe('角色权限 API 集成（/Admin/Role）', () => {
     expect(create.ok(), `创建角色失败: ${await create.text()}`).toBeTruthy();
     const createBody = await create.json();
     expect(createBody.code).toBe(0);
-    const roleId = createBody.data?.id ?? createBody.data?.ID;
+    const roleId = createBody.data?.id ?? createBody.data?.Id;
     expect(roleId, '创建角色未返回 id').toBeTruthy();
 
     try {
@@ -92,7 +92,7 @@ test.describe('角色权限 API 集成（/Admin/Role）', () => {
     const name = `${PREFIX}-clear`;
     const create = await request.post('/api/Admin/Role', { headers, data: { name, enable: true } });
     const createBody = await create.json();
-    const roleId = createBody.data?.id ?? createBody.data?.ID;
+    const roleId = createBody.data?.id ?? createBody.data?.Id;
 
     try {
       // 先授予，再清空

@@ -1,7 +1,7 @@
 /**
  * AreaTabsPicker 多 Tab 弹层选择器单元测试
  *
- * 覆盖：省份按大区分组、选省自动切城市 tab 并加载市、选市/区触发 onChange（最后 ID）、
+ * 覆盖：省份按大区分组、选省自动切城市 tab 并加载市、选市/区触发 onChange（最后 Id）、
  * 受控 value 回显（AreaParents 解析路径 + 输入显示路径）、清除。
  * 数据 mock 走 /Cube/AreaChilds、/Cube/AreaParents（camelCase，含 bigArea）。
  * jsdom 下 matchMedia 全 false → md=false → 走 Drawer（移动端）分支。

@@ -221,16 +221,16 @@ describe('resolveSearchControl 搜索控件映射', () => {
     ).toBe('lov');
   });
 
-  it('dataSource + multiple → 多选下拉（部门 DepartmentID）', () => {
+  it('dataSource + multiple → 多选下拉（部门 DepartmentId）', () => {
     expect(
       resolveSearchControl(
-        f({ name: 'DepartmentID', typeName: 'Int32', dataSource: { '1': '研发部', '2': '运营部' }, multiple: true }),
+        f({ name: 'DepartmentId', typeName: 'Int32', dataSource: { '1': '研发部', '2': '运营部' }, multiple: true }),
       ),
     ).toBe('lovMulti');
   });
 
-  it('lovCode + multiple → 多选下拉（角色 RoleID）', () => {
-    expect(resolveSearchControl(f({ name: 'RoleID', typeName: 'Int32', lovCode: 'Role', multiple: true }))).toBe(
+  it('lovCode + multiple → 多选下拉（角色 RoleId）', () => {
+    expect(resolveSearchControl(f({ name: 'RoleId', typeName: 'Int32', lovCode: 'Role', multiple: true }))).toBe(
       'lovMulti',
     );
   });
@@ -240,7 +240,7 @@ describe('resolveSearchControl 搜索控件映射', () => {
   });
 
   it('无选项的 Int32 仍是数字范围（部门未配置数据源时兜底）', () => {
-    expect(resolveSearchControl(f({ name: 'DepartmentID', typeName: 'Int32' }))).toBe('numberRange');
+    expect(resolveSearchControl(f({ name: 'DepartmentId', typeName: 'Int32' }))).toBe('numberRange');
   });
 
   it('省市区级联（itemType=area1~4）→ areaCascader', () => {
@@ -385,12 +385,12 @@ describe('pickChangedModel 编辑只提交变更字段', () => {
 describe('mapDataToFormValues 编辑回填映射', () => {
   it('camelCase 数据 → PascalCase 字段名（大小写不敏感）', () => {
     const fields = [
-      { name: 'ID', primaryKey: true, typeName: 'Int32' },
+      { name: 'Id', primaryKey: true, typeName: 'Int32' },
       { name: 'Name', typeName: 'String' },
       { name: 'DisplayName', typeName: 'String' },
     ] as FieldMeta[];
     const out = mapDataToFormValues({ id: 2, name: 'Stone', displayName: '石头' }, fields);
-    expect(out).toEqual({ ID: 2, Name: 'Stone', DisplayName: '石头' });
+    expect(out).toEqual({ Id: 2, Name: 'Stone', DisplayName: '石头' });
   });
 
   it('布尔串转布尔（Enable 等）', () => {
@@ -665,14 +665,14 @@ describe('映射字段、时长与 MVC 同义 ItemType（ItemType 全量对齐�
   it('映射字段有数据源 → mapSelect，整型键无数据源 → mapInput，非整型无数据源 → readonly', () => {
     const withDs = f({
       name: 'RoleName',
-      mapField: 'RoleID',
+      mapField: 'RoleId',
       mapTypeName: 'Int32',
       dataSource: { '1': '管理员' },
     } as Partial<DataField>);
     expect(resolveControl(withDs)).toBe('mapSelect');
-    expect(mapValueKey(withDs)).toBe('RoleID');
+    expect(mapValueKey(withDs)).toBe('RoleId');
 
-    const noDs = f({ name: 'RoleName', mapField: 'RoleID', mapTypeName: 'Int32' } as Partial<DataField>);
+    const noDs = f({ name: 'RoleName', mapField: 'RoleId', mapTypeName: 'Int32' } as Partial<DataField>);
     expect(resolveControl(noDs)).toBe('mapInput');
     expect(isNumericMapKey(noDs)).toBe(true);
 
@@ -685,7 +685,7 @@ describe('映射字段、时长与 MVC 同义 ItemType（ItemType 全量对齐�
     const field = f({
       name: 'RoleName',
       readOnly: true,
-      mapField: 'RoleID',
+      mapField: 'RoleId',
       mapTypeName: 'Int32',
       dataSource: { '1': '管理员' },
     } as Partial<DataField>);
@@ -693,7 +693,7 @@ describe('映射字段、时长与 MVC 同义 ItemType（ItemType 全量对齐�
   });
 
   it('映射字段配 lovCode → lov（大数据量关联表走远程值集）', () => {
-    const field = f({ name: 'RoleName', mapField: 'RoleID', lovCode: 'Role' } as Partial<DataField>);
+    const field = f({ name: 'RoleName', mapField: 'RoleId', lovCode: 'Role' } as Partial<DataField>);
     expect(resolveControl(field)).toBe('lov');
   });
 
@@ -714,18 +714,18 @@ describe('映射字段、时长与 MVC 同义 ItemType（ItemType 全量对齐�
     expect(resolveControl(f({ name: 'Size', typeName: 'Int64', itemType: 'GMK' }))).toBe('inputNumber');
   });
 
-  it('编辑回填按关联键取值（RoleName→RoleID）', () => {
+  it('编辑回填按关联键取值（RoleName→RoleId）', () => {
     const fields = [
       f({ name: 'Name' }),
-      f({ name: 'RoleName', mapField: 'RoleID', mapTypeName: 'Int32' } as Partial<DataField>),
+      f({ name: 'RoleName', mapField: 'RoleId', mapTypeName: 'Int32' } as Partial<DataField>),
     ];
-    const values = mapDataToFormValues({ name: 'stone', roleID: 3, roleName: '管理员' }, fields);
-    expect(values).toEqual({ Name: 'stone', RoleID: 3 });
+    const values = mapDataToFormValues({ name: 'stone', roleId: 3, roleName: '管理员' }, fields);
+    expect(values).toEqual({ Name: 'stone', RoleId: 3 });
   });
 
   it('提交模型剔除映射字段的展示名，保留关联键', () => {
-    const fields = [f({ name: 'RoleName', mapField: 'RoleID' } as Partial<DataField>)];
-    const out = serializeSubmitModel({ RoleID: 3, RoleName: '管理员' }, fields);
-    expect(out).toEqual({ RoleID: 3 });
+    const fields = [f({ name: 'RoleName', mapField: 'RoleId' } as Partial<DataField>)];
+    const out = serializeSubmitModel({ RoleId: 3, RoleName: '管理员' }, fields);
+    expect(out).toEqual({ RoleId: 3 });
   });
 });

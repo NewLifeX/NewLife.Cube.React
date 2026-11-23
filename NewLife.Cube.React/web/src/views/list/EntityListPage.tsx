@@ -99,7 +99,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     [listFields],
   );
 
-  // 树形列表父字段（LIST-17）：preset.treeBy 显式指定（false 关闭），否则按 ParentID 等命名自动识别
+  // 树形列表父字段（LIST-17）：preset.treeBy 显式指定（false 关闭），否则按 ParentId 等命名自动识别
   const treeField = useMemo(() => {
     const presetTreeBy = pagePreset?.treeBy;
     if (presetTreeBy === false) return undefined;

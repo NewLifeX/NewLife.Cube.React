@@ -151,7 +151,7 @@ export default function FieldControl({ field, value, onChange, apiPrefix, record
           />
         );
       case 'mapSelect':
-        // 映射字段（RoleName→RoleID）：显示关联表名称，提交关联键
+        // 映射字段（RoleName→RoleId）：显示关联表名称，提交关联键
         return (
           <LovSelect
             {...commonProps}

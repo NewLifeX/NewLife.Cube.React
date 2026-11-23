@@ -274,7 +274,7 @@ describe('TableContent 列呈现与数据动作（LIST-12/15/16）', () => {
         canEdit
         canDelete={false}
         selectable={false}
-        treeField="ParentID"
+        treeField="ParentId"
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
       />,

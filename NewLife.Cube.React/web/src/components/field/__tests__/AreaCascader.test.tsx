@@ -94,8 +94,8 @@ describe('buildAreaTree 路径树构建', () => {
     mockGet.mockImplementation(async (url: unknown, cfg?: { params?: { id?: number } }) => {
       const id = cfg?.params?.id ?? 0;
       if (url === '/Cube/AreaChilds') {
-        if (id === 0) return { data: { data: [{ ID: 1, Name: '北京市' }, { ID: 2, Name: '广东省' }] } };
-        if (id === 2) return { data: { data: [{ ID: 20, Name: '广州市' }] } };
+        if (id === 0) return { data: { data: [{ Id: 1, Name: '北京市' }, { Id: 2, Name: '广东省' }] } };
+        if (id === 2) return { data: { data: [{ Id: 20, Name: '广州市' }] } };
         return { data: { data: [] } };
       }
       return { data: { data: [] } };

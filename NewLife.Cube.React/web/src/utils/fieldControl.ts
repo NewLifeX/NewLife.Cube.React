@@ -42,11 +42,11 @@ export function hasDataSource(field: FieldMeta): boolean {
 }
 
 /**
- * 表单实际读写的模型键。映射字段（`RoleName` 通过 Map 指向 `RoleID`）要提交的是关联键。
+ * 表单实际读写的模型键。映射字段（`RoleName` 通过 Map 指向 `RoleId`）要提交的是关联键。
  *
  * @param field 字段元数据
  * @returns 模型键（无映射时即字段名）
- * @example mapValueKey({ name: 'RoleName', mapField: 'RoleID' }) // 'RoleID'
+ * @example mapValueKey({ name: 'RoleName', mapField: 'RoleId' }) // 'RoleId'
  */
 export function mapValueKey(field: FieldMeta): string {
   return field.mapField || field.name;
@@ -222,7 +222,7 @@ export function resolveControl(field: FieldMeta): ControlType {
     return ITEM_TYPE_TO_CONTROL[itemType];
   }
 
-  // 2. 映射字段（RoleName→RoleID 等）：虚拟属性在元数据里可能是只读，必须在只读判定之前处理，
+  // 2. 映射字段（RoleName→RoleId 等）：虚拟属性在元数据里可能是只读，必须在只读判定之前处理，
   //    否则关联表下拉永远不会出现。有 lovCode 走值集，有 dataSource 走本地下拉，整型键无数据源退回键值输入。
   if (field.mapField) {
     if (field.lovCode) return field.multiple ? 'lovMulti' : 'lov';
@@ -673,7 +673,7 @@ export function serializeSubmitModel(
   );
   // 虚拟字段（virtual=true）仅用于界面交互，不参与实体提交
   const virtualNames = new Set(fields.filter((f) => f.virtual).map((f) => f.name.toLowerCase()));
-  // 映射字段的展示名（RoleName）不是实体列，表单已按关联键（RoleID）读写，这里再兜底剔除
+  // 映射字段的展示名（RoleName）不是实体列，表单已按关联键（RoleId）读写，这里再兜底剔除
   const mapDisplayNames = new Set(
     fields.filter((f) => f.mapField).map((f) => f.name.toLowerCase()),
   );
@@ -711,8 +711,8 @@ function isSameFieldValue(a: unknown, b: unknown): boolean {
 /**
  * 编辑提交只保留变更字段（后端 PUT 为部分更新）
  *
- * 只提交变更字段可减少无效覆盖，并避免请求体包含同义大小写别名（如 RoleId/RoleID）时
- * 后端反射取值产生歧义（用户编辑保存返回 500）。
+ * 只提交变更字段可减少无效覆盖，并避免请求体包含同义大小写别名（如 RoleId/RoleID）时，
+ * 旧版后端反射取值产生歧义（用户编辑保存返回 500）。
  *
  * 必填字段始终保留：ASP.NET [ApiController] 会把非空引用类型属性隐式推断为必填，
  * meta 未必带 required 标记（如 User.Name），漏传会 400。
@@ -785,12 +785,12 @@ function toMultiArray(val: unknown): string[] {
  * 编辑回填：将后端 camelCase 数据（列表行/详情）映射为表单字段值（PascalCase 字段名）
  *
  * 后端实体 JSON 序列化为 camelCase（如 { id, name, displayName, enable }），
- * 而 meta 下发的 DataField.name 为 PascalCase 实体属性名（如 ID/Name/DisplayName）。
+ * 而 meta 下发的 DataField.name 为 PascalCase 实体属性名（如 Id/Name/DisplayName）。
  * 若直接用 form.setFieldsValue(data) 精确匹配，camelCase 键与 PascalCase 字段名对不上，
  * 编辑表单将全部为空（旧版问题：三方登录用户数据多时编辑完全看不到数据）。
  *
  * 归一规则：
- * - 按字段名大小写不敏感取值（复用 getValueByKey，兼容 ID↔id）；
+ * - 按字段名大小写不敏感取值（复用 getValueByKey，兼容 Id↔id）；
  * - 布尔串 'true'/'false' → boolean（Enable 等）；
  * - 多选字段（multiple / itemType=multipleselect）逗号/JSON 字符串 → string[]（LovSelect 多选展示）。
  *
@@ -801,7 +801,7 @@ function toMultiArray(val: unknown): string[] {
 export function mapDataToFormValues(data: Record<string, unknown>, fields: FieldMeta[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
-    // 映射字段（RoleName→RoleID）在表单里读写的是关联键，回填也要按键取值
+    // 映射字段（RoleName→RoleId）在表单里读写的是关联键，回填也要按键取值
     const key = mapValueKey(f);
     const v = getValueByKey(data, key);
     if (v === undefined) continue;

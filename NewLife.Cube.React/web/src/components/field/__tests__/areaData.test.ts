@@ -23,7 +23,7 @@ describe('areaData 地区接口降级', () => {
   it('首次 code≠0 时重试一次并返回结果', async () => {
     mockGet
       .mockResolvedValueOnce({ data: { code: 401, message: 'Unauthorized' } })
-      .mockResolvedValueOnce({ data: { code: 0, data: [{ ID: 110000, Name: '北京', BigArea: '华北' }] } });
+      .mockResolvedValueOnce({ data: { code: 0, data: [{ Id: 110000, Name: '北京', BigArea: '华北' }] } });
 
     const list = await fetchChildren(0);
 

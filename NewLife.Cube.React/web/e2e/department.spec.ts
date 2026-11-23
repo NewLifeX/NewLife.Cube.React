@@ -2,7 +2,7 @@
  * 部门列表页 E2E（搜索字段控件驱动）
  *
  * 验证：页面加载 / 列表展示 / 父级下拉（层级路径 label，同名部门可区分）/ 父级搜索过滤 / 管理者搜索字段已移除。
- * 后端 DepartmentController.SearchFields：ParentID 配部门缓存 DataSource（层级路径 label），ManagerId 移除（对齐 MVC）。
+ * 后端 DepartmentController.SearchFields：ParentId 配部门缓存 DataSource（层级路径 label），ManagerId 移除（对齐 MVC）。
  */
 import { expect, test } from '@playwright/test';
 

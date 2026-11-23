@@ -6,7 +6,7 @@
  * - 后端未继承该基类 → 404/405 → 前端提示「当前实体不支持排序」并降级；
  * - 后端提供动作 → 返回 `{code:0}` → 提示成功并刷新列表。
  *
- * 说明：Cube 的树控制器会在静态构造中移除父字段，`/Admin/Menu` 的 meta.list 因此没有 `ParentID`，
+ * 说明：Cube 的树控制器会在静态构造中移除父字段，`/Admin/Menu` 的 meta.list 因此没有 `ParentId`，
  * 前端识别不到树形。这里用 `page.route` 复现「后端下发父字段」的契约场景
  * （业务侧自行保留父字段时即为此形态），不依赖演示库的具体实体配置。
  */
@@ -23,7 +23,7 @@ async function injectParentField(page: Page) {
     const data = body?.data ?? {};
     const list: Record<string, unknown>[] = Array.isArray(data.list) ? [...data.list] : [];
     if (!list.some((f) => String(f.name).toLowerCase() === 'parentid')) {
-      list.push({ name: 'ParentID', displayName: '父级编号', typeName: 'Int32', visible: false });
+      list.push({ name: 'ParentId', displayName: '父级编号', typeName: 'Int32', visible: false });
     }
     data.list = list;
     await route.fulfill({ response, json: body });

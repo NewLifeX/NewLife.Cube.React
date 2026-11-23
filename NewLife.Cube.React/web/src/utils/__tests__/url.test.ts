@@ -43,7 +43,7 @@ describe('getValueByKey 大小写不敏感', () => {
   });
 
   it('全大写/全小写回退', () => {
-    const row2 = { ID: 5, uuid: 'x' };
+    const row2 = { Id: 5, uuid: 'x' };
     expect(getValueByKey(row2, 'id')).toBe(5);
     expect(getValueByKey(row2, 'UUID')).toBe('x');
   });
@@ -97,7 +97,7 @@ describe('resolveUrl 变量替换', () => {
   it('占位符与行键大小写不一致时仍可替换', () => {
     // 行 JSON camelCase，模板占位符 PascalCase
     expect(resolveUrl('/Admin/User/{Id}', { id: 42 })).toBe('/Admin/User/42');
-    expect(resolveUrl('/Admin/UserConnect?userId={ID}', { id: 7 })).toBe('/Admin/UserConnect?userId=7');
+    expect(resolveUrl('/Admin/UserConnect?userId={Id}', { id: 7 })).toBe('/Admin/UserConnect?userId=7');
   });
 });
 
