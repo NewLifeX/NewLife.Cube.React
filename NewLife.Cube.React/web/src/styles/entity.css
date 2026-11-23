@@ -158,19 +158,10 @@
   flex-wrap: wrap;
 }
 
-.cube-stat-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.cube-stat-chip {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--cube-surface-muted);
-  color: var(--cube-text-secondary);
-  border: 1px solid var(--cube-border-soft);
-  font-size: 13px;
+.cube-stat-row > td {
+  font-weight: 600;
+  background: var(--cube-surface-bg);
+  border-top: 1px solid var(--cube-border-soft);
 }
 
 /* ============================================================
@@ -389,5 +380,245 @@
   .cube-pagination-bar .ant-pagination {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+/* ============================================================
+   用户详情页与可点击单元格（用户列表 → 用户详情）
+   ============================================================ */
+.cube-cell-activate {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  cursor: pointer;
+  border-radius: 4px;
+  outline: none;
+}
+
+.cube-cell-activate:hover {
+  color: var(--cube-primary);
+}
+
+.cube-cell-activate:focus-visible {
+  box-shadow: 0 0 0 2px var(--cube-primary-soft);
+}
+
+.cube-cell-activate img {
+  transition: box-shadow 0.2s ease;
+}
+
+.cube-cell-activate:hover img {
+  box-shadow: 0 0 0 2px var(--cube-primary-soft);
+}
+
+.cube-user-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cube-border-soft);
+}
+
+.cube-user-detail-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--cube-border-soft);
+}
+
+.cube-user-detail-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cube-text);
+}
+
+.cube-user-detail-body {
+  display: grid;
+  grid-template-columns: 296px minmax(0, 1fr);
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.cube-user-detail-aside {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cube-user-detail-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--cube-border-soft);
+  background:
+    radial-gradient(circle at 50% 0%, var(--cube-primary-soft), transparent 62%),
+    var(--cube-surface-muted);
+  text-align: center;
+}
+
+.cube-user-detail-avatar {
+  flex: none;
+  margin-bottom: 4px;
+  box-shadow: 0 0 0 4px var(--cube-surface-bg), 0 0 0 5px var(--cube-border-soft);
+}
+
+.cube-user-detail-profile-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cube-user-detail-title {
+  max-width: 100%;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--cube-text);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cube-user-detail-subtitle {
+  font-size: 13px;
+  color: var(--cube-text-secondary);
+}
+
+.cube-user-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cube-user-detail-tags .ant-tag {
+  margin-inline-end: 0;
+}
+
+.cube-user-detail-stats {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--cube-border-soft);
+  background: var(--cube-surface-bg);
+}
+
+.cube-user-detail-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--cube-border-soft);
+}
+
+.cube-user-detail-stat:last-child {
+  border-bottom: none;
+}
+
+.cube-user-detail-stat-label {
+  flex: none;
+  font-size: 13px;
+  color: var(--cube-text-secondary);
+}
+
+.cube-user-detail-stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cube-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cube-user-detail-main {
+  min-width: 0;
+}
+
+.cube-user-detail-main .ant-tabs-nav {
+  margin-bottom: 12px;
+}
+
+.cube-user-detail-count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--cube-surface-muted);
+  color: var(--cube-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.cube-user-detail-main .ant-tabs-tab-active .cube-user-detail-count {
+  background: var(--cube-primary-soft);
+  color: var(--cube-primary);
+}
+
+.cube-user-basic {
+  margin-top: 4px;
+}
+
+/* 嵌入列表（用户详情 Tab 内复用通用列表页）：宿主卡片已提供留白，不再叠加页面级间距 */
+.cube-entity-embedded {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cube-entity-embedded .cube-search-panel {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 992px) {
+  .cube-user-detail-body {
+    grid-template-columns: 1fr;
+  }
+
+  .cube-user-detail-aside {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+    gap: 12px;
+  }
+
+  .cube-user-detail-profile {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+
+  .cube-user-detail-profile-main {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .cube-user-detail-tags {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .cube-user-detail-aside {
+    grid-template-columns: 1fr;
   }
 }

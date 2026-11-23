@@ -11,10 +11,12 @@ import {
 describe('pageExtensions 页面扩展点注册表', () => {
   afterEach(() => clearPageExtensions());
 
-  it('按路径注册并可读取（大小写不敏感）', () => {
+  it('按路径注册并可读取（大小写不敏感，首尾斜杠等价）', () => {
     registerPageExtension('Admin/User', { toolbarExtra: () => 'extra' });
     expect(getPageExtension('Admin/User')).not.toBeNull();
     expect(getPageExtension('admin/user')).not.toBeNull();
+    expect(getPageExtension('/Admin/User')).not.toBeNull();
+    expect(getPageExtension('/admin/user/')).not.toBeNull();
   });
 
   it('未注册路径与空参数返回 null', () => {

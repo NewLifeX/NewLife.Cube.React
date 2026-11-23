@@ -227,7 +227,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.goto('/Admin/User');
     await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
     // 导出收纳在「高级」菜单内（规范 §7.8）
-    await page.getByRole('button', { name: /高\s*级/ }).click();
+    await page.locator('.cube-toolbar').getByRole('button', { name: /高\s*级/ }).click();
     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
     await page.getByText('导出 CSV').click();
     const download = await downloadPromise;
@@ -244,7 +244,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.getByRole('button', { name: /搜\s*索/ }).click();
     await page.waitForTimeout(800);
     // 导出收纳在「高级」菜单内（规范 §7.8）
-    await page.getByRole('button', { name: /高\s*级/ }).click();
+    await page.locator('.cube-toolbar').getByRole('button', { name: /高\s*级/ }).click();
     const reqPromise = page.waitForRequest((r) => r.url().includes('/export'), { timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
     await page.getByText('导出 Excel').click();
@@ -264,7 +264,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     await page.getByRole('button', { name: /搜\s*索/ }).click();
     await page.waitForTimeout(800);
     // 导出收纳在「高级」菜单内（规范 §7.8）
-    await page.getByRole('button', { name: /高\s*级/ }).click();
+    await page.locator('.cube-toolbar').getByRole('button', { name: /高\s*级/ }).click();
     const reqPromise = page.waitForRequest((r) => r.url().includes('/export'), { timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
     await page.getByText('导出 Zip').click();
@@ -284,7 +284,7 @@ test.describe('通用列表页（/Admin/User）', () => {
     const csv = `Id,Name,DisplayName,Password\n${id},${name},导入测试,admin123\n`;
     const buffer = Buffer.from(csv, 'utf-8');
     // 导入收纳在「高级」菜单内（规范 §7.8），触发隐藏文件选择框并上传
-    await page.getByRole('button', { name: /高\s*级/ }).click();
+    await page.locator('.cube-toolbar').getByRole('button', { name: /高\s*级/ }).click();
     await page.getByText('导入 Excel/Json/Zip').click();
     await page.locator('input[type="file"]').setInputFiles({
       name: 'users.csv',

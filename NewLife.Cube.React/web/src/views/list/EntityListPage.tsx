@@ -7,13 +7,13 @@
  *   - SearchBar      动态搜索控件（按钮与条件同行）
  *   - Toolbar        新增/删除选中/刷新 + 表格图表视图切换 + 高级菜单
  *   - TableContent   动态列渲染
- *   - ListPagination 分页 + 统计行
+ *   - ListPagination 分页（统计行由表格底部合计行承担）
  *   - FormDialog     命令式新增/编辑弹窗（FieldControl）
  *   - ChartView      图表视图（表格/图表 Segmented 切换，规范 §7.6）
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { App, Card } from 'antd';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { ToolbarItem } from '@newlifex/cube';
 import { getValueByKey, parseUrlQuery } from '@/utils/url';
 import { mapUrlParamsToSearchValues } from '@/utils/fieldControl';
@@ -25,6 +25,7 @@ import Toolbar, { type ListViewMode } from './components/Toolbar';
 import TableContent from './components/TableContent';
 import ColumnSetting, { filterVisibleFields } from './components/ColumnSetting';
 import { applyColumnPrefs, loadColumnPrefs, type ColumnPrefs } from './utils/columnPrefs';
+import { resolveInitialSort } from './utils/sort';
 import { detectTreeField } from './utils/treeData';
 import { getPageExtension } from '@/rendering/pageExtensions';
 import ListPagination from './components/ListPagination';
@@ -37,14 +38,41 @@ import PermissionDialog from './components/PermissionDialog';
 export interface EntityListPageProps {
   /** 实体路径前缀，如 '/Admin/User'、'/Cube/App' */
   type: string;
+  /**
+   * 固定查询条件（嵌入其他页面时使用，如用户详情页按 userId 过滤关联数据）
+   *
+   * 每次请求都会附加，且**优先于**搜索条件与地址栏参数，避免用户改搜索条件绕过宿主过滤。
+   */
+  baseQuery?: Record<string, unknown>;
+  /** 嵌入模式：不渲染页面级 Card、忽略地址栏查询参数、隐藏新增与批量/开发等页面级操作 */
+  embedded?: boolean;
+  /** 列表加载完成回调（嵌入模式用于宿主页面的 Tab 计数） */
+  onLoaded?: (total: number) => void;
 }
 
-export default function EntityListPage({ type }: EntityListPageProps) {
+export default function EntityListPage({ type, baseQuery, embedded = false, onLoaded }: EntityListPageProps) {
   const { message, modal } = App.useApp();
   const store = usePageStore(type);
   const location = useLocation();
+  const navigate = useNavigate();
+  // 嵌入模式下地址栏属于宿主页面（如 ?tab=logs），不能当作列表查询条件
+  const urlSearch = embedded ? '' : location.search;
   // 外部跳转携带的查询参数（如工作台指标卡跳转日志页 ?dtStart=...&success=false）
-  const urlQuery = useMemo(() => parseUrlQuery(location.search), [location.search]);
+  const urlQuery = useMemo(() => parseUrlQuery(urlSearch), [urlSearch]);
+  const fixedQuery = useMemo(() => {
+    if (!baseQuery) return null;
+    const entries = Object.entries(baseQuery).filter(([, v]) => v !== undefined && v !== null && v !== '');
+    return entries.length ? Object.fromEntries(entries) : null;
+  }, [baseQuery]);
+  /** 合并固定查询条件：宿主过滤条件覆盖同名搜索参数 */
+  const withFixed = useCallback(
+    (params?: Record<string, unknown>) => {
+      const next = { ...(params ?? {}) };
+      if (fixedQuery) Object.assign(next, fixedQuery);
+      return next;
+    },
+    [fixedQuery],
+  );
 
   // 订阅 store 状态
   const listFields = store((s) => s.listFields);
@@ -142,24 +170,37 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       .loadFields()
       .then(() => {
         if (cancelled) return;
-        // orderByKey：页面要求按主键排序时首查带排序参数（对齐 MVC PageSetting.OrderByKey）
+        // orderByKey：数字主键默认降序。必须同时发送 desc=true，
+        // 只发 sort 会被后端理解为升序，覆盖默认降序（对齐 MVC PageSetting.OrderByKey）
         const state = store.getState();
-        const keySort = state.pageSetting?.orderByKey ? state.pkField : undefined;
-        if (keySort) setSortState({ field: keySort, desc: false });
-        return state.loadData({ ...urlQuery, ...(keySort ? { sort: keySort } : {}) });
+        const keySort = resolveInitialSort(state.pageSetting?.orderByKey, state.pkField);
+        if (keySort) setSortState(keySort);
+        return state.loadData(
+          withFixed({
+            ...urlQuery,
+            ...(keySort ? { sort: keySort.field, desc: keySort.desc } : {}),
+          }),
+        );
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, location.search]);
+  }, [type, urlSearch]);
 
   // URL 查询参数变化（外部跳转携带新条件）时同步 searchParams，驱动 hasSearch/刷新等
   useEffect(() => {
     setSearchParams(Object.keys(urlQuery).length ? { ...urlQuery } : {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [urlSearch]);
+
+  // 加载完成后回报总数（嵌入模式：父页面 Tab 标题显示条数）
+  const prevLoadingRef = useRef(loading);
+  useEffect(() => {
+    if (prevLoadingRef.current && !loading) onLoaded?.(pagination.totalCount);
+    prevLoadingRef.current = loading;
+  }, [loading, onLoaded, pagination.totalCount]);
 
   // 图表能力探测：加载一次，无图表数据的页面不显示 表格/图表 视图切换（§7.6）
   useEffect(() => {
@@ -181,9 +222,32 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     // 保留当前排序参数，刷新/删除后列表排序与表头箭头保持一致
     return store
       .getState()
-      .loadData({ ...searchParams, sort: sortState.field, desc: sortState.desc })
+      .loadData(withFixed({ ...searchParams, sort: sortState.field, desc: sortState.desc }))
       .catch(() => {});
-  }, [store, searchParams, sortState]);
+  }, [store, searchParams, sortState, withFixed]);
+
+  // 扩展点上下文与行内跳转（META-6）：未注册 rowLink 时 openRowLink 为空操作
+  const extensionCtx = useMemo(
+    () => ({ type, query: searchParams, selectedKeys, reload: () => void refresh() }),
+    [type, searchParams, selectedKeys, refresh],
+  );
+  const openRowLink = useCallback(
+    (row: Record<string, unknown>, event?: React.MouseEvent | React.KeyboardEvent) => {
+      const link = extension?.rowLink;
+      if (!link) return;
+
+      const url = link.to(row, extensionCtx);
+      if (!url) return;
+
+      // Ctrl/Cmd 点击保持浏览器习惯：新标签打开
+      if (event && (event.ctrlKey || event.metaKey)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      navigate(url);
+    },
+    [extension, extensionCtx, navigate],
+  );
 
   // 切换实体时重新读取该页面的列偏好
   useEffect(() => {
@@ -199,14 +263,15 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     // 搜索/重置时清空排序状态，避免表头箭头与后端排序参数不一致
     setSortState({ desc: false });
     store.getState().setPagination(1);
-    void store.getState().loadData(params);
+    void store.getState().loadData(withFixed(params));
   };
 
   const handleReset = () => {
     setSearchParams({});
     setSortState({ desc: false });
     store.getState().setPagination(1);
-    void store.getState().loadData();
+    const fixed = withFixed();
+    void store.getState().loadData(fixed && Object.keys(fixed).length ? fixed : undefined);
   };
 
   const handleNew = () => setDialog({ open: true, mode: 'add' });
@@ -258,25 +323,37 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   /** 角色页：打开权限配置弹窗（编辑按钮左侧「权限」） */
   const handlePermRow = (row: Record<string, unknown>) => setPermDialog({ open: true, row });
 
-  // 行操作：内置（角色页「权限」）+ 页面扩展追加（META-6）
+  // 行操作：内置（角色页「权限」/用户页「详情」）+ 页面扩展追加（META-6）
   const rowActions = useMemo(() => {
-    const base = isRole
-      ? [
-          {
-            key: 'permission',
-            label: t('权限'),
-            className: 'cube-op-btn-op-perm',
-            onClick: handlePermRow,
-          },
-        ]
-      : [];
+    const base = [
+      ...(isRole
+        ? [
+            {
+              key: 'permission',
+              label: t('权限'),
+              className: 'cube-op-btn-op-perm',
+              onClick: handlePermRow,
+            },
+          ]
+        : []),
+      ...(extension?.rowLink && extension.rowLink.showAction !== false
+        ? [
+            {
+              key: 'detail',
+              label: t('详情'),
+              className: 'cube-op-btn-op-detail',
+              onClick: openRowLink,
+            },
+          ]
+        : []),
+    ];
     const ext = extension?.rowActions;
     if (!ext) return base.length ? base : undefined;
     return (row: Record<string, unknown>) => [
       ...base,
-      ...(ext({ type, query: searchParams, selectedKeys, reload: () => void refresh(), row }) ?? []),
+      ...(ext({ ...extensionCtx, row }) ?? []),
     ];
-  }, [isRole, extension, type, searchParams, selectedKeys, refresh]);
+  }, [isRole, extension, extensionCtx, openRowLink]);
 
   const handleRestoreRow = (row: Record<string, unknown>) => {
     const id = getValueByKey(row, pkField) ?? getValueByKey(row, 'id');
@@ -313,7 +390,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const handleExport = async (format: string) => {
     try {
       const res = await api.client.get(`${type}/export`, {
-        params: { format, ...searchParams, sort: sortState.field, desc: sortState.desc },
+        params: withFixed({ format, ...searchParams, sort: sortState.field, desc: sortState.desc }),
         responseType: 'blob',
       });
       const blob = res.data as Blob;
@@ -443,7 +520,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       cancelText: t('取消'),
       onOk: async () => {
         try {
-          await store.getState().deleteAll(searchParams);
+          await store.getState().deleteAll(withFixed(searchParams));
           message.success(t('删除成功'));
           setSelectedKeys([]);
           void refresh();
@@ -514,12 +591,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const handlePageChange = (page: number, pageSize?: number) => {
     store.getState().setPagination(page, pageSize);
     // 翻页保留当前排序参数，列表数据与表头箭头保持一致
-    void store.getState().loadData({ ...searchParams, sort: sortState.field, desc: sortState.desc });
+    void store.getState().loadData(withFixed({ ...searchParams, sort: sortState.field, desc: sortState.desc }));
   };
 
   const handleSortChange = (sort?: string, desc?: boolean) => {
     setSortState({ field: sort, desc: !!desc });
-    void store.getState().loadData({ ...searchParams, sort, desc });
+    void store.getState().loadData(withFixed({ ...searchParams, sort, desc }));
   };
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
@@ -546,11 +623,7 @@ export default function EntityListPage({ type }: EntityListPageProps) {
     [urlQuery, searchFields],
   );
 
-  // 扩展点上下文与插槽内容（META-6）。未注册扩展时全部为 undefined
-  const extensionCtx = useMemo(
-    () => ({ type, query: searchParams, selectedKeys, reload: () => void refresh() }),
-    [type, searchParams, selectedKeys, refresh],
-  );
+  // 扩展点插槽内容（META-6）。未注册扩展时全部为 undefined
   const searchExtraNode = useMemo(
     () =>
       extension?.searchExtra
@@ -562,9 +635,8 @@ export default function EntityListPage({ type }: EntityListPageProps) {
   const extraColumns = useMemo(() => extension?.extraColumns?.(extensionCtx), [extension, extensionCtx]);
   const closeDialog = () => setDialog({ open: false, mode: 'add', row: null });
 
-  return (
-    // 页面名由顶栏面包屑/多标签承担，Card 不再重复标题（避免搜索区上方冗余占位）
-    <Card className="cube-entity-card" size="small" styles={{ body: { paddingTop: 8 } }}>
+  const content = (
+    <>
       <SearchBar
         fields={searchFields}
         onSearch={handleSearch}
@@ -574,11 +646,12 @@ export default function EntityListPage({ type }: EntityListPageProps) {
       />
       {enableToolbar && (
         <Toolbar
-          canAdd={canAdd}
-          canDelete={canDelete}
+          // 嵌入模式由宿主页面提供上下文：不提供新增/批量删除/导入/开发等页面级操作
+          canAdd={canAdd && !embedded}
+          canDelete={canDelete && !embedded}
           canExport={canExport}
-          canImport={canImport}
-          canDevelop={canDevelop}
+          canImport={canImport && !embedded}
+          canDevelop={canDevelop && !embedded}
           hasSearch={hasSearch}
           canChart={canChart}
           view={view}
@@ -621,6 +694,9 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             softDeleteField={softDeleteField}
             selectable={enableSelect}
             pageQuery={searchParams}
+            activateFields={extension?.rowLink?.fields}
+            activateTitle={extension?.rowLink?.title}
+            onActivate={(_field, row, event) => openRowLink(row, event)}
             onDataAction={handleDataAction}
             confirmDelete={confirmDelete}
             doubleClickEdit={doubleClickEdit}
@@ -636,13 +712,13 @@ export default function EntityListPage({ type }: EntityListPageProps) {
             onSortChange={handleSortChange}
             sortField={sortState.field}
             sortDesc={sortState.desc}
+            statData={statData}
           />
           <div className="cube-table-footer">
             <ListPagination
               total={pagination.totalCount}
               current={pagination.pageIndex}
               pageSize={pagination.pageSize}
-              statData={statData}
               onChange={handlePageChange}
             />
           </div>
@@ -704,6 +780,16 @@ export default function EntityListPage({ type }: EntityListPageProps) {
           onSaved={() => void refresh()}
         />
       )}
+    </>
+  );
+
+  // 嵌入模式：宿主页面（用户详情 Tab 等）已有卡片容器，这里只渲染列表本体
+  if (embedded) return <div className="cube-entity-embedded">{content}</div>;
+
+  return (
+    // 页面名由顶栏面包屑/多标签承担，Card 不再重复标题（避免搜索区上方冗余占位）
+    <Card className="cube-entity-card" size="small" styles={{ body: { paddingTop: 8 } }}>
+      {content}
     </Card>
   );
 }

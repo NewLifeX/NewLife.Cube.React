@@ -4,21 +4,24 @@
  * 每列按 resolveListControl 解析渲染类型：
  * 链接(resolveUrl)/布尔标签/日期/数值/图片缩略图/颜色色块/图标/LOV 翻译/JSON 摘要等。
  */
+import { useMemo } from 'react';
 import { Table, Tag, Tooltip, Button, Popconfirm } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { FieldMapping } from '@newlifex/cube';
 import { resolveListControl, isDateOnlyField } from '@/utils/fieldControl';
-import { toFieldMeta } from '@/types/field';
+import { toFieldMeta, type FieldMeta, type ListControlType } from '@/types/field';
 import { getFieldRenderer } from '@/rendering/fieldRenderers';
 import { getValueByKey, resolveUrl } from '@/utils/url';
 import {
   formatDateTimeWithPattern,
   formatDecimal,
   formatGmk,
+  formatInteger,
   formatMoney,
   formatPercent,
   formatTimeSpan,
   formatTimeStamp,
+  isMinDate,
   parseDecimalScale,
 } from '@/utils/numberFormat';
 import { buildTreeRows } from '../utils/treeData';
@@ -77,8 +80,16 @@ export interface TableContentProps {
   doubleClickEdit?: boolean;
   /** 树形列表父字段名（LIST-17）；传入后按该字段重建树并按父级缩进 */
   treeField?: string;
+  /** 可点击进入详情/卡片的字段名（大小写不敏感） */
+  activateFields?: string[];
+  /** 可点击单元格的悬浮提示 */
+  activateTitle?: string;
+  /** 激活单元格回调（event 用于识别 Ctrl/Cmd 新窗口打开） */
+  onActivate?: (field: string, row: Record<string, unknown>, event: React.MouseEvent | React.KeyboardEvent) => void;
   /** 页面扩展追加的自定义列（META-6），渲染在元数据列之后、操作列之前 */
   extraColumns?: ColumnsType<Record<string, unknown>>;
+  /** 统计行数据（后端 page.stat 返回的实体字段值），按列对齐渲染在表格底部并冻结 */
+  statData?: Record<string, unknown> | null;
   onChange?: (pagination: TablePaginationConfig) => void;
 }
 
@@ -100,9 +111,98 @@ export function resolveTextAlign(value?: string | number | null): 'left' | 'cent
   return undefined;
 }
 
+/** 列呈现信息：列宽/对齐/标签由字段元数据统一推导，表头与统计行共用 */
+interface ColumnPresentation {
+  meta: FieldMeta;
+  control: ListControlType;
+  width?: number;
+  align: 'left' | 'center' | 'right';
+  label: string;
+}
+
+/** 解析字段的列呈现信息（列宽规范 §7.5、对齐规则 §7.4） */
+function resolveColumnPresentation(field: FieldMapping): ColumnPresentation {
+  const meta = toFieldMeta(field.field);
+  const control = resolveListControl(meta);
+
+  // 列宽规范（皮肤设计规范 §7.5）：数字/枚举 ≥80、时间 ≥140、字符串自适应。
+  // 主键(Id)列初始宽 64px 且居中（规范 §7.4：主键/Id 居中对齐）：预留排序图标位置；
+  // 长 Id（雪花）由 max-content auto 布局按内容撑开（主键列不省略，排序不影响内容展示）。
+  // 列多时表格横向滚动，不把各列挤压到无法阅读
+  let width: number | undefined;
+  if (meta.primaryKey) width = 64;
+  else if (control === 'image' || control === 'file') width = 100;
+  else if (control === 'color' || control === 'icon') width = 90;
+  else if (control === 'boolean') width = 90;
+  else if (control === 'number') width = 100;
+  else if (control === 'percent' || control === 'money' || control === 'decimal') width = 110;
+  else if (control === 'gmk' || control === 'timespan') width = 110;
+  else if (control === 'lov') width = 100;
+  else if (control === 'date') width = (meta.itemType || '').toLowerCase() === 'date' ? 100 : 140;
+  else if (control === 'time' || control === 'timestamp') width = 140;
+
+  // 对齐：控制器 textAlign 优先；否则主键列居中（规范 §7.4）、数字右对齐，其余按类型
+  const align =
+    resolveTextAlign(meta.textAlign) ??
+    (meta.primaryKey
+      ? 'center'
+      : control === 'number' ||
+          control === 'percent' ||
+          control === 'money' ||
+          control === 'decimal' ||
+          control === 'timespan' ||
+          control === 'gmk'
+        ? 'right'
+        : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
+          ? 'center'
+          : 'left');
+
+  // 列头：header 优先于 displayName；headerTitle 以悬浮提示呈现
+  const label = meta.header || meta.displayName || meta.name;
+
+  return { meta, control, width, align, label };
+}
+
+/**
+ * 统计行单元格（对齐 MVC _List_Data_Stat）
+ *
+ * 主键列显示「合计」；日期/布尔/字符串/枚举/外键等列留空；
+ * 数值列按字段类型格式化（整数千分位、金额、小数、百分比、时长、容量、时间戳）。
+ */
+function renderStatValue(p: ColumnPresentation, statByField: Map<string, unknown>): React.ReactNode {
+  const { meta, control } = p;
+  if (meta.primaryKey) return t('合计');
+  // 外键 Id 列求和无业务意义（MVC 同口径）
+  if (/id$/i.test(meta.name)) return null;
+
+  const raw = statByField.get(meta.name.toLowerCase());
+  if (raw === null || raw === undefined || raw === '') return null;
+
+  switch (control) {
+    case 'number':
+      return formatInteger(raw);
+    case 'money':
+      return formatMoney(raw);
+    case 'decimal':
+      return formatDecimal(raw, parseDecimalScale(meta.itemType, meta.scale));
+    case 'percent':
+      return formatPercent(raw, meta);
+    case 'timespan':
+      return formatTimeSpan(raw, meta);
+    case 'gmk':
+      return formatGmk(raw);
+    case 'timestamp':
+      return formatTimeStamp(raw, meta);
+    default:
+      return null;
+  }
+}
+
 /** 日期格式化。dateOnly 输出 yyyy-MM-dd，否则 yyyy-MM-dd HH:mm:ss（规范 §7.4：日期时间到时分秒） */
 function formatDate(v: unknown, dateOnly = false): string {
   if (!v) return '';
+  // DateTime.MinValue（0001-01-01）表示未填写，列表留空（对齐 MVC 不显示）
+  if (isMinDate(v)) return '';
   let d: Date;
   if (v instanceof Date) {
     d = v;
@@ -274,66 +374,65 @@ export default function TableContent({
   confirmDelete = true,
   doubleClickEdit = true,
   treeField,
+  activateFields,
+  activateTitle,
+  onActivate,
   extraColumns,
+  statData,
   onChange,
 }: TableContentProps) {
-  const columns: ColumnsType<Record<string, unknown>> = fields.map((field) => {
-    const meta = toFieldMeta(field.field);
-    const control = resolveListControl(meta);
-
-    // 列宽规范（皮肤设计规范 §7.5）：数字/枚举 ≥80、时间 ≥140、字符串自适应。
-    // 主键(Id)列初始宽 52px 且居中（规范 §7.4：主键/ID 居中对齐）：数据少时列窄无大块留白；
-    // 长 Id（雪花）由 max-content auto 布局按内容撑开（配合主键列不省略、不排序）。
-    // 列多时表格横向滚动，不把各列挤压到无法阅读
-    let width: number | undefined;
-    if (meta.primaryKey) width = 52;
-    else if (control === 'image' || control === 'file') width = 100;
-    else if (control === 'color' || control === 'icon') width = 90;
-    else if (control === 'boolean') width = 90;
-    else if (control === 'number') width = 100;
-    else if (control === 'percent' || control === 'money' || control === 'decimal') width = 110;
-    else if (control === 'gmk' || control === 'timespan') width = 110;
-    else if (control === 'lov') width = 100;
-    else if (control === 'date') width = (meta.itemType || '').toLowerCase() === 'date' ? 100 : 140;
-    else if (control === 'time' || control === 'timestamp') width = 140;
-
-    // 对齐：控制器 textAlign 优先；否则主键列居中（规范 §7.4）、数字右对齐，其余按类型
-    const alignResolved =
-      resolveTextAlign(meta.textAlign) ??
-      (meta.primaryKey
-        ? 'center'
-        : control === 'number' ||
-            control === 'percent' ||
-            control === 'money' ||
-            control === 'decimal' ||
-            control === 'timespan' ||
-            control === 'gmk'
-          ? 'right'
-          : control === 'boolean' || control === 'color' || control === 'icon' || control === 'image'
-            ? 'center'
-            : 'left');
-
-    // 列头：header 优先于 displayName；headerTitle 以悬浮提示呈现
-    const label = meta.header || meta.displayName || meta.name;
+  // 表头与统计行共用同一套列呈现信息，保证统计值严格对齐到对应列
+  const presentations = fields.map(resolveColumnPresentation);
+  const columns: ColumnsType<Record<string, unknown>> = presentations.map(({ meta, width, align, label }, i) => {
+    const field = fields[i];
+    // 行内跳转：仅对未自带链接的字段生效，避免 <a> 嵌套交互元素
+    const activatable =
+      !!onActivate &&
+      !meta.url &&
+      !!activateFields?.some((name) => name.toLowerCase() === meta.name.toLowerCase());
 
     return {
       title: meta.headerTitle ? <Tooltip title={meta.headerTitle}>{label}</Tooltip> : label,
       dataIndex: meta.name,
       key: meta.name,
       width,
-      align: alignResolved as 'left' | 'center' | 'right',
+      align,
       className: meta.class,
       // 最大宽度：超长文本截断到指定字符宽度（对齐 MVC ListField.MaxWidth）
       onCell: () => (meta.maxWidth ? { style: { maxWidth: meta.maxWidth } } : {}),
-      // 主键列不参与排序 + 不省略：避免表头排序图标撑宽列、ellipsis 约束 auto 布局下按内容自适应；
-      // 配合主键列 64px 初始宽，数据少时列窄、雪花 ID 位数多时列宽
+      // 主键列同样可排序（自增 Id 常用：新数据 Id 更大）；不省略，雪花 ID 按内容自适应列宽。
+      // 虚拟字段（头像/快捷链接等 AddListField 列）没有实体字段，后端无法按它排序
       ellipsis: meta.primaryKey ? false : true,
-      sorter: onSortChange && !meta.primaryKey ? true : false,
+      sorter: !!onSortChange && !meta.virtual,
       // 排序箭头仅当前排序列显示（受控）：其余列 sortOrder 置 null 复位，配合 CSS 隐藏默认箭头
       sortOrder: meta.name === sortField ? (sortDesc ? 'descend' : 'ascend') : null,
-      render: (_: unknown, row: Record<string, unknown>) => (
-        <CellRenderer field={field} row={row} pageQuery={pageQuery} onDataAction={onDataAction} />
-      ),
+      render: (_: unknown, row: Record<string, unknown>) => {
+        const content = <CellRenderer field={field} row={row} pageQuery={pageQuery} onDataAction={onDataAction} />;
+        if (!activatable) return content;
+
+        return (
+          <span
+            className="cube-cell-activate"
+            role="button"
+            tabIndex={0}
+            title={activateTitle}
+            onClick={(e) => {
+              // 阻止冒泡，避免触发行双击编辑
+              e.stopPropagation();
+              onActivate?.(meta.name, row, e);
+            }}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              e.stopPropagation();
+              onActivate?.(meta.name, row, e);
+            }}
+          >
+            {content}
+          </span>
+        );
+      },
     };
   });
 
@@ -348,7 +447,8 @@ export default function TableContent({
   const hasRowActions = typeof rowActions === 'function' ? true : !!rowActions?.length;
   // 树节点排序（LIST-18）：树形表 + 有编辑权限时渲染上移/下移
   const canMove = !!treeField && !!canEdit && (!!onMoveUp || !!onMoveDown);
-  if (canView || canEdit || canDelete || hasRowActions || canMove) {
+  const hasOpsColumn = canView || canEdit || canDelete || hasRowActions || canMove;
+  if (hasOpsColumn) {
     // 操作列宽度按可用操作数自适应：每胶囊按钮约 52px + 单元格 16px 内边距，
     // 仅「查看」时收窄避免大块留白，多操作时撑开容纳按钮
     const opsCount =
@@ -440,6 +540,44 @@ export default function TableContent({
     });
   }
 
+  // 统计行：后端 page.stat 的键为实体字段小驼峰，按字段名忽略大小写对齐到列
+  const statByField = useMemo(() => {
+    const map = new Map<string, unknown>();
+    if (statData) {
+      for (const [key, value] of Object.entries(statData)) map.set(key.toLowerCase(), value);
+    }
+    return map;
+  }, [statData]);
+  const hasStatData = statByField.size > 0;
+
+  let summaryNode: React.ReactNode = null;
+  if (hasStatData) {
+    // 汇总单元格顺序必须与表格实际列一致：展开列 → 勾选列 → 字段列 → 扩展列 → 操作列
+    const cells: React.ReactNode[] = [];
+    let index = 0;
+    if (treeField) cells.push(<Table.Summary.Cell key="__stat-expand" index={index++} />);
+    if (selectable) cells.push(<Table.Summary.Cell key="__stat-select" index={index++} />);
+    presentations.forEach((p) => {
+      cells.push(
+        <Table.Summary.Cell key={`__stat-${p.meta.name}`} index={index++} align={p.align} className={p.meta.class}>
+          {renderStatValue(p, statByField)}
+        </Table.Summary.Cell>,
+      );
+    });
+    for (let i = 0; i < (extraColumns?.length ?? 0); i++) {
+      cells.push(<Table.Summary.Cell key={`__stat-extra-${i}`} index={index++} />);
+    }
+    if (hasOpsColumn) cells.push(<Table.Summary.Cell key="__stat-ops" index={index++} />);
+
+    summaryNode = (
+      <Table.Summary fixed>
+        <Table.Summary.Row className="cube-stat-row">{cells}</Table.Summary.Row>
+      </Table.Summary>
+    );
+  }
+
+  const pkName = presentations.find((p) => p.meta.primaryKey)?.meta.name;
+
   return (
     <Table<Record<string, unknown>>
       rowKey={(row) => String(getValueByKey(row, pkField) ?? JSON.stringify(row))}
@@ -448,6 +586,9 @@ export default function TableContent({
       loading={loading}
       size="medium"
       scroll={{ x: 'max-content' }}
+      // 有统计行时启用 antd sticky：表头随内容区滚动固定，统计行固定在表格底部（不随行滚动）
+      sticky={hasStatData}
+      summary={() => summaryNode}
       // 树形列表默认全展开（对齐全展开的树视图习惯），仍可手动收起
       expandable={treeField ? { defaultExpandAllRows: true } : undefined}
       // 双击行进入编辑（对齐 MVC：编辑链接 title「双击本行任意地方也可以进入编辑表单页」）；
@@ -470,9 +611,17 @@ export default function TableContent({
       }
       pagination={false}
       onChange={(pagination, _filters, sorter) => {
-        if (onSortChange && sorter && !Array.isArray(sorter) && sorter.order) {
-          const fieldName = String(sorter.field ?? sorter.columnKey ?? '');
-          onSortChange(fieldName, sorter.order === 'descend');
+        if (onSortChange && sorter && !Array.isArray(sorter)) {
+          if (sorter.order) {
+            const fieldName = String(sorter.field ?? sorter.columnKey ?? '');
+            onSortChange(fieldName, sorter.order === 'descend');
+          } else if (sortField && pkName && sortField.toLowerCase() === pkName.toLowerCase()) {
+            // 主键默认就是降序，AntD 点击已排序列会先给出“取消排序”（sorter 为空对象）。
+            // 对 Id 这种常用默认排序，直接切成相反方向，避免第一次点击看起来没反应
+            onSortChange(sortField, !sortDesc);
+          } else {
+            onSortChange(undefined, false);
+          }
         } else if (onSortChange) {
           onSortChange(undefined, false);
         }
