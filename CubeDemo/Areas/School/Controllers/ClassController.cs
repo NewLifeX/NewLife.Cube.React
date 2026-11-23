@@ -21,7 +21,7 @@ public class ClassController : EntityController<Class, ClassModel>
     static ClassController()
     {
         {
-            var df = ListFields.AddListField("test", afterName: "ID");
+            var df = ListFields.AddListField("test", afterName: "Id");
             df.DisplayName = "AJAX操作请求";
             df.Url = "/School/Class/Hello";
             df.DataAction = "action";
@@ -29,14 +29,14 @@ public class ClassController : EntityController<Class, ClassModel>
         }
 
         {
-            var df = ListFields.AddListField("test1", afterName: "ID");
+            var df = ListFields.AddListField("test1", afterName: "Id");
             df.DisplayName = "当前页打开";
             df.Url = "/School/Class";
             df.Target = "_self";
         }
 
         {
-            var df = ListFields.AddListField("test1", afterName: "ID");
+            var df = ListFields.AddListField("test1", afterName: "Id");
             df.DisplayName = "浏览器多标签页打开";
             df.Url = "/School/Student";
             df.Target = "_blank";
