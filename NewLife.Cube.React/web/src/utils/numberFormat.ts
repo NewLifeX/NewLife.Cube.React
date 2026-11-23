@@ -70,6 +70,19 @@ export function formatMoney(value: unknown): string {
 }
 
 /**
+ * 整数格式化（千分位、无小数，统计行使用，对齐 MVC `ToString("n0")`）
+ *
+ * @param value 原始值
+ * @returns 整数文本；空值返回空串
+ */
+export function formatInteger(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '';
+  const num = Number(value);
+  if (!Number.isFinite(num)) return String(value);
+  return withThousands(Math.trunc(num), 0);
+}
+
+/**
  * 定点小数格式化（`decimal(p,s)` 的 s 位小数，不加千分位）
  *
  * @param value 原始值
@@ -265,6 +278,33 @@ export function formatTimeSpan(
 }
 
 /**
+ * 是否后端「未填写」的日期值
+ *
+ * .NET `DateTime.MinValue` 序列化为 `0001-01-01T00:00:00`（或空格分隔），
+ * 列表/详情应留空而不是显示 0001-01-01。为 0 的 Unix 秒时间戳同样视为未填写。
+ *
+ * @param value 原始值（ISO 字符串 / Date）
+ * @returns 命中「未填写」返回 true
+ */
+export function isMinDate(value: unknown): boolean {
+  if (value === null || value === undefined || value === '') return false;
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    return !Number.isNaN(year) && year <= 1;
+  }
+
+  const text = String(value).trim();
+  if (!text) return false;
+
+  // 常见形态直接看年份，避免 "0001-01-01 00:00:00" 在某些引擎解析失败后漏判
+  const head = /^(\d{4})-/.exec(text);
+  if (head) return Number(head[1]) <= 1;
+
+  const date = new Date(text);
+  return !Number.isNaN(date.getTime()) && date.getFullYear() <= 1;
+}
+
+/**
  * Unix 秒时间戳格式化（ItemType=`Time` / `Time:<格式>`，ITYPE-4）
  *
  * 对齐后端 `ViewHelper.FormatValue`：值按 Unix 秒解析为本地时间。
@@ -308,6 +348,8 @@ export function formatDateTimeWithPattern(value: unknown, pattern: string): stri
   const text = String(value);
   const date = new Date(text.includes('T') ? text : text.replace(' ', 'T'));
   if (Number.isNaN(date.getTime())) return text;
+  // 后端 DateTime.MinValue 表示未填写，留空而不是显示 0001-01-01
+  if (date.getFullYear() <= 1) return '';
   return formatDotNetDate(date, pattern);
 }
 

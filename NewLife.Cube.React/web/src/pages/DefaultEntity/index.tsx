@@ -15,13 +15,8 @@ import ConfigNav, { findConfigCenter } from '@/views/config/ConfigNav';
 import { routeToApiPrefix } from '@/utils/url';
 import { isEntityMeta } from '@/utils/pageMeta';
 import { isSpecialApiPath } from '@/utils/specialPage';
+import { isFormPath } from '@/utils/route';
 import { api } from '@/api';
-
-/** 是否表单类路径（含 ?id= 或 /Edit /Add /New /Detail 后缀） */
-function isFormPath(pathname: string, search: string): boolean {
-  if (search.includes('id=')) return true;
-  return /\/+(edit|add|new|detail)$/i.test(pathname);
-}
 
 export default function DefaultEntityPage() {
   const location = useLocation();

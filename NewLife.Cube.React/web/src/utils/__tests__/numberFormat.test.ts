@@ -6,6 +6,7 @@ import {
   formatDateTimeWithPattern,
   formatDecimal,
   formatGmk,
+  formatInteger,
   formatMoney,
   formatPercent,
   formatTimeSpan,
@@ -58,6 +59,19 @@ describe('formatDecimal', () => {
 
   it('空值返回空串', () => {
     expect(formatDecimal(undefined)).toBe('');
+  });
+});
+
+describe('formatInteger', () => {
+  it('千分位整数（对齐 MVC n0）', () => {
+    expect(formatInteger(9574)).toBe('9,574');
+    expect(formatInteger(0)).toBe('0');
+  });
+
+  it('截断小数与空值处理', () => {
+    expect(formatInteger(12.9)).toBe('12');
+    expect(formatInteger(null)).toBe('');
+    expect(formatInteger('abc')).toBe('abc');
   });
 });
 
@@ -123,6 +137,11 @@ describe('formatDateTimeWithPattern（ITYPE-5）', () => {
 
   it('无法解析时原样返回', () => {
     expect(formatDateTimeWithPattern('not-a-date', 'yyyy')).toBe('not-a-date');
+  });
+
+  it('DateTime.MinValue（0001-01-01）输出空串', () => {
+    expect(formatDateTimeWithPattern('0001-01-01T00:00:00', 'yyyy-MM-dd')).toBe('');
+    expect(formatDateTimeWithPattern('0001-01-01 00:00:00', 'yyyy年MM月dd日')).toBe('');
   });
 });
 
