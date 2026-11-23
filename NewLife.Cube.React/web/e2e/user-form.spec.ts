@@ -101,3 +101,63 @@ test.describe('用户表单字段控件（/Admin/User 新增弹窗）', () => {
     await expect(cell.locator('.w-e-text-container')).toBeVisible();
   });
 });
+
+test.describe('用户编辑保存（Id 命名兼容）', () => {
+  test('修改昵称与主角色后保存成功，回读一致', async ({ page }) => {
+    await page.goto('/Admin/User');
+    await page.waitForSelector(ROW, { timeout: TABLE_TIMEOUT });
+
+    const name = `e2e-edit-${Date.now()}`;
+    const create = await page.evaluate(async (userName) => {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/Admin/User', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          Name: userName,
+          DisplayName: '编辑前',
+          Password: 'admin123',
+          RoleId: 5,
+          Enable: true,
+        }),
+      });
+      return { status: res.status, body: await res.json() };
+    }, name);
+    expect(create.status).toBe(200);
+    expect(create.body.code, create.body.message).toBe(0);
+    const id = create.body.data.id as number;
+
+    try {
+      await page.goto(`/Admin/User/Edit?id=${id}`);
+      await page.getByRole('textbox', { name: '昵称' }).fill('编辑后');
+      await page.locator('.ant-tabs-tab', { hasText: '登录信息' }).click();
+
+      // 表单内下拉顺序：性别、地区、主角色、角色组、部门
+      await page.locator('.ant-form-item .ant-select').nth(2).click();
+      await page.locator('.ant-select-dropdown:visible').getByText('普通用户', { exact: true }).click();
+
+      await page.getByRole('button', { name: /保\s*存/ }).click();
+      // 保存成功会提示并返回列表；失败则停留在编辑页
+      await page.waitForURL((url) => url.pathname === '/Admin/User', { timeout: 20000 });
+
+      const detail = await page.evaluate(async (userId) => {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/Admin/User/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return { status: res.status, body: await res.json() };
+      }, id);
+      expect(detail.status).toBe(200);
+      expect(detail.body.data.displayName).toBe('编辑后');
+      expect(detail.body.data.roleId).toBe(3);
+    } finally {
+      await page.evaluate(async (userId) => {
+        const token = localStorage.getItem('token');
+        await fetch(`/api/Admin/User/${userId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }, id);
+    }
+  });
+});
